@@ -51,12 +51,20 @@ class Player extends Model
     {
         return $this->hasMany(TournamentMatch::class, 'player_two_id');
     }
-    public function getStatusAttribute($value)
+    protected static function booted()
     {
-        if ($this->membership_expires_at && $this->membership_expires_at->isPast()) {
-            return 'inactive';
-        }
+        static::retrieved(function ($player) {
 
-        return $value;
+            if (
+                $player->membership_expires_at &&
+                $player->membership_expires_at->isPast() &&
+                $player->status !== 'inactive'
+            ) {
+                $player->updateQuietly([
+                    'status' => 'inactive'
+                ]);
+            }
+
+        });
     }
 }
