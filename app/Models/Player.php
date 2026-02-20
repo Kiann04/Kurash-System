@@ -13,21 +13,21 @@ class Player extends Model
     protected $fillable = [
         'full_name',
         'birthday',
+        'gender',
         'club',
         'address',
         'email',
         'emergency_contact',
         'emergency_contact_number',
-        'membership_start_date',
-        'membership_end_date',
-        'is_active',
+        'registered_at',
+        'membership_expires_at',
+        'status',
     ];
 
     protected $casts = [
         'birthday' => 'date',
-        'membership_start_date' => 'date',
-        'membership_end_date' => 'date',
-        'is_active' => 'boolean',
+        'registered_at' => 'date',
+        'membership_expires_at' => 'date',
     ];
 
     // Auto compute age
