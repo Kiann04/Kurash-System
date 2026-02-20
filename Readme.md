@@ -1,2 +1,0 @@
-# Kurash-System
-Kurash System
