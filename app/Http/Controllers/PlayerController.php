@@ -23,9 +23,20 @@ class PlayerController extends Controller
                 }
             })
             ->when($request->status, function ($query, $status) {
-                if ($status !== 'all') {
-                    $query->where('status', $status);
+                if ($status === 'active') {
+                    $query->where(function ($q) {
+                        $q->where('membership_expires_at', '>=', now())
+                        ->where('status', 'active');
+                    });
                 }
+
+                if ($status === 'inactive') {
+                    $query->where(function ($q) {
+                        $q->where('membership_expires_at', '<', now())
+                        ->orWhere('status', 'inactive');
+                    });
+                }
+
             })
             ->latest()
             ->paginate(10)
@@ -125,5 +136,15 @@ class PlayerController extends Controller
         $player->update($validated);
 
         return redirect()->route('admin.players.index')->with('success', 'Player updated successfully.');
+    }
+    public function renew(Player $player)
+    {
+        $player->update([
+            'registered_at' => now(),
+            'membership_expires_at' => now()->addYear(),
+            'status' => 'active',
+        ]);
+
+        return back()->with('success', 'Membership renewed successfully.');
     }
 }

@@ -104,7 +104,6 @@ watch([gender, status], ([newGender, newStatus]) => {
                     >Inactive / Renew</button>
                 </div>
             </div>
-
             <!-- Players Table -->
             <PlayerTable :players="players" />
         </div>

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Link } from '@inertiajs/vue3';
+import { Link, router } from '@inertiajs/vue3';
 import { route } from 'ziggy-js';
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -23,6 +23,11 @@ defineProps<{
         links: any[];
     };
 }>();
+function renewMembership(playerId: number) {
+    if (confirm('Renew this membership for another year?')) {
+        router.post(route('admin.players.renew', playerId));
+    }
+}
 </script>
 
 <template>
@@ -65,19 +70,31 @@ defineProps<{
                           <UserCheck v-if="player.status === 'active'" class="h-4 w-4" />
                         </div>
                             </td>
-                            <td class="p-4 align-middle text-center flex justify-center gap-2">
+                            <td class="p-4 align-middle text-center flex justify-center gap-2">                              
+                                <!-- Edit -->
                                 <Link :href="route('admin.players.edit', player.id)">
                                     <Button variant="outline" size="sm" class="h-8">
                                         <Edit class="mr-2 h-3 w-3" />
                                         Edit
                                     </Button>
                                 </Link>
+
+                                <!-- View -->
                                 <Link :href="route('admin.players.show', player.id)" v-if="route().has('admin.players.show')">
                                     <Button variant="ghost" size="sm" class="h-8 w-8 p-0">
                                         <Eye class="h-4 w-4" />
-                                        <span class="sr-only">View</span>
                                     </Button>
                                 </Link>
+
+                                <!-- Renew (ONLY if inactive) -->
+                                <Button
+                                    v-if="player.status === 'inactive'"
+                                    size="sm"
+                                    class="h-8 bg-green-600 hover:bg-green-700 text-white"
+                                    @click="renewMembership(player.id)"
+                                >
+                                    Renew
+                                </Button>
                             </td>
                         </tr>
                         <tr v-if="players.data.length === 0">

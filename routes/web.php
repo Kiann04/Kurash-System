@@ -25,4 +25,5 @@ Route::prefix('admin')->group(function () {
     Route::get('players/{player}/edit', [PlayerController::class, 'edit'])->name('admin.players.edit');
     Route::put('players/{player}', [PlayerController::class, 'update'])->name('admin.players.update');
     Route::get('players/{player}', [PlayerController::class, 'show'])->name('admin.players.show');
+    Route::post('admin/players/{player}/renew', [PlayerController::class, 'renew'])->name('admin.players.renew');
 });

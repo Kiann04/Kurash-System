@@ -33,7 +33,7 @@ class Player extends Model
     // Auto compute age
     public function getAgeAttribute()
     {
-        return Carbon::parse($this->birthday)->age;
+        return $this->birthday ? $this->birthday->age : null;
     }
 
     // Relationships
@@ -50,5 +50,13 @@ class Player extends Model
     public function matchesAsPlayerTwo()
     {
         return $this->hasMany(TournamentMatch::class, 'player_two_id');
+    }
+    public function getStatusAttribute($value)
+    {
+        if ($this->membership_expires_at && $this->membership_expires_at->isPast()) {
+            return 'inactive';
+        }
+
+        return $value;
     }
 }
