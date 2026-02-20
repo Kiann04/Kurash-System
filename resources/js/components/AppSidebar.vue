@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Link } from '@inertiajs/vue3';
-import { BookOpen, Folder, LayoutGrid } from 'lucide-vue-next';
+import { BookOpen, Folder, LayoutGrid, Brackets, Users, FileText, Trophy } from 'lucide-vue-next';
 import NavFooter from '@/components/NavFooter.vue';
 import NavMain from '@/components/NavMain.vue';
 import NavUser from '@/components/NavUser.vue';
@@ -20,8 +20,28 @@ import { dashboard } from '@/routes';
 const mainNavItems: NavItem[] = [
     {
         title: 'Dashboard',
-        href: dashboard(),
+        href: '/dashboard',
         icon: LayoutGrid,
+    },
+    {
+        title: 'Players',
+        href: '/players',
+        icon: Users,
+    },
+    {
+        title: 'Tournaments',
+        href: '/tournaments',
+        icon: Trophy,
+    },
+    {
+        title: 'Generate Bracket',
+        href: '/generateBracket',
+        icon: Brackets,
+    },
+    {
+        title: 'Tournament Docs',
+        href: '/tournamentDocs',
+        icon: FileText,
     },
 ];
 
