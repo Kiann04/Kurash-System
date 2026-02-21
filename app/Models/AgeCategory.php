@@ -19,4 +19,9 @@ class AgeCategory extends Model
     {
         return $this->hasMany(TournamentRegistration::class);
     }
+    public function weightCategories()
+    {
+        return $this->hasMany(WeightCategory::class);
+    }
+    
 }

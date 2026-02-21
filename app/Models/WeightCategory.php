@@ -13,10 +13,15 @@ class WeightCategory extends Model
         'name',
         'min_weight',
         'max_weight',
+        'age_category_id',
     ];
 
     public function registrations()
     {
         return $this->hasMany(TournamentRegistration::class);
+    }
+    public function ageCategory()
+    {
+        return $this->belongsTo(AgeCategory::class);
     }
 }

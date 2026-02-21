@@ -13,7 +13,7 @@ class Bracket extends Model
         'tournament_id',
         'age_category_id',
         'weight_category_id',
-        'round',
+        'rounds',
     ];
 
     public function tournament()

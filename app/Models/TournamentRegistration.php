@@ -14,7 +14,9 @@ class TournamentRegistration extends Model
         'player_id',
         'age_category_id',
         'weight_category_id',
+        'weigh_in_weight',
         'status',
+
     ];
 
     public function tournament()

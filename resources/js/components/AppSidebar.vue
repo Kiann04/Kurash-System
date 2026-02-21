@@ -31,7 +31,7 @@ const mainNavItems: NavItem[] = [
     },
     {
         title: 'Tournaments',
-        href: '/tournaments',
+        href: route('admin.tournaments.index'),
         icon: Trophy,
     },
     {

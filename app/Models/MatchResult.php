@@ -18,6 +18,6 @@ class MatchResult extends Model
 
     public function match()
     {
-        return $this->belongsTo(TournamentMatch::class);
+        return $this->belongsTo(TournamentMatch::class, 'match_id');
     }
 }
