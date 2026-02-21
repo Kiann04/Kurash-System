@@ -354,7 +354,7 @@ const exportPdf = () => {
                 </div>
 
                 <div v-else class="rr-board">
-                    <div v-for="round in roundsFor(bracket.matches)" :key="round.round" class="rr-round">
+                    <div v-for="round in roundsForBracket(bracket)" :key="round.round" class="rr-round">
                         <h3 class="round-title">{{ roundLabel(finalRoundNumber(bracket), round.round) }}</h3>
                         <div class="rr-grid">
                             <article v-for="match in round.matches" :key="match.id" class="rr-match">
