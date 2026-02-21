@@ -46,12 +46,17 @@ const form = useForm({
 
 /* ================= SEARCH ================= */
 const search = ref('')
+const genderFilter = ref<'all' | 'male' | 'female'>('all')
 const filteredPlayers = computed(() => {
-    if (!search.value) return props.players
-    return props.players.filter(p =>
-        p.full_name.toLowerCase().includes(search.value.toLowerCase()) ||
-        p.club.toLowerCase().includes(search.value.toLowerCase())
-    )
+    return props.players.filter(p => {
+        const playerGender = String(p.gender).toLowerCase()
+        const matchesGender = genderFilter.value === 'all' || playerGender === genderFilter.value
+        const matchesSearch = !search.value ||
+            p.full_name.toLowerCase().includes(search.value.toLowerCase()) ||
+            p.club.toLowerCase().includes(search.value.toLowerCase())
+
+        return matchesGender && matchesSearch
+    })
 })
 
 /* ================= REGISTRATION ================= */
@@ -59,21 +64,54 @@ const isSelected = (playerId: number) =>
     form.registrations.some(r => r.player_id === playerId)
 
 const isEligible = (player: Player) => !!player.age_category_id
+const activeWeighInPlayerId = ref<number | null>(null)
+const draftWeight = ref<number | null>(null)
+
+const activeWeighInPlayer = computed(() =>
+    props.players.find(p => p.id === activeWeighInPlayerId.value) ?? null
+)
 
 const togglePlayer = (player: Player) => {
     if (!isEligible(player)) return
 
     const index = form.registrations.findIndex(r => r.player_id === player.id)
-    if (index !== -1) form.registrations.splice(index, 1)
-    else form.registrations.push({
+    if (index !== -1) {
+        form.registrations.splice(index, 1)
+        if (activeWeighInPlayerId.value === player.id) closeWeighInModal()
+        return
+    }
+
+    form.registrations.push({
         player_id: player.id,
         weigh_in_weight: null,
         weight_category_id: null
     })
+
+    openWeighInModal(player.id)
 }
 
 const getRegistration = (playerId: number) =>
     form.registrations.find(r => r.player_id === playerId)!
+
+const openWeighInModal = (playerId: number) => {
+    activeWeighInPlayerId.value = playerId
+    draftWeight.value = getRegistration(playerId)?.weigh_in_weight ?? null
+}
+
+const closeWeighInModal = () => {
+    activeWeighInPlayerId.value = null
+    draftWeight.value = null
+}
+
+const saveWeighIn = () => {
+    const player = activeWeighInPlayer.value
+    if (!player) return
+
+    const registration = getRegistration(player.id)
+    registration.weigh_in_weight = draftWeight.value
+    autoAssignWeight(player)
+    closeWeighInModal()
+}
 
 /* ================= AUTO WEIGHT MATCH ================= */
 const autoAssignWeight = (player: Player) => {
@@ -128,7 +166,14 @@ const submit = () => form.post(route('admin.tournaments.store'))
             <span class="text-sm text-muted-foreground">Total Registered: {{ totalRegistered }}</span>
         </div>
 
-        <input v-model="search" placeholder="Search player by name or club..." class="border rounded-lg p-2 mb-4 w-80" />
+        <div class="flex flex-wrap items-center gap-3 mb-4">
+            <input v-model="search" placeholder="Search player by name or club..." class="border rounded-lg p-2 w-80" />
+            <div class="flex gap-2">
+                <button type="button" class="px-3 py-1 rounded border text-sm" :class="genderFilter==='all' ? 'bg-slate-900 text-white' : ''" @click="genderFilter='all'">All</button>
+                <button type="button" class="px-3 py-1 rounded border text-sm" :class="genderFilter==='male' ? 'bg-blue-600 text-white border-blue-600' : ''" @click="genderFilter='male'">Male</button>
+                <button type="button" class="px-3 py-1 rounded border text-sm" :class="genderFilter==='female' ? 'bg-emerald-600 text-white border-emerald-600' : ''" @click="genderFilter='female'">Female</button>
+            </div>
+        </div>
 
         <div class="border rounded-lg overflow-hidden">
             <table class="w-full text-sm">
@@ -139,11 +184,16 @@ const submit = () => form.post(route('admin.tournaments.store'))
                         <th class="p-3">Club</th>
                         <th class="p-3">Category</th>
                         <th class="p-3">Weigh-in (kg)</th>
-                    
+                        <th class="p-3">Action</th>
                     </tr>
                 </thead>
                 <tbody>
-                    <tr v-for="player in filteredPlayers" :key="player.id" class="border-t">
+                    <tr
+                        v-for="player in filteredPlayers"
+                        :key="player.id"
+                        class="border-t"
+                        :class="!isEligible(player) ? 'opacity-60 bg-slate-50' : ''"
+                    >
                         <td class="p-3 text-center">
                             <input
                                 type="checkbox"
@@ -152,19 +202,37 @@ const submit = () => form.post(route('admin.tournaments.store'))
                                 @change="togglePlayer(player)"
                             />
                         </td>
-                        <td class="p-3 font-medium">{{ player.full_name }}</td>
+                        <td class="p-3 font-medium">
+                            <div class="flex items-center gap-2">
+                                <span>{{ player.full_name }}</span>
+                                <span
+                                    class="px-2 py-0.5 rounded text-xs font-medium"
+                                    :class="String(player.gender).toLowerCase()==='male' ? 'bg-blue-100 text-blue-700' : 'bg-emerald-100 text-emerald-700'"
+                                >
+                                    {{ player.gender }}
+                                </span>
+                                <span
+                                    v-if="!isEligible(player)"
+                                    class="px-2 py-0.5 rounded text-xs font-medium bg-amber-100 text-amber-700"
+                                >
+                                    Not Eligible
+                                </span>
+                            </div>
+                        </td>
                         <td class="p-3 text-center">{{ player.club }}</td>
                         <td class="p-3 text-center">{{ player.age_category }}</td>
-                        <td class="p-3">
-                            <input
+                        <td class="p-3 text-center">
+                            {{ isSelected(player.id) ? (getRegistration(player.id).weigh_in_weight ?? '-') : '-' }}
+                        </td>
+                        <td class="p-3 text-center">
+                            <button
                                 v-if="isSelected(player.id)"
-                                type="number"
-                                step="0.01"
-                                v-model="getRegistration(player.id).weigh_in_weight"
-                                @input="autoAssignWeight(player)"
-                                class="border rounded p-1 w-24"
-                                placeholder="kg"
-                            />
+                                type="button"
+                                class="px-2 py-1 rounded border text-xs"
+                                @click="openWeighInModal(player.id)"
+                            >
+                                {{ getRegistration(player.id).weigh_in_weight ? 'Edit Weigh-in' : 'Set Weigh-in' }}
+                            </button>
                         </td>
                     </tr>
                 </tbody>
@@ -173,6 +241,28 @@ const submit = () => form.post(route('admin.tournaments.store'))
     </div>
 
     <Button @click="submit" :disabled="form.processing">Save Tournament</Button>
+
+    <div v-if="activeWeighInPlayer" class="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4">
+        <div class="bg-white rounded-xl w-full max-w-md p-5 space-y-4">
+            <div>
+                <h3 class="text-lg font-semibold">Weigh-in Entry</h3>
+                <p class="text-sm text-muted-foreground">{{ activeWeighInPlayer.full_name }}</p>
+            </div>
+
+            <input
+                type="number"
+                step="0.01"
+                v-model.number="draftWeight"
+                class="w-full border rounded-lg p-2"
+                placeholder="Enter weight in kg"
+            />
+
+            <div class="flex justify-end gap-2">
+                <button type="button" class="px-3 py-2 rounded border" @click="closeWeighInModal">Cancel</button>
+                <button type="button" class="px-3 py-2 rounded bg-slate-900 text-white" @click="saveWeighIn">Save</button>
+            </div>
+        </div>
+    </div>
 
 </div>
 </AppLayout>

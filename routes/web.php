@@ -5,6 +5,7 @@ use Inertia\Inertia;
 use Laravel\Fortify\Features;
 use App\Http\Controllers\PlayerController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\BracketController;
 use App\Http\Controllers\TournamentController;
 
 Route::get('/', function () {
@@ -33,4 +34,11 @@ Route::prefix('admin')
 
         // TOURNAMENTS (resource route with admin prefix)
         Route::resource('tournaments', TournamentController::class);
+        Route::get('brackets', [BracketController::class, 'index'])->name('brackets.index');
+        Route::get('tournaments/{tournament}/brackets', [BracketController::class, 'show'])
+            ->name('tournaments.brackets.show');
+        Route::post('tournaments/{tournament}/brackets/generate', [BracketController::class, 'generate'])
+            ->name('tournaments.brackets.generate');
+        Route::post('tournaments/{tournament}/matches/{match}/advance', [BracketController::class, 'advance'])
+            ->name('tournaments.matches.advance');
     });

@@ -11,8 +11,10 @@ class Bracket extends Model
 
     protected $fillable = [
         'tournament_id',
+        'gender',
         'age_category_id',
         'weight_category_id',
+        'format',
         'rounds',
     ];
 
@@ -24,5 +26,15 @@ class Bracket extends Model
     public function matches()
     {
         return $this->hasMany(TournamentMatch::class);
+    }
+
+    public function ageCategory()
+    {
+        return $this->belongsTo(AgeCategory::class);
+    }
+
+    public function weightCategory()
+    {
+        return $this->belongsTo(WeightCategory::class);
     }
 }

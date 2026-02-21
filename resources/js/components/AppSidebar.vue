@@ -36,7 +36,7 @@ const mainNavItems: NavItem[] = [
     },
     {
         title: 'Generate Bracket',
-        href: '/generateBracket',
+        href: route('admin.brackets.index'),
         icon: Brackets,
     },
     {

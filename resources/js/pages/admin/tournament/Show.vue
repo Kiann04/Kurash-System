@@ -1,7 +1,9 @@
 <script setup lang="ts">
-import { Head } from '@inertiajs/vue3'
+import { Head, router } from '@inertiajs/vue3'
 import AppLayout from '@/layouts/AppLayout.vue'
-import { ref, computed, PropType } from 'vue'
+import { ref, computed } from 'vue'
+import { route } from 'ziggy-js'
+import { type BreadcrumbItem } from '@/types';
 
 interface Player {
     id: number
@@ -31,7 +33,11 @@ const props = defineProps<{
     players: Player[]
     weightCategories: WeightCategory[]
 }>()
-
+const breadcrumbs: BreadcrumbItem[] = [
+    { title: 'Tournaments', href: route('admin.tournaments.index') },
+    { title: props.tournament.name, href: route('admin.tournaments.show', props.tournament.id) },
+    { title: 'Edit', href: '' },
+];
 /* ================= REACTIVE STATES ================= */
 const selectedGender = ref<string>('male')
 const selectedAge = ref<string>('all')
@@ -90,18 +96,40 @@ const ageCategories = computed(() => {
     const cats = new Set(props.players.map(p => p.age_category))
     return Array.from(cats).sort()
 })
+
+const generating = ref(false)
+
+const generateBrackets = () => {
+    if (generating.value) return
+
+    generating.value = true
+
+    router.post(route('admin.tournaments.brackets.generate', props.tournament.id), {}, {
+        preserveScroll: true,
+        onFinish: () => {
+            generating.value = false
+        },
+    })
+}
 </script>
 
 <template>
 <Head :title="`Tournament: ${props.tournament.name}`" />
 
-<AppLayout>
+<AppLayout :breadcrumbs="breadcrumbs">
 <div class="p-6 space-y-6">
 
     <h1 class="text-2xl font-bold">{{ props.tournament.name }}</h1>
     <p class="text-sm text-muted-foreground">
         Date: {{ props.tournament.tournament_date }} | Status: {{ props.tournament.status }}
     </p>
+    <button
+        class="px-3 py-2 rounded bg-blue-600 text-white disabled:opacity-50"
+        :disabled="generating"
+        @click="generateBrackets"
+    >
+        {{ generating ? 'Generating...' : 'Generate Brackets' }}
+    </button>
 
     <!-- Filters -->
     <div class="flex flex-wrap gap-4 mt-4 items-center">

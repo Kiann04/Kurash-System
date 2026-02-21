@@ -13,15 +13,17 @@ class TournamentMatch extends Model
 
     protected $fillable = [
         'bracket_id',
+        'round_number',
+        'match_number',
         'player_one_id',
         'player_two_id',
-        'scheduled_at',
+        'match_date',
         'winner_id',
         'status',
     ];
 
     protected $casts = [
-        'scheduled_at' => 'datetime',
+        'match_date' => 'datetime',
     ];
 
     public function bracket()
