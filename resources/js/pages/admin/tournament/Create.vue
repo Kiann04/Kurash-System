@@ -4,7 +4,7 @@ import AppLayout from '@/layouts/AppLayout.vue'
 import { route } from 'ziggy-js'
 import { Button } from '@/components/ui/button'
 import { ref, computed } from 'vue'
-
+import { type BreadcrumbItem } from '@/types';
 /* ================= TYPES ================= */
 interface Player {
     id: number
@@ -35,7 +35,10 @@ const props = defineProps<{
     players: Player[]
     weightCategories: WeightCategory[]
 }>()
-
+const breadcrumbs: BreadcrumbItem[] = [
+    { title: 'Tournaments', href: route('admin.tournaments.index') },
+    { title: 'Create a Tournament', href: '' },
+];
 /* ================= FORM ================= */
 const form = useForm({
     name: '',
@@ -142,7 +145,7 @@ const submit = () => form.post(route('admin.tournaments.store'))
 
 <template>
 <Head title="Create Tournament" />
-<AppLayout>
+<AppLayout :breadcrumbs="breadcrumbs">
 <div class="p-6 space-y-8">
 
     <!-- Tournament Info -->
