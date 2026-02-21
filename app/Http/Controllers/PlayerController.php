@@ -39,7 +39,7 @@ class PlayerController extends Controller
 
             })
             ->latest()
-            ->paginate(10)
+            ->paginate(15)
             ->withQueryString()
             ->through(fn ($player) => [
                 'id' => $player->id,

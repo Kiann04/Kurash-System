@@ -61,15 +61,25 @@ const form = useForm({
 
 const search = ref('')
 const genderFilter = ref<'all' | 'male' | 'female'>('all')
+const categoryFilter = ref<string>('all')
+
+const uniqueCategories = computed(() => {
+    const categories = new Set(props.players.map(p => p.age_category).filter(Boolean))
+    return Array.from(categories).sort()
+})
+
 const filteredPlayers = computed(() => {
     return props.players.filter(p => {
         const playerGender = String(p.gender).toLowerCase()
         const matchesGender = genderFilter.value === 'all' || playerGender === genderFilter.value
+        
+        const matchesCategory = categoryFilter.value === 'all' || p.age_category === categoryFilter.value
+
         const matchesSearch = !search.value ||
             p.full_name.toLowerCase().includes(search.value.toLowerCase()) ||
             p.club.toLowerCase().includes(search.value.toLowerCase())
 
-        return matchesGender && matchesSearch
+        return matchesGender && matchesCategory && matchesSearch
     })
 })
 
@@ -130,7 +140,7 @@ const autoAssignWeight = (player: Player) => {
         return
     }
     const matched = props.weightCategories.find(w =>
-        w.gender === player.gender &&
+        w.gender.toLowerCase() === player.gender.toLowerCase() &&
         w.age_category_id === player.age_category_id &&
         weight > w.min_weight &&
         weight <= w.max_weight
@@ -149,9 +159,9 @@ const submit = () => form.put(route('admin.tournaments.update', props.tournament
 
     <div class="space-y-4 max-w-xl">
         <h1 class="text-2xl font-bold">Edit Tournament</h1>
-        <input v-model="form.name" placeholder="Tournament Name" class="w-full border rounded-lg p-2" />
-        <input type="date" v-model="form.tournament_date" class="w-full border rounded-lg p-2" />
-        <select v-model="form.status" class="w-full border rounded-lg p-2">
+        <input v-model="form.name" placeholder="Tournament Name" class="w-full border bg-background rounded-lg p-2" />
+        <input type="date" v-model="form.tournament_date" class="w-full border bg-background rounded-lg p-2" />
+        <select v-model="form.status" class="w-full border bg-background rounded-lg p-2">
             <option value="draft">Draft</option>
             <option value="open">Open</option>
             <option value="ongoing">Ongoing</option>
@@ -166,11 +176,19 @@ const submit = () => form.put(route('admin.tournaments.update', props.tournament
         </div>
 
         <div class="flex flex-wrap items-center gap-3 mb-4">
-            <input v-model="search" placeholder="Search player by name or club..." class="border rounded-lg p-2 w-80" />
+            <input v-model="search" placeholder="Search player by name or club..." class="border bg-background rounded-lg p-2 w-80" />
+            
+            <select v-model="categoryFilter" class="border bg-background rounded-lg p-2 text-sm">
+                <option value="all">All Categories</option>
+                <option v-for="cat in uniqueCategories" :key="cat" :value="cat">
+                    {{ cat }}
+                </option>
+            </select>
+
             <div class="flex gap-2">
-                <button type="button" class="px-3 py-1 rounded border text-sm" :class="genderFilter==='all' ? 'bg-slate-900 text-white' : ''" @click="genderFilter='all'">All</button>
-                <button type="button" class="px-3 py-1 rounded border text-sm" :class="genderFilter==='male' ? 'bg-blue-600 text-white border-blue-600' : ''" @click="genderFilter='male'">Male</button>
-                <button type="button" class="px-3 py-1 rounded border text-sm" :class="genderFilter==='female' ? 'bg-emerald-600 text-white border-emerald-600' : ''" @click="genderFilter='female'">Female</button>
+                <button type="button" class="px-3 py-1 rounded border text-sm transition-colors" :class="genderFilter==='all' ? 'bg-slate-900 text-white border-slate-900' : 'bg-background hover:bg-muted'" @click="genderFilter='all'">All</button>
+                <button type="button" class="px-3 py-1 rounded border text-sm transition-colors" :class="genderFilter==='male' ? 'bg-blue-600 text-white border-blue-600' : 'bg-background hover:bg-muted'" @click="genderFilter='male'">Male</button>
+                <button type="button" class="px-3 py-1 rounded border text-sm transition-colors" :class="genderFilter==='female' ? 'bg-emerald-600 text-white border-emerald-600' : 'bg-background hover:bg-muted'" @click="genderFilter='female'">Female</button>
             </div>
         </div>
 
@@ -191,7 +209,7 @@ const submit = () => form.put(route('admin.tournaments.update', props.tournament
                         v-for="player in filteredPlayers"
                         :key="player.id"
                         class="border-t"
-                        :class="!isEligible(player) ? 'opacity-60 bg-slate-50' : ''"
+                        :class="!isEligible(player) ? 'opacity-50 bg-muted/50' : 'hover:bg-muted/50'"
                     >
                         <td class="p-3 text-center">
                             <input
@@ -242,7 +260,7 @@ const submit = () => form.put(route('admin.tournaments.update', props.tournament
     <Button @click="submit" :disabled="form.processing">Update Tournament</Button>
 
     <div v-if="activeWeighInPlayer" class="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4">
-        <div class="bg-white rounded-xl w-full max-w-md p-5 space-y-4">
+        <div class="bg-background border rounded-xl w-full max-w-md p-5 space-y-4">
             <div>
                 <h3 class="text-lg font-semibold">Weigh-in Entry</h3>
                 <p class="text-sm text-muted-foreground">{{ activeWeighInPlayer.full_name }}</p>
@@ -252,13 +270,13 @@ const submit = () => form.put(route('admin.tournaments.update', props.tournament
                 type="number"
                 step="0.01"
                 v-model.number="draftWeight"
-                class="w-full border rounded-lg p-2"
+                class="w-full border bg-background rounded-lg p-2"
                 placeholder="Enter weight in kg"
             />
 
             <div class="flex justify-end gap-2">
-                <button type="button" class="px-3 py-2 rounded border" @click="closeWeighInModal">Cancel</button>
-                <button type="button" class="px-3 py-2 rounded bg-slate-900 text-white" @click="saveWeighIn">Save</button>
+                <button type="button" class="px-3 py-2 rounded border hover:bg-muted" @click="closeWeighInModal">Cancel</button>
+                <button type="button" class="px-3 py-2 rounded bg-primary text-primary-foreground hover:bg-primary/90" @click="saveWeighIn">Save</button>
             </div>
         </div>
     </div>

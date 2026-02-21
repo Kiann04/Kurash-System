@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Head, router } from '@inertiajs/vue3'
+import { Head, router, Link } from '@inertiajs/vue3'
 import AppLayout from '@/layouts/AppLayout.vue'
 import { ref, computed } from 'vue'
 import { route } from 'ziggy-js'
@@ -35,8 +35,7 @@ const props = defineProps<{
 }>()
 const breadcrumbs: BreadcrumbItem[] = [
     { title: 'Tournaments', href: route('admin.tournaments.index') },
-    { title: props.tournament.name, href: route('admin.tournaments.show', props.tournament.id) },
-    { title: 'Edit', href: '' },
+    { title: props.tournament.name, href: '' },
 ];
 /* ================= REACTIVE STATES ================= */
 const selectedGender = ref<string>('male')
@@ -130,6 +129,12 @@ const generateBrackets = () => {
     >
         {{ generating ? 'Generating...' : 'Generate Brackets' }}
     </button>
+    <Link
+        :href="route('tournamentDocs', { name: props.tournament.name, date: props.tournament.tournament_date })"
+        class="ml-2 px-3 py-2 rounded bg-gray-600 text-white hover:bg-gray-700"
+    >
+        Tournament Docs
+    </Link>
 
     <!-- Filters -->
     <div class="flex flex-wrap gap-4 mt-4 items-center">
@@ -137,12 +142,12 @@ const generateBrackets = () => {
         <div class="flex space-x-2">
             <button
                 @click="selectedGender = 'male'"
-                :class="selectedGender==='male' ? 'bg-blue-500 text-white' : 'bg-gray-200'"
-                class="px-3 py-1 rounded">Male</button>
+                :class="selectedGender==='male' ? 'bg-blue-500 text-white border-blue-500' : 'bg-background hover:bg-muted'"
+                class="px-3 py-1 rounded border transition-colors">Male</button>
             <button
                 @click="selectedGender = 'female'"
-                :class="selectedGender==='female' ? 'bg-pink-500 text-white' : 'bg-gray-200'"
-                class="px-3 py-1 rounded">Female</button>
+                :class="selectedGender==='female' ? 'bg-pink-500 text-white border-pink-500' : 'bg-background hover:bg-muted'"
+                class="px-3 py-1 rounded border transition-colors">Female</button>
         </div>
 
         <!-- Age Category -->
@@ -158,17 +163,17 @@ const generateBrackets = () => {
     <!-- Table -->
     <div class="mt-6 border rounded-lg overflow-x-auto">
         <table class="w-full text-sm">
-            <thead class="bg-gray-100">
+            <thead class="bg-muted text-muted-foreground">
                 <tr>
                     <th class="p-3 text-left">Player</th>
-                    <th class="p-3">Club</th>
-                    <th class="p-3">Age Category</th>
-                    <th class="p-3">Weigh-in (kg)</th>
-                    <th class="p-3">Weight Class</th>
+                    <th class="p-3 text-center">Club</th>
+                    <th class="p-3 text-center">Age Category</th>
+                    <th class="p-3 text-center">Weigh-in (kg)</th>
+                    <th class="p-3 text-center">Weight Class</th>
                 </tr>
             </thead>
             <tbody>
-                <tr v-for="player in paginatedPlayers" :key="player.id" class="border-t">
+                <tr v-for="player in paginatedPlayers" :key="player.id" class="border-t hover:bg-muted/50 transition-colors">
                     <td class="p-3 font-medium">{{ player.full_name }}</td>
                     <td class="p-3 text-center">{{ player.club || '-' }}</td>
                     <td class="p-3 text-center">{{ player.age_category }}</td>

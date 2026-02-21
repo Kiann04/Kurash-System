@@ -18,6 +18,10 @@ Route::get('dashboard', [DashboardController::class, 'index'])
     ->middleware(['auth', 'verified'])
     ->name('dashboard');
 
+Route::get('/tournamentDocs', function () {
+    return Inertia::render('TournamentDocs');
+})->middleware(['auth', 'verified'])->name('tournamentDocs');
+
 require __DIR__.'/settings.php';
 Route::prefix('admin')
     ->name('admin.')

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { Link, router } from '@inertiajs/vue3';
 import { route } from 'ziggy-js';
-import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/ui/card';
+import { Card, CardHeader, CardTitle, CardContent, CardDescription, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Edit, Eye, UserCheck, UserX } from 'lucide-vue-next';
@@ -21,6 +21,10 @@ defineProps<{
     players: {
         data: Player[];
         links: any[];
+        from: number;
+        to: number;
+        total: number;
+        last_page: number;
     };
 }>();
 function renewMembership(playerId: number) {
@@ -106,5 +110,32 @@ function renewMembership(playerId: number) {
                 </table>
             </div>
         </CardContent>
+        <CardFooter v-if="players.last_page > 1" class="flex items-center justify-between border-t p-4">
+            <div class="text-xs text-muted-foreground">
+                Showing {{ players.from }} to {{ players.to }} of {{ players.total }} players
+            </div>
+            <div class="flex flex-wrap gap-1">
+                <template v-for="(link, i) in players.links" :key="i">
+                    <Button
+                        v-if="link.url"
+                        :variant="link.active ? 'default' : 'outline'"
+                        size="sm"
+                        class="h-8 min-w-[2rem] px-3"
+                        @click="router.get(link.url)"
+                    >
+                        <span v-html="link.label"></span>
+                    </Button>
+                    <Button
+                        v-else
+                        variant="outline"
+                        size="sm"
+                        class="h-8 min-w-[2rem] px-3 opacity-50 cursor-not-allowed"
+                        disabled
+                    >
+                        <span v-html="link.label"></span>
+                    </Button>
+                </template>
+            </div>
+        </CardFooter>
     </Card>
 </template>

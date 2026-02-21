@@ -30,7 +30,7 @@ Record Match Results
 Show History on Public Website
 
 min_weight < weight ≤ max_weight
-👩 Female Adults
+👩 Female Seniors
 Label	Min	Max
 -44 kg	0	44
 -48 kg	44	48
@@ -43,8 +43,8 @@ Label	Min	Max
 -87 kg	78	87
 +87 kg	87	999
 
-✅ Adults 18+ — Proper Range Structure
-👨 Male Adults
+✅ Seniors 18+ — Proper Range Structure
+👨 Male Seniors
 Label	Min	Max
 -60 kg	0	60
 -66 kg	60	66

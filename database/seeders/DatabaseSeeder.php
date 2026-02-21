@@ -16,6 +16,7 @@ class DatabaseSeeder extends Seeder
         $this->call([
             AgeCategorySeeder::class,
             WeightCategorySeeder::class,
+            PlayerSeeder::class,
         ]);
 
         User::factory()->create([

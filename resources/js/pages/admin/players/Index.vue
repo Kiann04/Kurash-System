@@ -28,6 +28,10 @@ const props = defineProps<{
     players: {
         data: Player[];
         links: any[];
+        from: number;
+        to: number;
+        total: number;
+        last_page: number;
     };
     filters: {
         search?: string;

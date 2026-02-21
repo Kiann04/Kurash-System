@@ -163,14 +163,14 @@ const exportPdf = () => {
     <Head :title="`Brackets - ${props.tournament.name}`" />
 
     <AppLayout>
-        <div class="p-6 space-y-6 bracket-page">
+        <div class="p-6 space-y-6">
             <div class="bracket-header print:hidden">
                 <div>
                     <h1 class="text-2xl font-bold">{{ props.tournament.name }} Bracketing</h1>
-                    <p class="text-sm text-slate-500">
+                    <p class="text-sm text-muted-foreground">
                         {{ props.tournament.tournament_date }} | {{ props.tournament.status }}
                     </p>
-                    <p class="text-sm text-slate-500">
+                    <p class="text-sm text-muted-foreground">
                         Total Registered: {{ props.tournament.registrations_count ?? 0 }}
                     </p>
                 </div>
@@ -182,21 +182,21 @@ const exportPdf = () => {
                     >
                         Export PDF
                     </button>
-                    <Link :href="route('admin.brackets.index')" class="px-3 py-2 rounded border border-slate-300">
+                    <Link :href="route('admin.brackets.index')" class="px-3 py-2 rounded border border-border bg-background hover:bg-muted transition-colors">
                         Back
                     </Link>
                 </div>
             </div>
 
-            <div v-if="props.brackets.length === 0" class="border rounded-lg p-4 text-sm text-slate-500 bg-white">
+            <div v-if="props.brackets.length === 0" class="border border-border rounded-lg p-4 text-sm text-muted-foreground bg-card">
                 No brackets generated yet for this tournament.
             </div>
 
-            <div v-if="(props.category_participants ?? []).length" class="rounded-xl border border-slate-200 bg-white p-4">
+            <div v-if="(props.category_participants ?? []).length" class="rounded-xl border border-border bg-card p-4">
                 <h2 class="text-sm font-semibold mb-3">Category Participants</h2>
                 <div class="overflow-x-auto">
                     <table class="w-full text-sm">
-                        <thead class="text-slate-500">
+                        <thead class="text-muted-foreground bg-muted">
                             <tr>
                                 <th class="text-left p-2">Gender</th>
                                 <th class="text-left p-2">Age Category</th>
@@ -205,7 +205,7 @@ const exportPdf = () => {
                             </tr>
                         </thead>
                         <tbody>
-                            <tr v-for="(item, idx) in (props.category_participants ?? [])" :key="`${item.gender}-${item.age_category}-${item.weight_category}-${idx}`" class="border-t">
+                            <tr v-for="(item, idx) in (props.category_participants ?? [])" :key="`${item.gender}-${item.age_category}-${item.weight_category}-${idx}`" class="border-t border-border hover:bg-muted/50 transition-colors">
                                 <td class="p-2">{{ item.gender }}</td>
                                 <td class="p-2">{{ item.age_category }}</td>
                                 <td class="p-2">{{ item.weight_category }}</td>
@@ -217,7 +217,7 @@ const exportPdf = () => {
             </div>
 
             <section v-for="bracket in props.brackets" :key="bracket.id" class="space-y-4">
-                <div class="rounded-xl border border-slate-200 p-4 bg-white">
+                <div class="rounded-xl border border-border p-4 bg-card">
                     <div class="flex flex-wrap gap-2 text-sm items-center">
                         <span class="tag">{{ (bracket.gender || 'unknown').toUpperCase() }}</span>
                         <span class="tag">{{ bracket.age_category || '-' }}</span>
@@ -229,13 +229,13 @@ const exportPdf = () => {
                         <span v-if="bracket.champion" class="tag champion">Champion: {{ bracket.champion }}</span>
                     </div>
                     <div class="mt-3 grid gap-2 md:grid-cols-3 text-sm">
-                        <div class="rounded-lg border border-amber-300 bg-amber-50 p-2">
+                        <div class="rounded-lg border border-amber-500/50 bg-amber-500/10 p-2">
                             <strong>Gold:</strong> {{ safeAwards(bracket).gold || '-' }}
                         </div>
-                        <div class="rounded-lg border border-slate-300 bg-slate-50 p-2">
+                        <div class="rounded-lg border border-slate-500/50 bg-slate-500/10 p-2">
                             <strong>Silver:</strong> {{ safeAwards(bracket).silver || '-' }}
                         </div>
-                        <div class="rounded-lg border border-orange-300 bg-orange-50 p-2">
+                        <div class="rounded-lg border border-orange-500/50 bg-orange-500/10 p-2">
                             <strong>Bronze:</strong>
                             <span v-if="safeAwards(bracket).bronze.length">{{ safeAwards(bracket).bronze.join(', ') }}</span>
                             <span v-else>-</span>
@@ -388,13 +388,6 @@ const exportPdf = () => {
 </template>
 
 <style scoped>
-.bracket-page {
-    background:
-        radial-gradient(circle at 10% 8%, #e8f1ff 0, transparent 35%),
-        radial-gradient(circle at 88% 10%, #eafaf0 0, transparent 33%),
-        #f8fafc;
-}
-
 .bracket-header {
     display: flex;
     align-items: center;
@@ -402,25 +395,25 @@ const exportPdf = () => {
 }
 
 .tag {
-    border: 1px solid #cbd5e1;
+    border: 1px solid hsl(var(--border));
     border-radius: 999px;
     padding: 4px 10px;
-    background: #f8fafc;
+    background: hsl(var(--muted));
 }
 
 .tag.blue {
-    background: #dbeafe;
-    border-color: #93c5fd;
+    background: rgba(59, 130, 246, 0.1);
+    border-color: rgba(59, 130, 246, 0.3);
 }
 
 .tag.green {
-    background: #dcfce7;
-    border-color: #86efac;
+    background: rgba(34, 197, 94, 0.1);
+    border-color: rgba(34, 197, 94, 0.3);
 }
 
 .tag.champion {
-    background: #fef3c7;
-    border-color: #fcd34d;
+    background: rgba(251, 191, 36, 0.1);
+    border-color: rgba(251, 191, 36, 0.3);
     font-weight: 700;
 }
 
@@ -474,7 +467,7 @@ const exportPdf = () => {
     font-size: 11px;
     letter-spacing: 0.03em;
     text-transform: uppercase;
-    color: #475569;
+    color: hsl(var(--muted-foreground));
     margin-bottom: 8px;
     padding-left: 4px;
 }
@@ -482,10 +475,10 @@ const exportPdf = () => {
 .se-match,
 .rr-match {
     position: relative;
-    border: 1px solid #cbd5e1;
-    background: #ffffff;
+    border: 1px solid hsl(var(--border));
+    background: hsl(var(--card));
     border-radius: 12px;
-    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.08);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
     padding: 10px;
     display: grid;
     gap: 8px;
@@ -497,7 +490,7 @@ const exportPdf = () => {
     right: -18px;
     top: 50%;
     width: 18px;
-    border-top: 2px solid #cbd5e1;
+    border-top: 2px solid hsl(var(--border));
 }
 
 .conference-side.west .se-round:not(:last-child) .se-match::before {
@@ -506,7 +499,7 @@ const exportPdf = () => {
     left: -18px;
     top: 50%;
     width: 18px;
-    border-top: 2px solid #cbd5e1;
+    border-top: 2px solid hsl(var(--border));
 }
 
 .conference-center .grand-final::before,
@@ -515,7 +508,7 @@ const exportPdf = () => {
     position: absolute;
     top: 50%;
     width: 16px;
-    border-top: 2px solid #cbd5e1;
+    border-top: 2px solid hsl(var(--border));
 }
 
 .conference-center .grand-final::before {
@@ -530,7 +523,7 @@ const exportPdf = () => {
     display: flex;
     justify-content: space-between;
     font-size: 11px;
-    color: #64748b;
+    color: hsl(var(--muted-foreground));
 }
 
 .fighter {
@@ -544,29 +537,29 @@ const exportPdf = () => {
 
 .fighter:disabled {
     cursor: default;
-    opacity: 0.95;
+    opacity: 0.8;
 }
 
 .fighter-blue {
-    background: #dbeafe;
-    border-color: #93c5fd;
+    background: rgba(59, 130, 246, 0.15);
+    border-color: rgba(59, 130, 246, 0.3);
 }
 
 .fighter-blue:hover:not(:disabled) {
-    background: #bfdbfe;
+    background: rgba(59, 130, 246, 0.25);
 }
 
 .fighter-green {
-    background: #dcfce7;
-    border-color: #86efac;
+    background: rgba(34, 197, 94, 0.15);
+    border-color: rgba(34, 197, 94, 0.3);
 }
 
 .fighter-green:hover:not(:disabled) {
-    background: #bbf7d0;
+    background: rgba(34, 197, 94, 0.25);
 }
 
 .fighter.winner {
-    box-shadow: 0 0 0 2px #0f172a inset;
+    box-shadow: 0 0 0 2px hsl(var(--primary)) inset;
     font-weight: 700;
 }
 
@@ -577,9 +570,9 @@ const exportPdf = () => {
 }
 
 .rr-round {
-    border: 1px solid #cbd5e1;
+    border: 1px solid hsl(var(--border));
     border-radius: 12px;
-    background: #fff;
+    background: hsl(var(--card));
     padding: 12px;
 }
 

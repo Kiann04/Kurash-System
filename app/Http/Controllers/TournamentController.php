@@ -222,7 +222,7 @@ class TournamentController extends Controller
     {
         if (!$gender || !$ageCategoryId || !$weight) return null;
 
-        $category = WeightCategory::where('gender', $gender)
+        $category = WeightCategory::where(DB::raw('LOWER(gender)'), strtolower($gender))
             ->where('age_category_id', $ageCategoryId)
             ->where('min_weight', '<', $weight)
             ->where('max_weight', '>=', $weight)
