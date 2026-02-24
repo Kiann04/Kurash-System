@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { Head, Link } from '@inertiajs/vue3'
 import { route } from 'ziggy-js'
+import Pagination from '@/components/Pagination.vue'
 
 interface Tournament {
     id: number
@@ -54,19 +55,7 @@ const props = defineProps<{
             </table>
         </div>
 
-        <div class="flex flex-wrap gap-2">
-            <Link
-                v-for="(link, idx) in props.tournaments.links"
-                :key="idx"
-                :href="link.url || ''"
-                :class="[
-                    'px-3 py-1 rounded border text-sm',
-                    link.active ? 'bg-slate-900 text-white border-slate-900' : 'bg-white text-slate-700',
-                    !link.url ? 'pointer-events-none opacity-40' : ''
-                ]"
-                v-html="link.label"
-            />
-        </div>
+        <Pagination :links="props.tournaments.links" />
     </div>
 </div>
 </template>

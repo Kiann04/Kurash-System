@@ -1,10 +1,11 @@
 <script setup lang="ts">
-import { Head } from '@inertiajs/vue3';
+import { Link, Head } from '@inertiajs/vue3';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { type BreadcrumbItem } from '@/types';
 import { dashboard } from '@/routes'; // Assuming this works as it was in the original file
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { route } from 'ziggy-js';
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
@@ -71,7 +72,9 @@ defineProps<{
                         <CardTitle>Recent Players</CardTitle>
                         <CardDescription>A list of recently registered Kurash players.</CardDescription>
                     </div>
-                    <Button variant="outline" size="sm">View All</Button>
+                    <Link :href="route('admin.players.index')">
+                        <Button variant="outline" size="sm">View All</Button>
+                    </Link>
                 </CardHeader>
                 <CardContent>
                     <div class="relative w-full overflow-auto">

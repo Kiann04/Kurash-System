@@ -4,6 +4,7 @@ import AppLayout from '@/layouts/AppLayout.vue';
 import { type BreadcrumbItem } from '@/types';
 import { route } from 'ziggy-js';
 import { Button } from '@/components/ui/button';
+import Pagination from '@/components/Pagination.vue';
 
 const breadcrumbs: BreadcrumbItem[] = [
     { title: 'Tournaments', href: route('admin.tournaments.index') },
@@ -59,6 +60,7 @@ const deleteTournament = (id: number) => {
                 <table class="w-full text-sm">
                     <thead class="bg-muted">
                         <tr>
+                            <th class="text-left p-3">ID</th>
                             <th class="text-left p-3">Name</th>
                             <th class="text-left p-3">Date</th>
                             <th class="text-left p-3">Status</th>
@@ -71,6 +73,7 @@ const deleteTournament = (id: number) => {
                             :key="t.id"
                             class="border-t"
                         >
+                            <td class="p-3 font-mono text-xs">{{ t.id }}</td>
                             <td class="p-3">{{ t.name }}</td>
                             <td class="p-3">{{ t.tournament_date }}</td>
                             <td class="p-3">{{ t.status }}</td>
@@ -106,7 +109,7 @@ const deleteTournament = (id: number) => {
                     </tbody>
                 </table>
             </div>
-
+            <Pagination :links="tournaments.links" />
         </div>
     </AppLayout>
 </template>

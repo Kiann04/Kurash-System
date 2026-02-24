@@ -13,6 +13,7 @@ class MatchResult extends Model
         'match_id',
         'player_one_score',
         'player_two_score',
+        'winning_player_id',
         'method',
     ];
 

@@ -20,6 +20,7 @@ class TournamentMatch extends Model
         'match_date',
         'winner_id',
         'status',
+        'global_match_order',
     ];
 
     protected $casts = [

@@ -5,6 +5,7 @@ import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Edit, Eye, UserCheck, UserX } from 'lucide-vue-next';
+import Pagination from '@/components/Pagination.vue';
 
 interface Player {
     id: number;
@@ -105,6 +106,7 @@ function renewMembership(playerId: number) {
                     </tbody>
                 </table>
             </div>
+            <Pagination :links="players.links" />
         </CardContent>
     </Card>
 </template>

@@ -248,7 +248,10 @@ const submit = () => form.post(route('admin.tournaments.store'))
 <div class="p-6 space-y-8">
 
     <div class="border rounded-xl bg-white p-5 space-y-4">
-        <h1 class="text-2xl font-bold">Create Tournament</h1>
+        <div class="flex items-center justify-between">
+            <h1 class="text-2xl font-bold">Create Tournament</h1>
+            <Button @click="submit" :disabled="form.processing">Save Tournament</Button>
+        </div>
         <div class="grid gap-4 md:grid-cols-3">
             <div class="space-y-1">
                 <label class="text-sm font-medium">Tournament Name</label>
@@ -396,10 +399,6 @@ const submit = () => form.post(route('admin.tournaments.store'))
                 </tbody>
             </table>
         </div>
-    </div>
-
-    <div class="flex justify-end">
-        <Button @click="submit" :disabled="form.processing">Save Tournament</Button>
     </div>
 
     <div v-if="openedSummary" class="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4">

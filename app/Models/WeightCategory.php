@@ -13,6 +13,7 @@ class WeightCategory extends Model
         'name',
         'min_weight',
         'max_weight',
+        'gender',
         'age_category_id',
     ];
 
