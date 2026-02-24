@@ -1,7 +1,8 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\Admin;
 
+use App\Http\Controllers\Controller;
 use App\Models\Bracket;
 use App\Models\Tournament;
 use App\Models\TournamentMatch;
@@ -533,3 +534,5 @@ class BracketController extends Controller
         ];
     }
 }
+
+

@@ -3,10 +3,12 @@
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 use Laravel\Fortify\Features;
-use App\Http\Controllers\PlayerController;
-use App\Http\Controllers\DashboardController;
-use App\Http\Controllers\BracketController;
-use App\Http\Controllers\TournamentController;
+use App\Http\Controllers\Admin\PlayerController as AdminPlayerController;
+use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
+use App\Http\Controllers\Admin\BracketController as AdminBracketController;
+use App\Http\Controllers\Admin\TournamentController as AdminTournamentController;
+use App\Http\Controllers\Public\HomeController as PublicHomeController;
+use App\Http\Controllers\Public\TournamentController as PublicTournamentController;
 
 Route::get('/', function () {
     return Inertia::render('Welcome', [
@@ -14,31 +16,34 @@ Route::get('/', function () {
     ]);
 })->name('home');
 
-Route::get('dashboard', [DashboardController::class, 'index'])
+Route::get('public', [PublicHomeController::class, 'index'])->name('public.home');
+Route::get('public/tournaments', [PublicTournamentController::class, 'index'])->name('public.tournaments.index');
+Route::get('public/tournaments/{tournament}', [PublicTournamentController::class, 'show'])->name('public.tournaments.show');
+
+Route::get('dashboard', [AdminDashboardController::class, 'index'])
     ->middleware(['auth', 'verified'])
     ->name('dashboard');
 
 require __DIR__.'/settings.php';
+
 Route::prefix('admin')
     ->name('admin.')
     ->group(function () {
+        Route::get('players', [AdminPlayerController::class, 'index'])->name('players.index');
+        Route::get('players/create', [AdminPlayerController::class, 'create'])->name('players.create');
+        Route::post('players', [AdminPlayerController::class, 'store'])->name('players.store');
+        Route::get('players/{player}/edit', [AdminPlayerController::class, 'edit'])->name('players.edit');
+        Route::put('players/{player}', [AdminPlayerController::class, 'update'])->name('players.update');
+        Route::get('players/{player}', [AdminPlayerController::class, 'show'])->name('players.show');
+        Route::post('players/{player}/renew', [AdminPlayerController::class, 'renew'])->name('players.renew');
 
-        // PLAYERS (manual routes — already correct)
-        Route::get('players', [PlayerController::class, 'index'])->name('players.index');
-        Route::get('players/create', [PlayerController::class, 'create'])->name('players.create');
-        Route::post('players', [PlayerController::class, 'store'])->name('players.store');
-        Route::get('players/{player}/edit', [PlayerController::class, 'edit'])->name('players.edit');
-        Route::put('players/{player}', [PlayerController::class, 'update'])->name('players.update');
-        Route::get('players/{player}', [PlayerController::class, 'show'])->name('players.show');
-        Route::post('players/{player}/renew', [PlayerController::class, 'renew'])->name('players.renew');
+        Route::resource('tournaments', AdminTournamentController::class);
 
-        // TOURNAMENTS (resource route with admin prefix)
-        Route::resource('tournaments', TournamentController::class);
-        Route::get('brackets', [BracketController::class, 'index'])->name('brackets.index');
-        Route::get('tournaments/{tournament}/brackets', [BracketController::class, 'show'])
+        Route::get('brackets', [AdminBracketController::class, 'index'])->name('brackets.index');
+        Route::get('tournaments/{tournament}/brackets', [AdminBracketController::class, 'show'])
             ->name('tournaments.brackets.show');
-        Route::post('tournaments/{tournament}/brackets/generate', [BracketController::class, 'generate'])
+        Route::post('tournaments/{tournament}/brackets/generate', [AdminBracketController::class, 'generate'])
             ->name('tournaments.brackets.generate');
-        Route::post('tournaments/{tournament}/matches/{match}/advance', [BracketController::class, 'advance'])
+        Route::post('tournaments/{tournament}/matches/{match}/advance', [AdminBracketController::class, 'advance'])
             ->name('tournaments.matches.advance');
     });

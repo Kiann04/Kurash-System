@@ -3,143 +3,242 @@ import { Head, useForm } from '@inertiajs/vue3'
 import AppLayout from '@/layouts/AppLayout.vue'
 import { route } from 'ziggy-js'
 import { Button } from '@/components/ui/button'
-import { ref, computed } from 'vue'
-import { type BreadcrumbItem } from '@/types';
-/* ================= TYPES ================= */
+import { ref, computed, watch } from 'vue'
+import { type BreadcrumbItem } from '@/types'
+
 interface Player {
     id: number
     full_name: string
-    gender: 'male' | 'female'
+    gender: 'male' | 'female' | 'Male' | 'Female' | 'M' | 'F'
     club: string
-    age_category_id: number | null
-    age_category: string
 }
 
-interface WeightCategory {
+interface TournamentWeightCategory {
     id: number
-    gender: 'male' | 'female'
+    gender: 'male' | 'female' | 'Male' | 'Female' | 'M' | 'F'
     age_category_id: number
+    age_category_name: string
     name: string
-    min_weight: number
-    max_weight: number
 }
 
 interface Registration {
     player_id: number
-    weigh_in_weight: number | null
-    weight_category_id: number | null
+    tournament_weight_category_id: number
 }
 
-/* ================= PROPS ================= */
 const props = defineProps<{
     players: Player[]
-    weightCategories: WeightCategory[]
+    tournamentWeightCategories: TournamentWeightCategory[]
 }>()
+
 const breadcrumbs: BreadcrumbItem[] = [
     { title: 'Tournaments', href: route('admin.tournaments.index') },
     { title: 'Create a Tournament', href: '' },
-];
-/* ================= FORM ================= */
+]
+
 const form = useForm({
     name: '',
     tournament_date: '',
     status: 'draft',
-    registrations: [] as Registration[]
+    registrations: [] as Registration[],
 })
 
-/* ================= SEARCH ================= */
 const search = ref('')
-const genderFilter = ref<'all' | 'male' | 'female'>('all')
+const playerGenderFilter = ref<'all' | 'male' | 'female'>('all')
+const openedSummaryCategoryId = ref<number | null>(null)
+
+const normalizeGender = (value: string | null | undefined): 'male' | 'female' | '' => {
+    const normalized = String(value ?? '').trim().toLowerCase()
+
+    if (normalized === 'male' || normalized === 'm') return 'male'
+    if (normalized === 'female' || normalized === 'f') return 'female'
+    return ''
+}
+
+const genderOptions = computed(() =>
+    Array.from(
+        new Set(
+            props.tournamentWeightCategories
+                .map((category) => normalizeGender(category.gender))
+                .filter((gender): gender is 'male' | 'female' => gender === 'male' || gender === 'female'),
+        ),
+    ),
+)
+
+const selectedGender = ref<'male' | 'female'>(genderOptions.value[0] ?? 'male')
+
+const ageCategoryOptions = computed(() => {
+    const map = new Map<number, string>()
+
+    props.tournamentWeightCategories
+        .filter((category) => normalizeGender(category.gender) === selectedGender.value)
+        .forEach((category) => {
+            map.set(category.age_category_id, category.age_category_name || `Age Category #${category.age_category_id}`)
+        })
+
+    return Array.from(map.entries())
+        .map(([id, name]) => ({ id, name }))
+        .sort((a, b) => a.id - b.id)
+})
+
+const selectedAgeCategoryId = ref<number | null>(ageCategoryOptions.value[0]?.id ?? null)
+
+const weightCategoryOptions = computed(() =>
+    props.tournamentWeightCategories.filter((category) =>
+        normalizeGender(category.gender) === selectedGender.value &&
+        category.age_category_id === selectedAgeCategoryId.value,
+    ),
+)
+
+const selectedCategoryId = ref<number | null>(weightCategoryOptions.value[0]?.id ?? null)
+
+watch(selectedGender, () => {
+    selectedAgeCategoryId.value = ageCategoryOptions.value[0]?.id ?? null
+})
+
+watch([selectedGender, selectedAgeCategoryId], () => {
+    selectedCategoryId.value = weightCategoryOptions.value[0]?.id ?? null
+}, { immediate: true })
+
+const selectedCategory = computed(() =>
+    props.tournamentWeightCategories.find((category) => category.id === selectedCategoryId.value) ?? null,
+)
+
 const filteredPlayers = computed(() => {
-    return props.players.filter(p => {
-        const playerGender = String(p.gender).toLowerCase()
-        const matchesGender = genderFilter.value === 'all' || playerGender === genderFilter.value
-        const matchesSearch = !search.value ||
-            p.full_name.toLowerCase().includes(search.value.toLowerCase()) ||
-            p.club.toLowerCase().includes(search.value.toLowerCase())
+    return props.players.filter((player) => {
+        const matchesGender =
+            playerGenderFilter.value === 'all' || normalizeGender(player.gender) === playerGenderFilter.value
+
+        const matchesSearch =
+            !search.value ||
+            player.full_name.toLowerCase().includes(search.value.toLowerCase()) ||
+            (player.club ?? '').toLowerCase().includes(search.value.toLowerCase())
 
         return matchesGender && matchesSearch
     })
 })
 
-/* ================= REGISTRATION ================= */
-const isSelected = (playerId: number) =>
-    form.registrations.some(r => r.player_id === playerId)
+const getPlayerRegistrations = (playerId: number) =>
+    form.registrations.filter((registration) => registration.player_id === playerId)
 
-const isEligible = (player: Player) => !!player.age_category_id
-const activeWeighInPlayerId = ref<number | null>(null)
-const draftWeight = ref<number | null>(null)
+const getCategoryById = (categoryId: number) =>
+    props.tournamentWeightCategories.find((category) => category.id === categoryId) ?? null
 
-const activeWeighInPlayer = computed(() =>
-    props.players.find(p => p.id === activeWeighInPlayerId.value) ?? null
-)
+const getPlayerNameById = (playerId: number) =>
+    props.players.find((player) => player.id === playerId)?.full_name ?? `#${playerId}`
 
-const togglePlayer = (player: Player) => {
-    if (!isEligible(player)) return
+const isSelectedInCurrentCategory = (playerId: number) =>
+    form.registrations.some((registration) =>
+        registration.player_id === playerId &&
+        registration.tournament_weight_category_id === selectedCategoryId.value,
+    )
 
-    const index = form.registrations.findIndex(r => r.player_id === player.id)
-    if (index !== -1) {
-        form.registrations.splice(index, 1)
-        if (activeWeighInPlayerId.value === player.id) closeWeighInModal()
+const togglePlayerForSelectedCategory = (player: Player) => {
+    if (!selectedCategoryId.value) {
+        return
+    }
+
+    const existsInSelectedCategory = form.registrations.some((registration) =>
+        registration.player_id === player.id &&
+        registration.tournament_weight_category_id === selectedCategoryId.value,
+    )
+
+    if (existsInSelectedCategory) {
+        form.registrations = form.registrations.filter((registration) =>
+            !(registration.player_id === player.id && registration.tournament_weight_category_id === selectedCategoryId.value),
+        )
         return
     }
 
     form.registrations.push({
         player_id: player.id,
-        weigh_in_weight: null,
-        weight_category_id: null
+        tournament_weight_category_id: selectedCategoryId.value,
     })
-
-    openWeighInModal(player.id)
 }
 
-const getRegistration = (playerId: number) =>
-    form.registrations.find(r => r.player_id === playerId)!
-
-const openWeighInModal = (playerId: number) => {
-    activeWeighInPlayerId.value = playerId
-    draftWeight.value = getRegistration(playerId)?.weigh_in_weight ?? null
-}
-
-const closeWeighInModal = () => {
-    activeWeighInPlayerId.value = null
-    draftWeight.value = null
-}
-
-const saveWeighIn = () => {
-    const player = activeWeighInPlayer.value
-    if (!player) return
-
-    const registration = getRegistration(player.id)
-    registration.weigh_in_weight = draftWeight.value
-    autoAssignWeight(player)
-    closeWeighInModal()
-}
-
-/* ================= AUTO WEIGHT MATCH ================= */
-const autoAssignWeight = (player: Player) => {
-    const registration = getRegistration(player.id)
-    const weight = registration.weigh_in_weight
-
-    if (!weight || weight <= 0) {
-        registration.weight_category_id = null
-        return
+const getAssignedCategoryName = (playerId: number) => {
+    const registrations = getPlayerRegistrations(playerId)
+    if (registrations.length === 0) {
+        return '-'
     }
 
-    const matched = props.weightCategories.find(w =>
-        w.gender === player.gender &&
-        w.age_category_id === player.age_category_id &&
-        weight > w.min_weight &&
-        weight <= w.max_weight
-    )
-
-    registration.weight_category_id = matched ? matched.id : null
+    return registrations
+        .map((registration) => getCategoryById(registration.tournament_weight_category_id)?.name ?? '-')
+        .join(', ')
 }
 
-/* ================= TOTAL ================= */
-const totalRegistered = computed(() => form.registrations.length)
+const getAssignedAgeCategoryName = (playerId: number) => {
+    const registrations = getPlayerRegistrations(playerId)
+    if (registrations.length === 0) {
+        return '-'
+    }
 
-/* ================= SUBMIT ================= */
+    return Array.from(
+        new Set(
+            registrations.map((registration) =>
+                getCategoryById(registration.tournament_weight_category_id)?.age_category_name ?? '-',
+            ),
+        ),
+    ).join(', ')
+}
+
+const registeredCategorySummary = computed(() => {
+    const grouped = new Map<number, number[]>()
+
+    form.registrations.forEach((registration) => {
+        const playerIds = grouped.get(registration.tournament_weight_category_id) ?? []
+        playerIds.push(registration.player_id)
+        grouped.set(registration.tournament_weight_category_id, playerIds)
+    })
+
+    return Array.from(grouped.entries())
+        .map(([categoryId, playerIds]) => {
+            const category = getCategoryById(categoryId)
+
+            return {
+                category_id: categoryId,
+                category_name: category?.name ?? '-',
+                gender: category?.gender ?? '-',
+                age_category: category?.age_category_name ?? '-',
+                player_count: playerIds.length,
+                players: playerIds.map((playerId) => ({
+                    player_id: playerId,
+                    full_name: getPlayerNameById(playerId),
+                })),
+            }
+        })
+        .sort((a, b) => b.player_count - a.player_count || a.category_name.localeCompare(b.category_name))
+})
+
+const openedSummary = computed(() =>
+    registeredCategorySummary.value.find((item) => item.category_id === openedSummaryCategoryId.value) ?? null,
+)
+
+const openSummary = (categoryId: number) => {
+    openedSummaryCategoryId.value = categoryId
+}
+
+const closeSummary = () => {
+    openedSummaryCategoryId.value = null
+}
+
+const removeFromSummary = (categoryId: number, playerId: number) => {
+    form.registrations = form.registrations.filter((registration) =>
+        !(registration.tournament_weight_category_id === categoryId && registration.player_id === playerId),
+    )
+}
+
+const totalRegistered = computed(() => form.registrations.length)
+const uniqueRegisteredPlayers = computed(() => new Set(form.registrations.map((r) => r.player_id)).size)
+const usedCategoryCount = computed(() => new Set(form.registrations.map((r) => r.tournament_weight_category_id)).size)
+const selectedCategoryRegisteredCount = computed(() => {
+    if (!selectedCategoryId.value) return 0
+
+    return form.registrations.filter((registration) => registration.tournament_weight_category_id === selectedCategoryId.value).length
+})
+const isPlayerRegisteredAnywhere = (playerId: number) =>
+    form.registrations.some((registration) => registration.player_id === playerId)
+
 const submit = () => form.post(route('admin.tournaments.store'))
 </script>
 
@@ -148,121 +247,193 @@ const submit = () => form.post(route('admin.tournaments.store'))
 <AppLayout :breadcrumbs="breadcrumbs">
 <div class="p-6 space-y-8">
 
-    <!-- Tournament Info -->
-    <div class="space-y-4 max-w-xl">
+    <div class="border rounded-xl bg-white p-5 space-y-4">
         <h1 class="text-2xl font-bold">Create Tournament</h1>
-
-        <input v-model="form.name" placeholder="Tournament Name" class="w-full border rounded-lg p-2" />
-        <input type="date" v-model="form.tournament_date" class="w-full border rounded-lg p-2" />
-        <select v-model="form.status" class="w-full border rounded-lg p-2">
-            <option value="draft">Draft</option>
-            <option value="open">Open</option>
-            <option value="ongoing">Ongoing</option>
-            <option value="completed">Completed</option>
-        </select>
+        <div class="grid gap-4 md:grid-cols-3">
+            <div class="space-y-1">
+                <label class="text-sm font-medium">Tournament Name</label>
+                <input v-model="form.name" placeholder="Tournament Name" class="w-full border rounded-lg p-2" />
+                <p v-if="form.errors.name" class="text-xs text-red-600">{{ form.errors.name }}</p>
+            </div>
+            <div class="space-y-1">
+                <label class="text-sm font-medium">Tournament Date</label>
+                <input type="date" v-model="form.tournament_date" class="w-full border rounded-lg p-2" />
+                <p v-if="form.errors.tournament_date" class="text-xs text-red-600">{{ form.errors.tournament_date }}</p>
+            </div>
+            <div class="space-y-1">
+                <label class="text-sm font-medium">Status</label>
+                <select v-model="form.status" class="w-full border rounded-lg p-2">
+                    <option value="draft">Draft</option>
+                    <option value="open">Open</option>
+                    <option value="ongoing">Ongoing</option>
+                    <option value="completed">Completed</option>
+                </select>
+                <p v-if="form.errors.status" class="text-xs text-red-600">{{ form.errors.status }}</p>
+            </div>
+        </div>
     </div>
 
-    <!-- Players -->
-    <div>
-        <div class="flex justify-between items-center mb-4">
-            <h2 class="text-xl font-semibold">Register Players</h2>
+    <div class="space-y-4">
+        <div class="flex flex-wrap justify-between items-center gap-3">
+            <h2 class="text-xl font-semibold">Category First Registration</h2>
             <span class="text-sm text-muted-foreground">Total Registered: {{ totalRegistered }}</span>
         </div>
 
-        <div class="flex flex-wrap items-center gap-3 mb-4">
-            <input v-model="search" placeholder="Search player by name or club..." class="border rounded-lg p-2 w-80" />
-            <div class="flex gap-2">
-                <button type="button" class="px-3 py-1 rounded border text-sm" :class="genderFilter==='all' ? 'bg-slate-900 text-white' : ''" @click="genderFilter='all'">All</button>
-                <button type="button" class="px-3 py-1 rounded border text-sm" :class="genderFilter==='male' ? 'bg-blue-600 text-white border-blue-600' : ''" @click="genderFilter='male'">Male</button>
-                <button type="button" class="px-3 py-1 rounded border text-sm" :class="genderFilter==='female' ? 'bg-emerald-600 text-white border-emerald-600' : ''" @click="genderFilter='female'">Female</button>
+        <div class="grid gap-3 md:grid-cols-4">
+            <div class="border rounded-lg p-3 bg-white">
+                <p class="text-xs text-muted-foreground">Total Entries</p>
+                <p class="text-2xl font-semibold">{{ totalRegistered }}</p>
+            </div>
+            <div class="border rounded-lg p-3 bg-white">
+                <p class="text-xs text-muted-foreground">Unique Players</p>
+                <p class="text-2xl font-semibold">{{ uniqueRegisteredPlayers }}</p>
+            </div>
+            <div class="border rounded-lg p-3 bg-white">
+                <p class="text-xs text-muted-foreground">Categories Used</p>
+                <p class="text-2xl font-semibold">{{ usedCategoryCount }}</p>
+            </div>
+            <div class="border rounded-lg p-3 bg-white">
+                <p class="text-xs text-muted-foreground">Selected Category Entries</p>
+                <p class="text-2xl font-semibold">{{ selectedCategoryRegisteredCount }}</p>
             </div>
         </div>
 
-        <div class="border rounded-lg overflow-hidden">
+        <div class="border rounded-lg overflow-hidden bg-white">
             <table class="w-full text-sm">
-                <thead class="bg-muted">
+                <thead class="bg-muted/70">
+                    <tr>
+                        <th class="p-3 text-left">Gender</th>
+                        <th class="p-3 text-left">Age Category</th>
+                        <th class="p-3 text-left">Weight Category</th>
+                        <th class="p-3 text-center">Players</th>
+                        <th class="p-3 text-left">Who Registered</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr v-for="item in registeredCategorySummary" :key="item.category_id" class="border-t">
+                        <td class="p-3 capitalize">{{ item.gender }}</td>
+                        <td class="p-3">{{ item.age_category }}</td>
+                        <td class="p-3 font-medium">{{ item.category_name }}</td>
+                        <td class="p-3 text-center">{{ item.player_count }}</td>
+                        <td class="p-3">
+                            <button type="button" class="text-blue-600 hover:underline" @click="openSummary(item.category_id)">
+                                View {{ item.player_count }} player{{ item.player_count > 1 ? 's' : '' }}
+                            </button>
+                        </td>
+                    </tr>
+                    <tr v-if="registeredCategorySummary.length === 0">
+                        <td colspan="5" class="p-4 text-center text-muted-foreground">No category registrations yet.</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="border rounded-xl bg-white p-4 grid gap-4 md:grid-cols-3">
+            <div class="space-y-1">
+                <label class="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Gender</label>
+                <select v-model="selectedGender" class="border rounded-lg p-2 w-full">
+                    <option v-for="gender in genderOptions" :key="gender" :value="gender">{{ gender }}</option>
+                </select>
+            </div>
+            <div class="space-y-1">
+                <label class="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Age Category</label>
+                <select v-model="selectedAgeCategoryId" class="border rounded-lg p-2 w-full">
+                    <option v-for="ageCategory in ageCategoryOptions" :key="ageCategory.id" :value="ageCategory.id">{{ ageCategory.name }}</option>
+                </select>
+            </div>
+            <div class="space-y-1">
+                <label class="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Weight Category</label>
+                <select v-model="selectedCategoryId" class="border rounded-lg p-2 w-full">
+                    <option v-for="category in weightCategoryOptions" :key="category.id" :value="category.id">{{ category.name }}</option>
+                </select>
+            </div>
+        </div>
+
+        <div v-if="selectedCategory" class="text-sm border rounded-lg bg-blue-50 border-blue-200 px-3 py-2">
+            Assigning players to
+            <strong>{{ selectedCategory.name }}</strong>
+            <span class="text-muted-foreground">({{ selectedCategory.age_category_name }} / {{ selectedCategory.gender }})</span>
+        </div>
+
+        <div class="flex gap-3 max-w-xl">
+            <input v-model="search" placeholder="Search player by name or club..." class="border rounded-lg p-2 w-full" />
+            <select v-model="playerGenderFilter" class="border rounded-lg p-2 w-36">
+                <option value="all">All</option>
+                <option value="male">Male</option>
+                <option value="female">Female</option>
+            </select>
+        </div>
+
+        <div class="border rounded-lg overflow-hidden bg-white">
+            <table class="w-full text-sm">
+                <thead class="bg-muted/70">
                     <tr>
                         <th class="p-3">Select</th>
                         <th class="p-3 text-left">Player</th>
                         <th class="p-3">Club</th>
-                        <th class="p-3">Category</th>
-                        <th class="p-3">Weigh-in (kg)</th>
-                        <th class="p-3">Action</th>
+                        <th class="p-3">Age Category</th>
+                        <th class="p-3">Assigned Category</th>
                     </tr>
                 </thead>
                 <tbody>
-                    <tr
-                        v-for="player in filteredPlayers"
-                        :key="player.id"
-                        class="border-t"
-                        :class="!isEligible(player) ? 'opacity-60 bg-slate-50' : ''"
-                    >
+                    <tr v-for="player in filteredPlayers" :key="player.id" class="border-t" :class="isSelectedInCurrentCategory(player.id) ? 'bg-emerald-50' : ''">
                         <td class="p-3 text-center">
-                            <input
-                                type="checkbox"
-                                :checked="isSelected(player.id)"
-                                :disabled="!isEligible(player)"
-                                @change="togglePlayer(player)"
-                            />
+                            <input type="checkbox" :checked="isSelectedInCurrentCategory(player.id)" :disabled="!selectedCategoryId" @change="togglePlayerForSelectedCategory(player)" />
                         </td>
                         <td class="p-3 font-medium">
-                            <div class="flex items-center gap-2">
-                                <span>{{ player.full_name }}</span>
-                                <span
-                                    class="px-2 py-0.5 rounded text-xs font-medium"
-                                    :class="String(player.gender).toLowerCase()==='male' ? 'bg-blue-100 text-blue-700' : 'bg-emerald-100 text-emerald-700'"
-                                >
-                                    {{ player.gender }}
-                                </span>
-                                <span
-                                    v-if="!isEligible(player)"
-                                    class="px-2 py-0.5 rounded text-xs font-medium bg-amber-100 text-amber-700"
-                                >
-                                    Not Eligible
-                                </span>
+                            <div>{{ player.full_name }}</div>
+                            <div v-if="isPlayerRegisteredAnywhere(player.id) && !isSelectedInCurrentCategory(player.id)" class="text-xs text-amber-700">
+                                Already in another category
                             </div>
                         </td>
                         <td class="p-3 text-center">{{ player.club }}</td>
-                        <td class="p-3 text-center">{{ player.age_category }}</td>
-                        <td class="p-3 text-center">
-                            {{ isSelected(player.id) ? (getRegistration(player.id).weigh_in_weight ?? '-') : '-' }}
-                        </td>
-                        <td class="p-3 text-center">
-                            <button
-                                v-if="isSelected(player.id)"
-                                type="button"
-                                class="px-2 py-1 rounded border text-xs"
-                                @click="openWeighInModal(player.id)"
-                            >
-                                {{ getRegistration(player.id).weigh_in_weight ? 'Edit Weigh-in' : 'Set Weigh-in' }}
-                            </button>
-                        </td>
+                        <td class="p-3 text-center">{{ getAssignedAgeCategoryName(player.id) }}</td>
+                        <td class="p-3 text-center">{{ getAssignedCategoryName(player.id) }}</td>
+                    </tr>
+                    <tr v-if="filteredPlayers.length === 0">
+                        <td colspan="5" class="p-4 text-center text-muted-foreground">No players found.</td>
                     </tr>
                 </tbody>
             </table>
         </div>
     </div>
 
-    <Button @click="submit" :disabled="form.processing">Save Tournament</Button>
+    <div class="flex justify-end">
+        <Button @click="submit" :disabled="form.processing">Save Tournament</Button>
+    </div>
 
-    <div v-if="activeWeighInPlayer" class="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4">
-        <div class="bg-white rounded-xl w-full max-w-md p-5 space-y-4">
-            <div>
-                <h3 class="text-lg font-semibold">Weigh-in Entry</h3>
-                <p class="text-sm text-muted-foreground">{{ activeWeighInPlayer.full_name }}</p>
+    <div v-if="openedSummary" class="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4">
+        <div class="bg-white rounded-xl w-full max-w-2xl p-5 space-y-4">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h3 class="text-lg font-semibold">{{ openedSummary.category_name }} ({{ openedSummary.gender }} / {{ openedSummary.age_category }})</h3>
+                    <p class="text-sm text-muted-foreground">{{ openedSummary.player_count }} registered</p>
+                </div>
+                <button type="button" class="px-3 py-1 rounded border" @click="closeSummary">Close</button>
             </div>
 
-            <input
-                type="number"
-                step="0.01"
-                v-model.number="draftWeight"
-                class="w-full border rounded-lg p-2"
-                placeholder="Enter weight in kg"
-            />
-
-            <div class="flex justify-end gap-2">
-                <button type="button" class="px-3 py-2 rounded border" @click="closeWeighInModal">Cancel</button>
-                <button type="button" class="px-3 py-2 rounded bg-slate-900 text-white" @click="saveWeighIn">Save</button>
+            <div class="border rounded-lg overflow-hidden max-h-80 overflow-y-auto">
+                <table class="w-full text-sm">
+                    <thead class="bg-muted sticky top-0">
+                        <tr>
+                            <th class="p-3 text-left">Player</th>
+                            <th class="p-3 text-right">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr v-for="player in openedSummary.players" :key="`${openedSummary.category_id}-${player.player_id}`" class="border-t">
+                            <td class="p-3">{{ player.full_name }}</td>
+                            <td class="p-3 text-right">
+                                <button type="button" class="px-2 py-1 rounded border text-red-600 border-red-200 hover:bg-red-50" @click="removeFromSummary(openedSummary.category_id, player.player_id)">
+                                    Remove
+                                </button>
+                            </td>
+                        </tr>
+                        <tr v-if="openedSummary.players.length === 0">
+                            <td colspan="2" class="p-4 text-center text-muted-foreground">No players in this category.</td>
+                        </tr>
+                    </tbody>
+                </table>
             </div>
         </div>
     </div>
