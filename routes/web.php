@@ -7,7 +7,9 @@ use App\Http\Controllers\Admin\PlayerController as AdminPlayerController;
 use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
 use App\Http\Controllers\Admin\BracketController as AdminBracketController;
 use App\Http\Controllers\Admin\TournamentController as AdminTournamentController;
+use App\Http\Controllers\Public\AthleteController as PublicAthleteController;
 use App\Http\Controllers\Public\HomeController as PublicHomeController;
+use App\Http\Controllers\Public\RankingController as PublicRankingController;
 use App\Http\Controllers\Public\TournamentController as PublicTournamentController;
 
 Route::get('/', function () {
@@ -19,6 +21,8 @@ Route::get('/', function () {
 Route::get('home', [PublicHomeController::class, 'index'])->name('public.home');
 Route::get('public/tournaments', [PublicTournamentController::class, 'index'])->name('public.tournaments.index');
 Route::get('public/tournaments/{tournament}', [PublicTournamentController::class, 'show'])->name('public.tournaments.show');
+Route::get('public/athletes', [PublicAthleteController::class, 'index'])->name('public.athletes.index');
+Route::get('public/rankings', [PublicRankingController::class, 'index'])->name('public.rankings.index');
 
 Route::get('dashboard', [AdminDashboardController::class, 'index'])
     ->middleware(['auth', 'verified'])

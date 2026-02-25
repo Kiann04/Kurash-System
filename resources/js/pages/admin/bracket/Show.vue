@@ -2,6 +2,8 @@
 import { Head, Link, router } from '@inertiajs/vue3'
 import { route } from 'ziggy-js'
 import AppLayout from '@/layouts/AppLayout.vue'
+import { Maximize2, Minimize2 } from 'lucide-vue-next'
+import { ref, onMounted, onUnmounted } from 'vue'
 
 interface MatchItem {
     id: number
@@ -157,6 +159,40 @@ const exportPdf = () => {
     if (!isCompleted) return
     window.print()
 }
+
+const fullscreenBracketId = ref<number | null>(null)
+
+const toggleFullScreen = (bracketId: number) => {
+    const element = document.getElementById(`bracket-section-${bracketId}`)
+    if (!element) return
+
+    if (!document.fullscreenElement) {
+        element.requestFullscreen().catch((err) => {
+            console.error(`Error attempting to enable full-screen mode: ${err.message}`)
+        })
+    } else {
+        document.exitFullscreen()
+    }
+}
+
+const handleFullscreenChange = () => {
+    if (!document.fullscreenElement) {
+        fullscreenBracketId.value = null
+    } else {
+        const id = document.fullscreenElement.id
+        if (id && id.startsWith('bracket-section-')) {
+            fullscreenBracketId.value = parseInt(id.replace('bracket-section-', ''))
+        }
+    }
+}
+
+onMounted(() => {
+    document.addEventListener('fullscreenchange', handleFullscreenChange)
+})
+
+onUnmounted(() => {
+    document.removeEventListener('fullscreenchange', handleFullscreenChange)
+})
 </script>
 
 <template>
@@ -216,7 +252,12 @@ const exportPdf = () => {
                 </div>
             </div>
 
-            <section v-for="bracket in props.brackets" :key="bracket.id" class="space-y-4">
+            <section 
+                v-for="bracket in props.brackets" 
+                :key="bracket.id" 
+                :id="`bracket-section-${bracket.id}`"
+                class="space-y-4 bracket-section"
+            >
                 <div class="rounded-xl border border-slate-200 p-4 bg-white">
                     <div class="flex flex-wrap gap-2 text-sm items-center">
                         <span class="tag">{{ (bracket.gender || 'unknown').toUpperCase() }}</span>
@@ -227,6 +268,14 @@ const exportPdf = () => {
                         <span class="tag blue">Blue = upper fighter</span>
                         <span class="tag green">Green = lower fighter</span>
                         <span v-if="bracket.champion" class="tag champion">Champion: {{ bracket.champion }}</span>
+                        
+                        <button 
+                            @click="toggleFullScreen(bracket.id)" 
+                            class="ml-auto p-1.5 rounded-lg border border-slate-200 hover:bg-slate-50 text-slate-500 transition-colors print:hidden"
+                            :title="fullscreenBracketId === bracket.id ? 'Exit Full Screen' : 'Full Screen'"
+                        >
+                            <component :is="fullscreenBracketId === bracket.id ? Minimize2 : Maximize2" class="size-4" />
+                        </button>
                     </div>
                     <div class="mt-3 grid gap-2 md:grid-cols-3 text-sm">
                         <div class="rounded-lg border border-amber-300 bg-amber-50 p-2">
@@ -393,6 +442,15 @@ const exportPdf = () => {
         radial-gradient(circle at 10% 8%, #e8f1ff 0, transparent 35%),
         radial-gradient(circle at 88% 10%, #eafaf0 0, transparent 33%),
         #f8fafc;
+}
+
+.bracket-section:fullscreen {
+    padding: 24px;
+    background: #f8fafc;
+    overflow-y: auto;
+    width: 100%;
+    height: 100%;
+    display: block;
 }
 
 .bracket-header {

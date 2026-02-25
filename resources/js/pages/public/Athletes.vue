@@ -2,13 +2,14 @@
 import { Head } from '@inertiajs/vue3'
 const route = window.route;
 import Pagination from '@/components/Pagination.vue'
-import { Instagram, Facebook, Calendar, MapPin, ExternalLink } from 'lucide-vue-next'
+import { Instagram, Facebook } from 'lucide-vue-next'
 
-interface Tournament {
+interface Player {
     id: number
-    name: string
-    tournament_date: string | null
-    status: string
+    full_name: string
+    gender: string
+    club: string | null
+    profile_image: string | null
 }
 
 interface Paginated<T> {
@@ -17,8 +18,10 @@ interface Paginated<T> {
 }
 
 const props = defineProps<{
-    tournaments: Paginated<Tournament>
+    players: Paginated<Player>
 }>()
+
+const defaultProfileImage = '/images/default-profile.svg'
 
 const navItems = [
     { name: 'Home', route: 'public.home' },
@@ -30,19 +33,10 @@ const navItems = [
     { name: 'Rules' },
     { name: 'News' },
 ];
-
-const getStatusColor = (status: string) => {
-    switch (status.toLowerCase()) {
-        case 'open': return 'text-green-500 bg-green-500/10 border-green-500/20';
-        case 'ongoing': return 'text-yellow-500 bg-yellow-500/10 border-yellow-500/20';
-        case 'completed': return 'text-gray-500 bg-gray-500/10 border-gray-500/20';
-        default: return 'text-blue-500 bg-blue-500/10 border-blue-500/20';
-    }
-}
 </script>
 
 <template>
-<Head title="Tournaments | Kurash Federation" />
+<Head title="Athletes | Kurash Federation" />
 <div class="min-h-screen bg-[#050a14] text-white font-sans selection:bg-yellow-500 selection:text-black">
     <!-- Navbar (Same as Home.vue) -->
     <header class="border-b border-white/10 bg-[#050a14] relative z-50">
@@ -64,14 +58,14 @@ const getStatusColor = (status: string) => {
               :href="route(item.route)"
               :class="[
                 'relative h-full flex items-center px-4 transition-all duration-300 group whitespace-nowrap',
-                item.route === 'public.tournaments.index' ? 'text-yellow-500' : 'text-gray-400 hover:text-white'
+                item.route === 'public.athletes.index' ? 'text-yellow-500' : 'text-gray-400 hover:text-white'
               ]"
             >
               {{ item.name }}
               <span 
                 :class="[
                   'absolute bottom-0 left-0 h-0.5 bg-yellow-500 transition-all duration-300 ease-out shadow-[0_0_10px_rgba(234,179,8,0.5)]',
-                  item.route === 'public.tournaments.index' ? 'w-full' : 'w-0 group-hover:w-full'
+                  item.route === 'public.athletes.index' ? 'w-full' : 'w-0 group-hover:w-full'
                 ]"
               ></span>
             </a>
@@ -105,56 +99,44 @@ const getStatusColor = (status: string) => {
 
         <div class="flex flex-col md:flex-row md:items-end justify-between mb-12 border-b border-slate-800 pb-8 gap-4">
             <div>
-                <h2 class="text-5xl font-serif font-bold text-white mb-3">Tournaments</h2>
-                <p class="text-slate-400 text-lg">Official international Kurash tournaments and events</p>
+                <h2 class="text-5xl font-serif font-bold text-white mb-3">Our Athletes</h2>
+                <p class="text-slate-400 text-lg">Official database of international Kurash competitors</p>
             </div>
             <div class="flex items-center gap-4 text-sm font-bold uppercase tracking-widest text-slate-500">
-                <span>Total Events: {{ props.tournaments.data.length }}</span>
+                <span>Total Athletes: {{ props.players.data.length }}</span>
             </div>
         </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            <div v-for="tournament in props.tournaments.data" :key="tournament.id" 
-                 class="group bg-[#0f172a] rounded-[32px] border border-slate-800/50 overflow-hidden hover:border-yellow-500/50 transition-all duration-500 hover:shadow-[0_20px_50px_rgba(234,179,8,0.1)] flex flex-col p-8">
-                
-                <div class="flex justify-between items-start mb-6">
-                    <div :class="['px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border', getStatusColor(tournament.status)]">
-                        {{ tournament.status }}
-                    </div>
-                    <Trophy class="w-6 h-6 text-yellow-500/50 group-hover:text-yellow-500 transition-colors" />
-                </div>
-
-                <h3 class="text-2xl font-serif font-bold text-white mb-6 group-hover:text-yellow-500 transition-colors leading-tight">
-                    {{ tournament.name }}
-                </h3>
-
-                <div class="space-y-4 mb-8">
-                    <div class="flex items-center gap-3 text-slate-400">
-                        <Calendar class="w-4 h-4 text-yellow-500/50" />
-                        <span class="text-sm font-medium tracking-wide">{{ tournament.tournament_date ?? 'TBD' }}</span>
-                    </div>
-                    <div class="flex items-center gap-3 text-slate-400">
-                        <MapPin class="w-4 h-4 text-yellow-500/50" />
-                        <span class="text-sm font-medium tracking-wide">International Event</span>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
+            <div v-for="player in props.players.data" :key="player.id" 
+                 class="group bg-[#0f172a] rounded-[32px] border border-slate-800/50 overflow-hidden hover:border-yellow-500/50 transition-all duration-500 hover:shadow-[0_20px_50px_rgba(234,179,8,0.1)] flex flex-col">
+                <div class="h-64 bg-slate-800 relative overflow-hidden">
+                    <img 
+                        :src="player.profile_image ? `/storage/${player.profile_image}` : defaultProfileImage" 
+                        alt="Profile" 
+                        class="w-full h-full object-cover opacity-80 group-hover:scale-110 transition-transform duration-1000"
+                    />
+                    <div class="absolute inset-0 bg-gradient-to-t from-[#0f172a] to-transparent opacity-60"></div>
+                    <div class="absolute bottom-4 left-6">
+                        <div class="text-yellow-500 font-black text-[10px] uppercase tracking-[0.2em] mb-1">{{ player.gender }}</div>
+                        <h3 class="text-2xl font-serif font-bold text-white group-hover:text-yellow-500 transition-colors leading-tight">{{ player.full_name }}</h3>
                     </div>
                 </div>
-
-                <div class="mt-auto">
-                    <a :href="route('public.tournaments.show', tournament.id)" 
-                       class="inline-flex items-center gap-2 text-yellow-500 font-black text-xs uppercase tracking-[0.2em] group/link">
-                        View Details
-                        <ExternalLink class="w-3 h-3 transition-transform group-hover/link:translate-x-1" />
-                    </a>
+                <div class="p-6 flex-1 flex flex-col justify-between">
+                    <div class="flex items-center gap-3 text-slate-400 text-xs font-bold uppercase tracking-widest">
+                        <span class="w-2 h-2 rounded-full bg-blue-500"></span>
+                        {{ player.club ?? 'Independent' }}
+                    </div>
                 </div>
             </div>
         </div>
 
-        <div v-if="props.tournaments.data.length === 0" class="py-20 text-center">
-            <p class="text-slate-500 italic text-xl">No upcoming tournaments found.</p>
+        <div v-if="props.players.data.length === 0" class="py-20 text-center">
+            <p class="text-slate-500 italic text-xl">No athletes found in the database.</p>
         </div>
 
         <div class="mt-12">
-            <Pagination :links="props.tournaments.links" />
+            <Pagination :links="props.players.links" />
         </div>
     </main>
 </div>
