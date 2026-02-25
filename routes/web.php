@@ -24,7 +24,7 @@ Route::get('dashboard', [AdminDashboardController::class, 'index'])
     ->middleware(['auth', 'verified'])
     ->name('dashboard');
 
-require __DIR__.'/settings.php';
+require __DIR__ . '/settings.php';
 
 Route::prefix('admin')
     ->name('admin.')
