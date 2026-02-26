@@ -8,7 +8,7 @@ declare global {
 
 const route = window.route || ((name: string) => name);
 import { ref, computed } from 'vue'
-import { Instagram, Facebook, Trophy, Users, LayoutGrid, X } from 'lucide-vue-next'
+import { Instagram, Facebook, Trophy, Users, LayoutGrid, X, ArrowLeft } from 'lucide-vue-next'
 
 interface Tournament {
     id: number
@@ -52,12 +52,8 @@ const props = defineProps<{
     categories: Category[]
 }>()
 
-const currentView = ref('male') // 'male' or 'female'
 const selectedCategory = ref<Category | null>(null)
 const isModalOpen = ref(false)
-
-const maleCategories = computed(() => props.categories.filter(c => c.gender?.toLowerCase() === 'male'));
-const femaleCategories = computed(() => props.categories.filter(c => c.gender?.toLowerCase() === 'female'));
 
 const openBracket = (category: Category) => {
     selectedCategory.value = category
@@ -179,14 +175,14 @@ const getStatusColor = (status: string) => {
               :href="route(item.route)"
               :class="[
                 'relative h-full flex items-center px-2 transition-all duration-300 group whitespace-nowrap',
-                item.route === 'public.brackets.index' ? 'text-yellow-500' : 'text-gray-400 hover:text-white'
+                (item.route === 'public.brackets.index' || item.route === 'public.brackets.show') ? 'text-yellow-500' : 'text-gray-400 hover:text-white'
               ]"
             >
               {{ item.name }}
               <span 
                 :class="[
                   'absolute bottom-0 left-0 h-0.5 bg-yellow-500 transition-all duration-300 ease-out shadow-[0_0_10px_rgba(234,179,8,0.5)]',
-                  item.route === 'public.brackets.index' ? 'w-full' : 'w-0 group-hover:w-full'
+                  (item.route === 'public.brackets.index' || item.route === 'public.brackets.show') ? 'w-full' : 'w-0 group-hover:w-full'
                 ]"
               ></span>
             </a>
@@ -223,6 +219,14 @@ const getStatusColor = (status: string) => {
         <div class="mb-12">
             <div class="flex flex-col md:flex-row md:items-end justify-between gap-6 border-b border-slate-800 pb-12">
                 <div class="max-w-3xl">
+                    <a :href="route('public.brackets.index')" class="flex items-center gap-2 text-yellow-500/60 hover:text-yellow-500 font-bold text-[10px] uppercase tracking-[0.2em] mb-6 transition-colors group w-fit">
+                        <ArrowLeft class="w-3.5 h-3.5 transform group-hover:-translate-x-1 transition-transform" />
+                        Back to Tournaments
+                    </a>
+                    <div class="flex items-center gap-3 text-yellow-500 font-black uppercase tracking-[0.3em] text-[10px] mb-4">
+                        <div class="h-px w-8 bg-yellow-500"></div>
+                        {{ tournament.name }}
+                    </div>
                     <h1 class="text-5xl md:text-6xl font-serif font-bold text-white mb-6 leading-tight italic uppercase tracking-tighter">Brackets Board</h1>
                     <p class="text-slate-400 text-lg font-medium max-w-2xl leading-relaxed">
                         Follow the elimination paths and results for all weight categories. Select a category to view the full bracket layout.
@@ -231,159 +235,69 @@ const getStatusColor = (status: string) => {
             </div>
         </div>
 
-        <!-- Tournament Navigation Tabs -->
-        <div class="mb-12 border-b border-slate-800">
-            <div class="flex gap-12 overflow-x-auto no-scrollbar">
-                <button 
-                    @click="currentView = 'male'"
-                    :class="[
-                        'pb-6 text-sm font-black uppercase tracking-[0.2em] transition-all relative group',
-                        currentView === 'male' ? 'text-blue-500' : 'text-slate-500 hover:text-white'
-                    ]"
-                >
-                    <div class="flex items-center gap-3">
-                        <Users class="w-4 h-4" />
-                        Male
+        <!-- Content Area -->
+        <div class="space-y-24">
+            <!-- Bracket Categories Grid -->
+            <div class="space-y-16">
+                <div class="flex items-center gap-6">
+                    <div class="w-12 h-12 rounded-2xl bg-yellow-600/20 flex items-center justify-center border border-yellow-600/30">
+                        <LayoutGrid class="w-6 h-6 text-yellow-500" />
                     </div>
-                    <div :class="['absolute bottom-0 left-0 h-0.5 bg-blue-500 transition-all duration-300 shadow-[0_0_15px_rgba(59,130,246,0.5)]', currentView === 'male' ? 'w-full' : 'w-0 group-hover:w-full']"></div>
-                </button>
-                <button 
-                    @click="currentView = 'female'"
-                    :class="[
-                        'pb-6 text-sm font-black uppercase tracking-[0.2em] transition-all relative group',
-                        currentView === 'female' ? 'text-emerald-500' : 'text-slate-500 hover:text-white'
-                    ]"
-                >
-                    <div class="flex items-center gap-3">
-                        <Users class="w-4 h-4" />
-                        Female
-                    </div>
-                    <div :class="['absolute bottom-0 left-0 h-0.5 bg-emerald-500 transition-all duration-300 shadow-[0_0_15px_rgba(16,185,129,0.5)]', currentView === 'female' ? 'w-full' : 'w-0 group-hover:w-full']"></div>
-                </button>
-            </div>
-        </div>
-
-    <!-- Content Area -->
-    <div v-if="currentView === 'male'" class="space-y-24">
-        <!-- Bracket Categories Grid -->
-        <div class="space-y-16">
-            <div class="flex items-center gap-6">
-                <div class="w-12 h-12 rounded-2xl bg-blue-600/20 flex items-center justify-center border border-blue-600/30">
-                    <LayoutGrid class="w-6 h-6 text-blue-500" />
+                    <h2 class="text-4xl font-serif font-bold text-white uppercase tracking-wider italic">Categories</h2>
+                    <div class="h-px flex-1 bg-linear-to-r from-yellow-600/50 to-transparent"></div>
                 </div>
-                <h2 class="text-4xl font-serif font-bold text-white uppercase tracking-wider italic">Categories</h2>
-                <div class="h-px flex-1 bg-linear-to-r from-blue-600/50 to-transparent"></div>
-            </div>
 
-            <div v-if="maleCategories.length === 0" class="py-16 text-center border border-dashed border-slate-800 rounded-5xl">
-                <p class="text-slate-500 italic text-lg">No male categories available.</p>
-            </div>
+                <div v-if="categories.length === 0" class="py-16 text-center border border-dashed border-slate-800 rounded-5xl">
+                    <p class="text-slate-500 italic text-lg">No categories available.</p>
+                </div>
 
-            <div v-else class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
-                <div v-for="category in maleCategories" :key="category.id" 
-                     class="group relative bg-[#0f172a]/50 rounded-4xl border border-slate-800/50 hover:border-blue-500/30 transition-all duration-500 p-8 flex flex-col gap-8 overflow-hidden">
-                    
-                    <div class="absolute top-0 right-0 p-8 opacity-5 group-hover:opacity-10 transition-opacity">
-                        <Trophy class="w-32 h-32 text-blue-500" />
-                    </div>
-
-                    <div class="relative z-10">
-                        <div class="flex items-center gap-4 mb-4">
-                            <span class="px-3 py-1 rounded-full bg-blue-500/10 text-blue-500 text-[10px] font-black uppercase tracking-widest border border-blue-500/20">
-                                {{ category.age_category }}
-                            </span>
-                            <div class="h-px w-4 bg-slate-800"></div>
-                            <span class="text-[10px] font-black uppercase tracking-widest text-slate-500">
-                                {{ category.format.replace('_', ' ') }}
-                            </span>
+                <div v-else class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
+                    <div v-for="category in categories" :key="category.id" 
+                         class="group relative bg-[#0f172a]/50 rounded-4xl border border-slate-800/50 hover:border-yellow-500/30 transition-all duration-500 p-8 flex flex-col gap-8 overflow-hidden">
+                        
+                        <div class="absolute top-0 right-0 p-8 opacity-5 group-hover:opacity-10 transition-opacity">
+                            <Trophy class="w-32 h-32 text-yellow-500" />
                         </div>
-                        <h3 class="text-3xl font-serif font-bold text-white group-hover:text-blue-400 transition-colors italic">
-                            {{ category.weight_category }}
-                        </h3>
-                    </div>
 
-                    <div class="grid grid-cols-2 gap-4 relative z-10">
-                        <div class="p-4 rounded-2xl bg-white/2 border border-white/5">
-                            <div class="text-[10px] font-black uppercase tracking-widest text-slate-500 mb-1">Matches</div>
-                            <div class="text-xl font-serif font-bold text-white">{{ category.matches_count }}</div>
+                        <div class="relative z-10">
+                            <div class="flex items-center gap-4 mb-4">
+                                <span :class="[
+                                    'px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border',
+                                    category.gender?.toLowerCase() === 'male' ? 'bg-blue-500/10 text-blue-500 border-blue-500/20' : 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20'
+                                ]">
+                                    {{ category.gender }} - {{ category.age_category }}
+                                </span>
+                                <div class="h-px w-4 bg-slate-800"></div>
+                                <span class="text-[10px] font-black uppercase tracking-widest text-slate-500">
+                                    {{ category.format.replace('_', ' ') }}
+                                </span>
+                            </div>
+                            <h3 class="text-3xl font-serif font-bold text-white group-hover:text-yellow-400 transition-colors italic">
+                                {{ category.weight_category }}
+                            </h3>
                         </div>
-                        <div class="p-4 rounded-2xl bg-white/2 border border-white/5">
-                            <div class="text-[10px] font-black uppercase tracking-widest text-slate-500 mb-1">Status</div>
-                            <div class="text-xl font-serif font-bold text-white">{{ category.completed_matches }}/{{ category.matches_count }}</div>
-                        </div>
-                    </div>
 
-                    <button 
-                        @click="openBracket(category)"
-                        class="w-full py-4 bg-white/5 hover:bg-blue-500 hover:text-black rounded-2xl border border-white/10 hover:border-blue-500 text-[10px] font-black uppercase tracking-[0.2em] transition-all duration-300"
-                    >
-                        View Bracket
-                    </button>
+                        <div class="grid grid-cols-2 gap-4 relative z-10">
+                            <div class="p-4 rounded-2xl bg-white/2 border border-white/5">
+                                <div class="text-[10px] font-black uppercase tracking-widest text-slate-500 mb-1">Matches</div>
+                                <div class="text-xl font-serif font-bold text-white">{{ category.matches_count }}</div>
+                            </div>
+                            <div class="p-4 rounded-2xl bg-white/2 border border-white/5">
+                                <div class="text-[10px] font-black uppercase tracking-widest text-slate-500 mb-1">Status</div>
+                                <div class="text-xl font-serif font-bold text-white">{{ category.completed_matches }}/{{ category.matches_count }}</div>
+                            </div>
+                        </div>
+
+                        <button 
+                            @click="openBracket(category)"
+                            class="w-full py-4 bg-white/5 hover:bg-yellow-500 hover:text-black rounded-2xl border border-white/10 hover:border-yellow-500 text-[10px] font-black uppercase tracking-[0.2em] transition-all duration-300"
+                        >
+                            View Bracket
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
-    </div>
-
-    <!-- Female View -->
-    <div v-if="currentView === 'female'" class="space-y-24">
-        <!-- Bracket Categories Grid -->
-        <div class="space-y-16">
-            <div class="flex items-center gap-6">
-                <div class="w-12 h-12 rounded-2xl bg-emerald-600/20 flex items-center justify-center border border-emerald-600/30">
-                    <LayoutGrid class="w-6 h-6 text-emerald-500" />
-                </div>
-                <h2 class="text-4xl font-serif font-bold text-white uppercase tracking-wider italic">Categories</h2>
-                <div class="h-px flex-1 bg-linear-to-r from-emerald-600/50 to-transparent"></div>
-            </div>
-
-            <div v-if="femaleCategories.length === 0" class="py-16 text-center border border-dashed border-slate-800 rounded-5xl">
-                <p class="text-slate-500 italic text-lg">No female categories available.</p>
-            </div>
-
-            <div v-else class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
-                <div v-for="category in femaleCategories" :key="category.id" 
-                     class="group relative bg-[#0f172a]/50 rounded-4xl border border-slate-800/50 hover:border-emerald-500/30 transition-all duration-500 p-8 flex flex-col gap-8 overflow-hidden">
-                    
-                    <div class="absolute top-0 right-0 p-8 opacity-5 group-hover:opacity-10 transition-opacity">
-                        <Trophy class="w-32 h-32 text-emerald-500" />
-                    </div>
-
-                    <div class="relative z-10">
-                        <div class="flex items-center gap-4 mb-4">
-                            <span class="px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-500 text-[10px] font-black uppercase tracking-widest border border-emerald-500/20">
-                                {{ category.age_category }}
-                            </span>
-                            <div class="h-px w-4 bg-slate-800"></div>
-                            <span class="text-[10px] font-black uppercase tracking-widest text-slate-500">
-                                {{ category.format.replace('_', ' ') }}
-                            </span>
-                        </div>
-                        <h3 class="text-3xl font-serif font-bold text-white group-hover:text-emerald-400 transition-colors italic">
-                            {{ category.weight_category }}
-                        </h3>
-                    </div>
-
-                    <div class="grid grid-cols-2 gap-4 relative z-10">
-                        <div class="p-4 rounded-2xl bg-white/2 border border-white/5">
-                            <div class="text-[10px] font-black uppercase tracking-widest text-slate-500 mb-1">Matches</div>
-                            <div class="text-xl font-serif font-bold text-white">{{ category.matches_count }}</div>
-                        </div>
-                        <div class="p-4 rounded-2xl bg-white/2 border border-white/5">
-                            <div class="text-[10px] font-black uppercase tracking-widest text-slate-500 mb-1">Status</div>
-                            <div class="text-xl font-serif font-bold text-white">{{ category.completed_matches }}/{{ category.matches_count }}</div>
-                        </div>
-                    </div>
-
-                    <button 
-                        @click="openBracket(category)"
-                        class="w-full py-4 bg-white/5 hover:bg-emerald-500 hover:text-black rounded-2xl border border-white/10 hover:border-emerald-500 text-[10px] font-black uppercase tracking-[0.2em] transition-all duration-300"
-                    >
-                        View Bracket
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
     </main>
 
     <!-- Bracket Modal -->
@@ -397,14 +311,14 @@ const getStatusColor = (status: string) => {
             <div class="p-8 border-b border-white/10 flex items-center justify-between shrink-0 bg-white/2">
                 <div class="flex items-center gap-8">
                     <div class="w-16 h-16 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center">
-                        <Trophy :class="['w-8 h-8', currentView === 'male' ? 'text-blue-500' : 'text-emerald-500']" />
+                        <Trophy :class="['w-8 h-8', selectedCategory.gender?.toLowerCase() === 'male' ? 'text-blue-500' : 'text-emerald-500']" />
                     </div>
                     <div>
                         <div class="flex items-center gap-3 mb-2">
                             <span class="text-[10px] font-black uppercase tracking-[0.3em] text-slate-500">Tournament Bracket</span>
                             <div class="w-1 h-1 rounded-full bg-slate-700"></div>
-                            <span :class="['text-[10px] font-black uppercase tracking-[0.3em]', currentView === 'male' ? 'text-blue-500' : 'text-emerald-500']">
-                                {{ currentView }}
+                            <span :class="['text-[10px] font-black uppercase tracking-[0.3em]', selectedCategory.gender?.toLowerCase() === 'male' ? 'text-blue-500' : 'text-emerald-500']">
+                                {{ selectedCategory.gender }}
                             </span>
                         </div>
                         <h3 class="text-4xl font-serif font-bold text-white italic">
@@ -437,14 +351,24 @@ const getStatusColor = (status: string) => {
                                                 <span v-if="match.status === 'ongoing'" class="w-2 h-2 rounded-full bg-orange-500 animate-pulse"></span>
                                             </div>
                                             <div class="space-y-2">
-                                                <div :class="['flex items-center justify-between p-2 rounded-lg', match.winner_id === match.player_one_id ? 'bg-yellow-500/10 border border-yellow-500/20' : 'bg-white/2']">
-                                                    <span :class="['text-xs font-bold truncate pr-2', match.winner_id === match.player_one_id ? 'text-yellow-500' : 'text-slate-400']">
+                                                <div :class="[
+                                                    'flex items-center justify-between p-2 rounded-lg transition-all duration-300',
+                                                    match.winner_id === match.player_one_id 
+                                                        ? 'bg-yellow-500/20 border border-yellow-500/40' 
+                                                        : 'bg-blue-500/10 border border-blue-500/20 hover:bg-blue-500/20'
+                                                ]">
+                                                    <span :class="['text-xs font-bold truncate pr-2', match.winner_id === match.player_one_id ? 'text-yellow-500' : 'text-blue-400']">
                                                         {{ match.player_one || 'TBD' }}
                                                     </span>
                                                     <Trophy v-if="match.winner_id === match.player_one_id" class="w-3 h-3 text-yellow-500 shrink-0" />
                                                 </div>
-                                                <div :class="['flex items-center justify-between p-2 rounded-lg', match.winner_id === match.player_two_id ? 'bg-yellow-500/10 border border-yellow-500/20' : 'bg-white/2']">
-                                                    <span :class="['text-xs font-bold truncate pr-2', match.winner_id === match.player_two_id ? 'text-yellow-500' : 'text-slate-400']">
+                                                <div :class="[
+                                                    'flex items-center justify-between p-2 rounded-lg transition-all duration-300',
+                                                    match.winner_id === match.player_two_id 
+                                                        ? 'bg-yellow-500/20 border border-yellow-500/40' 
+                                                        : 'bg-emerald-500/10 border border-emerald-500/20 hover:bg-emerald-500/20'
+                                                ]">
+                                                    <span :class="['text-xs font-bold truncate pr-2', match.winner_id === match.player_two_id ? 'text-yellow-500' : 'text-emerald-400']">
                                                         {{ match.player_two || 'TBD' }}
                                                     </span>
                                                     <Trophy v-if="match.winner_id === match.player_two_id" class="w-3 h-3 text-yellow-500 shrink-0" />
@@ -469,30 +393,48 @@ const getStatusColor = (status: string) => {
                                         <div class="h-px w-8 bg-yellow-500/20"></div>
                                     </div>
                                     <div class="space-y-4">
-                                        <div :class="['flex items-center justify-between p-4 rounded-2xl border transition-all', match.winner_id === match.player_one_id ? 'bg-yellow-500 border-yellow-400' : 'bg-white/5 border-white/10']">
-                                            <div class="flex flex-col">
-                                                <span :class="['text-sm font-black uppercase tracking-wide', match.winner_id === match.player_one_id ? 'text-black' : 'text-white']">
-                                                    {{ match.player_one || 'TBD' }}
-                                                </span>
-                                                <span :class="['text-[10px] font-bold opacity-60', match.winner_id === match.player_one_id ? 'text-black' : 'text-slate-400']">
-                                                    {{ match.player_one_club || 'Finalist' }}
-                                                </span>
+                                        <div :class="[
+                                            'relative p-6 rounded-2xl transition-all duration-500 overflow-hidden group/player',
+                                            match.winner_id === match.player_one_id 
+                                                ? 'bg-yellow-500 shadow-[0_0_30px_rgba(234,179,8,0.3)]' 
+                                                : 'bg-blue-500/10 border border-blue-500/20 hover:bg-blue-500/20'
+                                        ]">
+                                            <div class="flex items-center justify-between relative z-10">
+                                                <div>
+                                                    <div :class="['text-[10px] font-black uppercase tracking-widest mb-1', match.winner_id === match.player_one_id ? 'text-black/50' : 'text-blue-500']">
+                                                        Finalist
+                                                    </div>
+                                                    <div :class="['text-xl font-serif font-bold italic', match.winner_id === match.player_one_id ? 'text-black' : 'text-white']">
+                                                        {{ match.player_one || 'TBD' }}
+                                                    </div>
+                                                </div>
+                                                <Trophy :class="['w-8 h-8 transition-transform duration-500 group-hover/player:scale-110', match.winner_id === match.player_one_id ? 'text-black' : 'text-blue-500/30']" />
                                             </div>
-                                            <Trophy v-if="match.winner_id === match.player_one_id" class="w-5 h-5 text-black" />
                                         </div>
-                                        <div class="flex items-center justify-center">
-                                            <span class="text-xs font-black text-slate-700 italic">VS</span>
+
+                                        <div class="flex items-center justify-center gap-4 py-2">
+                                            <div class="h-px flex-1 bg-white/5"></div>
+                                            <span class="text-[10px] font-black text-slate-600 uppercase tracking-[0.3em]">VS</span>
+                                            <div class="h-px flex-1 bg-white/5"></div>
                                         </div>
-                                        <div :class="['flex items-center justify-between p-4 rounded-2xl border transition-all', match.winner_id === match.player_two_id ? 'bg-yellow-500 border-yellow-400' : 'bg-white/5 border-white/10']">
-                                            <div class="flex flex-col">
-                                                <span :class="['text-sm font-black uppercase tracking-wide', match.winner_id === match.player_two_id ? 'text-black' : 'text-white']">
-                                                    {{ match.player_two || 'TBD' }}
-                                                </span>
-                                                <span :class="['text-[10px] font-bold opacity-60', match.winner_id === match.player_two_id ? 'text-black' : 'text-slate-400']">
-                                                    {{ match.player_two_club || 'Finalist' }}
-                                                </span>
+
+                                        <div :class="[
+                                            'relative p-6 rounded-2xl transition-all duration-500 overflow-hidden group/player',
+                                            match.winner_id === match.player_two_id 
+                                                ? 'bg-yellow-500 shadow-[0_0_30px_rgba(234,179,8,0.3)]' 
+                                                : 'bg-emerald-500/10 border border-emerald-500/20 hover:bg-emerald-500/20'
+                                        ]">
+                                            <div class="flex items-center justify-between relative z-10">
+                                                <div>
+                                                    <div :class="['text-[10px] font-black uppercase tracking-widest mb-1', match.winner_id === match.player_two_id ? 'text-black/50' : 'text-emerald-500']">
+                                                        Finalist
+                                                    </div>
+                                                    <div :class="['text-xl font-serif font-bold italic', match.winner_id === match.player_two_id ? 'text-black' : 'text-white']">
+                                                        {{ match.player_two || 'TBD' }}
+                                                    </div>
+                                                </div>
+                                                <Trophy :class="['w-8 h-8 transition-transform duration-500 group-hover/player:scale-110', match.winner_id === match.player_two_id ? 'text-black' : 'text-emerald-500/30']" />
                                             </div>
-                                            <Trophy v-if="match.winner_id === match.player_two_id" class="w-5 h-5 text-black" />
                                         </div>
                                     </div>
                                     <div v-if="selectedCategory.champion" class="mt-8 p-4 rounded-2xl bg-yellow-500/10 border border-yellow-500/20 text-center">
@@ -518,14 +460,24 @@ const getStatusColor = (status: string) => {
                                                 <span v-if="match.status === 'ongoing'" class="w-2 h-2 rounded-full bg-orange-500 animate-pulse"></span>
                                             </div>
                                             <div class="space-y-2">
-                                                <div :class="['flex items-center justify-between p-2 rounded-lg flex-row-reverse', match.winner_id === match.player_one_id ? 'bg-yellow-500/10 border border-yellow-500/20' : 'bg-white/2']">
-                                                    <span :class="['text-xs font-bold truncate pl-2', match.winner_id === match.player_one_id ? 'text-yellow-500' : 'text-slate-400']">
+                                                <div :class="[
+                                                    'flex items-center justify-between p-2 rounded-lg flex-row-reverse transition-all duration-300',
+                                                    match.winner_id === match.player_one_id 
+                                                        ? 'bg-yellow-500/20 border border-yellow-500/40' 
+                                                        : 'bg-blue-500/10 border border-blue-500/20 hover:bg-blue-500/20'
+                                                ]">
+                                                    <span :class="['text-xs font-bold truncate pl-2', match.winner_id === match.player_one_id ? 'text-yellow-500' : 'text-blue-400']">
                                                         {{ match.player_one || 'TBD' }}
                                                     </span>
                                                     <Trophy v-if="match.winner_id === match.player_one_id" class="w-3 h-3 text-yellow-500 shrink-0" />
                                                 </div>
-                                                <div :class="['flex items-center justify-between p-2 rounded-lg flex-row-reverse', match.winner_id === match.player_two_id ? 'bg-yellow-500/10 border border-yellow-500/20' : 'bg-white/2']">
-                                                    <span :class="['text-xs font-bold truncate pl-2', match.winner_id === match.player_two_id ? 'text-yellow-500' : 'text-slate-400']">
+                                                <div :class="[
+                                                    'flex items-center justify-between p-2 rounded-lg flex-row-reverse transition-all duration-300',
+                                                    match.winner_id === match.player_two_id 
+                                                        ? 'bg-yellow-500/20 border border-yellow-500/40' 
+                                                        : 'bg-emerald-500/10 border border-emerald-500/20 hover:bg-emerald-500/20'
+                                                ]">
+                                                    <span :class="['text-xs font-bold truncate pl-2', match.winner_id === match.player_two_id ? 'text-yellow-500' : 'text-emerald-400']">
                                                         {{ match.player_two || 'TBD' }}
                                                     </span>
                                                     <Trophy v-if="match.winner_id === match.player_two_id" class="w-3 h-3 text-yellow-500 shrink-0" />
@@ -543,9 +495,16 @@ const getStatusColor = (status: string) => {
                 <div v-else class="max-w-4xl mx-auto py-12">
                     <div class="grid grid-cols-1 gap-6">
                         <div v-for="match in selectedCategory.matches" :key="match.id" class="bg-white/2 border border-white/10 rounded-3xl p-6 flex items-center justify-between gap-8">
-                            <div class="flex-1 text-right">
-                                <div class="text-xs font-bold text-slate-500 mb-1">{{ match.player_one_club || 'Club' }}</div>
-                                <div :class="['text-lg font-serif font-bold', match.winner_id === match.player_one_id ? 'text-yellow-500' : 'text-white']">
+                            <div :class="[
+                                'flex-1 text-right p-4 rounded-2xl transition-all duration-300',
+                                match.winner_id === match.player_one_id 
+                                    ? 'bg-yellow-500/20 border border-yellow-500/40' 
+                                    : 'bg-blue-500/10 border border-blue-500/20'
+                            ]">
+                                <div :class="['text-xs font-bold mb-1', match.winner_id === match.player_one_id ? 'text-yellow-500/60' : 'text-blue-500/60']">
+                                    {{ match.player_one_club || 'Club' }}
+                                </div>
+                                <div :class="['text-lg font-serif font-bold italic', match.winner_id === match.player_one_id ? 'text-yellow-500' : 'text-blue-400']">
                                     {{ match.player_one || 'TBD' }}
                                 </div>
                             </div>
@@ -553,9 +512,16 @@ const getStatusColor = (status: string) => {
                                 <div class="text-[10px] font-black text-slate-700 uppercase tracking-widest">M{{ match.match_number }}</div>
                                 <div class="text-2xl font-serif font-black italic text-slate-800">VS</div>
                             </div>
-                            <div class="flex-1">
-                                <div class="text-xs font-bold text-slate-500 mb-1">{{ match.player_two_club || 'Club' }}</div>
-                                <div :class="['text-lg font-serif font-bold', match.winner_id === match.player_two_id ? 'text-yellow-500' : 'text-white']">
+                            <div :class="[
+                                'flex-1 p-4 rounded-2xl transition-all duration-300',
+                                match.winner_id === match.player_two_id 
+                                    ? 'bg-yellow-500/20 border border-yellow-500/40' 
+                                    : 'bg-emerald-500/10 border border-emerald-500/20'
+                            ]">
+                                <div :class="['text-xs font-bold mb-1', match.winner_id === match.player_two_id ? 'text-yellow-500/60' : 'text-emerald-500/60']">
+                                    {{ match.player_two_club || 'Club' }}
+                                </div>
+                                <div :class="['text-lg font-serif font-bold italic', match.winner_id === match.player_two_id ? 'text-yellow-500' : 'text-emerald-400']">
                                     {{ match.player_two || 'TBD' }}
                                 </div>
                             </div>

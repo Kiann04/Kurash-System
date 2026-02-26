@@ -41,7 +41,7 @@ const mainNavItems: NavItem[] = [
     },
     {
         title: 'Tournament Docs',
-        href: '/tournamentDocs',
+        href: route('admin.tournaments.docs'),
         icon: FileText,
     },
 ];

@@ -33,13 +33,28 @@ class TournamentController extends Controller
         return Inertia::render('public/TournamentShow', $this->getTournamentData($tournament));
     }
 
-    public function brackets(): Response
+    public function bracketsIndex(): Response
     {
-        $tournament = Tournament::query()
-            ->whereIn('status', ['ongoing', 'completed', 'open'])
+        $tournaments = Tournament::query()
             ->latest('tournament_date')
-            ->firstOrFail();
+            ->paginate(12)
+            ->through(function ($tournament) {
+                return [
+                    'id' => $tournament->id,
+                    'name' => $tournament->name,
+                    'tournament_date' => $tournament->tournament_date?->toDateString(),
+                    'status' => $tournament->status,
+                    'brackets_count' => $tournament->brackets()->count(),
+                ];
+            });
 
+        return Inertia::render('public/BracketsIndex', [
+            'tournaments' => $tournaments,
+        ]);
+    }
+
+    public function tournamentBrackets(Tournament $tournament): Response
+    {
         return Inertia::render('public/Brackets', $this->getTournamentData($tournament));
     }
 

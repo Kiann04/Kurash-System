@@ -3,8 +3,15 @@ import { Head, useForm } from '@inertiajs/vue3'
 import AppLayout from '@/layouts/AppLayout.vue'
 import { route } from 'ziggy-js'
 import { Button } from '@/components/ui/button'
-import { ref, computed, watch } from 'vue'
+import { ref, computed, watch, onMounted } from 'vue'
 import { type BreadcrumbItem } from '@/types'
+import {
+    Dialog,
+    DialogContent,
+    DialogHeader,
+    DialogTitle,
+    DialogFooter,
+} from '@/components/ui/dialog'
 
 interface Player {
     id: number
@@ -239,7 +246,19 @@ const selectedCategoryRegisteredCount = computed(() => {
 const isPlayerRegisteredAnywhere = (playerId: number) =>
     form.registrations.some((registration) => registration.player_id === playerId)
 
-const submit = () => form.post(route('admin.tournaments.store'))
+onMounted(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('name')) form.name = params.get('name') || '';
+    if (params.get('date')) form.tournament_date = params.get('date') || '';
+    if (params.get('status')) form.status = params.get('status') || 'draft';
+})
+
+const isConfirmModalOpen = ref(false)
+
+const submit = () => {
+    isConfirmModalOpen.value = false
+    form.post(route('admin.tournaments.store'))
+}
 </script>
 
 <template>
@@ -247,124 +266,194 @@ const submit = () => form.post(route('admin.tournaments.store'))
 <AppLayout :breadcrumbs="breadcrumbs">
 <div class="p-6 space-y-8">
 
-    <div class="border rounded-xl bg-white p-5 space-y-4">
-        <div class="flex items-center justify-between">
-            <h1 class="text-2xl font-bold">Create Tournament</h1>
-            <Button @click="submit" :disabled="form.processing">Save Tournament</Button>
-        </div>
-        <div class="grid gap-4 md:grid-cols-3">
+    <div class="border rounded-xl bg-white p-4">
+        <div class="flex items-start justify-between">
             <div class="space-y-1">
-                <label class="text-sm font-medium">Tournament Name</label>
-                <input v-model="form.name" placeholder="Tournament Name" class="w-full border rounded-lg p-2" />
-                <p v-if="form.errors.name" class="text-xs text-red-600">{{ form.errors.name }}</p>
+                <h1 class="text-xl font-bold">Create Tournament</h1>
+                <div class="flex flex-wrap items-center gap-x-3 gap-y-1 text-muted-foreground">
+                    <span class="text-sm font-semibold text-slate-900">{{ form.name }}</span>
+                    <span class="hidden sm:block h-3 w-px bg-slate-200"></span>
+                    <span class="text-xs">Date: {{ form.tournament_date }}</span>
+                    <span class="hidden sm:block h-3 w-px bg-slate-200"></span>
+                    <span class="text-xs flex items-center gap-1.5">
+                        Status: 
+                        <span class="capitalize px-1.5 py-0.5 rounded-full bg-slate-100 text-slate-700 text-[10px] font-medium border border-slate-200">{{ form.status }}</span>
+                    </span>
+                </div>
             </div>
-            <div class="space-y-1">
-                <label class="text-sm font-medium">Tournament Date</label>
-                <input type="date" v-model="form.tournament_date" class="w-full border rounded-lg p-2" />
-                <p v-if="form.errors.tournament_date" class="text-xs text-red-600">{{ form.errors.tournament_date }}</p>
-            </div>
-            <div class="space-y-1">
-                <label class="text-sm font-medium">Status</label>
-                <select v-model="form.status" class="w-full border rounded-lg p-2">
-                    <option value="draft">Draft</option>
-                    <option value="open">Open</option>
-                    <option value="ongoing">Ongoing</option>
-                    <option value="completed">Completed</option>
-                </select>
-                <p v-if="form.errors.status" class="text-xs text-red-600">{{ form.errors.status }}</p>
-            </div>
+            <Button @click="isConfirmModalOpen = true" :disabled="form.processing" size="sm" class="h-9">Save Tournament</Button>
         </div>
     </div>
 
+    <!-- Confirmation Modal -->
+    <Dialog v-model:open="isConfirmModalOpen">
+        <DialogContent class="sm:max-w-[500px]">
+            <DialogHeader>
+                <DialogTitle>Confirm Tournament Details</DialogTitle>
+            </DialogHeader>
+            <div class="space-y-4 py-4">
+                <div class="grid grid-cols-2 gap-4 text-sm">
+                    <div class="space-y-1">
+                        <p class="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Tournament Name</p>
+                        <p class="font-medium text-slate-900">{{ form.name }}</p>
+                    </div>
+                    <div class="space-y-1">
+                        <p class="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Date</p>
+                        <p class="font-medium text-slate-900">{{ form.tournament_date }}</p>
+                    </div>
+                    <div class="space-y-1">
+                        <p class="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Status</p>
+                        <p class="font-medium capitalize text-slate-900">{{ form.status }}</p>
+                    </div>
+                    <div class="space-y-1">
+                        <p class="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Total Registrations</p>
+                        <p class="font-medium text-slate-900">{{ totalRegistered }}</p>
+                    </div>
+                </div>
+
+                <div v-if="registeredCategorySummary.length > 0" class="space-y-2">
+                    <p class="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Category Summary</p>
+                    <div class="max-h-[200px] overflow-y-auto border rounded-lg">
+                        <table class="w-full text-xs">
+                            <thead class="bg-muted sticky top-0">
+                                <tr>
+                                    <th class="p-2 text-left">Category</th>
+                                    <th class="p-2 text-center">Players</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr v-for="item in registeredCategorySummary" :key="item.category_id" class="border-t">
+                                    <td class="p-2">{{ item.category_name }} ({{ item.age_category }} / {{ item.gender }})</td>
+                                    <td class="p-2 text-center">{{ item.player_count }}</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            <DialogFooter>
+                <Button variant="outline" @click="isConfirmModalOpen = false">Cancel</Button>
+                <Button @click="submit" :disabled="form.processing">Confirm & Save</Button>
+            </DialogFooter>
+        </DialogContent>
+    </Dialog>
+
     <div class="space-y-4">
-        <div class="flex flex-wrap justify-between items-center gap-3">
-            <h2 class="text-xl font-semibold">Category First Registration</h2>
-            <span class="text-sm text-muted-foreground">Total Registered: {{ totalRegistered }}</span>
-        </div>
+        <div class="grid grid-cols-1 lg:grid-cols-4 gap-6 items-start">
+            <!-- Left Side: Summary Stats -->
+            <div class="space-y-4">
+                <div class="flex items-center justify-between">
+                    <h2 class="text-lg font-semibold">Registration Stats</h2>
+                </div>
+                <div class="grid grid-cols-2 lg:grid-cols-1 gap-3">
+                    <div class="border rounded-lg p-3 bg-white shadow-sm">
+                        <p class="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground">Total Entries</p>
+                        <p class="text-xl font-bold">{{ totalRegistered }}</p>
+                    </div>
+                    <div class="border rounded-lg p-3 bg-white shadow-sm">
+                        <p class="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground">Unique Players</p>
+                        <p class="text-xl font-bold">{{ uniqueRegisteredPlayers }}</p>
+                    </div>
+                    <div class="border rounded-lg p-3 bg-white shadow-sm">
+                        <p class="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground">Categories Used</p>
+                        <p class="text-xl font-bold">{{ usedCategoryCount }}</p>
+                    </div>
+                    <div class="border rounded-lg p-3 bg-white shadow-sm">
+                        <p class="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground">Selected Entries</p>
+                        <p class="text-xl font-bold">{{ selectedCategoryRegisteredCount }}</p>
+                    </div>
+                </div>
+            </div>
 
-        <div class="grid gap-3 md:grid-cols-4">
-            <div class="border rounded-lg p-3 bg-white">
-                <p class="text-xs text-muted-foreground">Total Entries</p>
-                <p class="text-2xl font-semibold">{{ totalRegistered }}</p>
-            </div>
-            <div class="border rounded-lg p-3 bg-white">
-                <p class="text-xs text-muted-foreground">Unique Players</p>
-                <p class="text-2xl font-semibold">{{ uniqueRegisteredPlayers }}</p>
-            </div>
-            <div class="border rounded-lg p-3 bg-white">
-                <p class="text-xs text-muted-foreground">Categories Used</p>
-                <p class="text-2xl font-semibold">{{ usedCategoryCount }}</p>
-            </div>
-            <div class="border rounded-lg p-3 bg-white">
-                <p class="text-xs text-muted-foreground">Selected Category Entries</p>
-                <p class="text-2xl font-semibold">{{ selectedCategoryRegisteredCount }}</p>
-            </div>
-        </div>
+            <!-- Right Side: Registered Categories Table -->
+            <div class="lg:col-span-3 space-y-4">
+                <div class="flex flex-wrap justify-between items-center gap-3">
+                    <h2 class="text-lg font-semibold">Category First Registration</h2>
+                    <span class="text-xs font-medium text-muted-foreground px-2 py-1 bg-slate-100 rounded-md">Total Registered: {{ totalRegistered }}</span>
+                </div>
 
-        <div class="border rounded-lg overflow-hidden bg-white">
-            <table class="w-full text-sm">
-                <thead class="bg-muted/70">
-                    <tr>
-                        <th class="p-3 text-left">Gender</th>
-                        <th class="p-3 text-left">Age Category</th>
-                        <th class="p-3 text-left">Weight Category</th>
-                        <th class="p-3 text-center">Players</th>
-                        <th class="p-3 text-left">Who Registered</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr v-for="item in registeredCategorySummary" :key="item.category_id" class="border-t">
-                        <td class="p-3 capitalize">{{ item.gender }}</td>
-                        <td class="p-3">{{ item.age_category }}</td>
-                        <td class="p-3 font-medium">{{ item.category_name }}</td>
-                        <td class="p-3 text-center">{{ item.player_count }}</td>
-                        <td class="p-3">
-                            <button type="button" class="text-blue-600 hover:underline" @click="openSummary(item.category_id)">
-                                View {{ item.player_count }} player{{ item.player_count > 1 ? 's' : '' }}
-                            </button>
-                        </td>
-                    </tr>
-                    <tr v-if="registeredCategorySummary.length === 0">
-                        <td colspan="5" class="p-4 text-center text-muted-foreground">No category registrations yet.</td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
+                <div class="border rounded-lg overflow-hidden bg-white shadow-sm">
+                    <table class="w-full text-sm">
+                        <thead class="bg-slate-50 border-b border-slate-200">
+                            <tr>
+                                <th class="p-3 text-left font-semibold text-slate-700">Gender</th>
+                                <th class="p-3 text-left font-semibold text-slate-700">Age Category</th>
+                                <th class="p-3 text-left font-semibold text-slate-700">Weight Category</th>
+                                <th class="p-3 text-center font-semibold text-slate-700">Players</th>
+                                <th class="p-3 text-left font-semibold text-slate-700">Who Registered</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-100">
+                            <tr v-for="item in registeredCategorySummary" :key="item.category_id" class="hover:bg-slate-50 transition-colors">
+                                <td class="p-3 capitalize">{{ item.gender }}</td>
+                                <td class="p-3">{{ item.age_category }}</td>
+                                <td class="p-3 font-medium">{{ item.category_name }}</td>
+                                <td class="p-3 text-center">
+                                    <span class="inline-flex items-center justify-center w-8 h-8 rounded-full bg-blue-50 text-blue-700 font-bold text-xs">
+                                        {{ item.player_count }}
+                                    </span>
+                                </td>
+                                <td class="p-3">
+                                    <button type="button" class="text-xs font-semibold text-blue-600 hover:text-blue-800 flex items-center gap-1 group" @click="openSummary(item.category_id)">
+                                        <span>View Players</span>
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="group-hover:translate-x-0.5 transition-transform"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+                                    </button>
+                                </td>
+                            </tr>
+                            <tr v-if="registeredCategorySummary.length === 0">
+                                <td colspan="5" class="p-8 text-center text-muted-foreground italic bg-slate-50/50">
+                                    No category registrations yet. Select a category below to start adding players.
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
 
-        <div class="border rounded-xl bg-white p-4 grid gap-4 md:grid-cols-3">
-            <div class="space-y-1">
-                <label class="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Gender</label>
-                <select v-model="selectedGender" class="border rounded-lg p-2 w-full">
-                    <option v-for="gender in genderOptions" :key="gender" :value="gender">{{ gender }}</option>
-                </select>
-            </div>
-            <div class="space-y-1">
-                <label class="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Age Category</label>
-                <select v-model="selectedAgeCategoryId" class="border rounded-lg p-2 w-full">
-                    <option v-for="ageCategory in ageCategoryOptions" :key="ageCategory.id" :value="ageCategory.id">{{ ageCategory.name }}</option>
-                </select>
-            </div>
-            <div class="space-y-1">
-                <label class="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Weight Category</label>
-                <select v-model="selectedCategoryId" class="border rounded-lg p-2 w-full">
-                    <option v-for="category in weightCategoryOptions" :key="category.id" :value="category.id">{{ category.name }}</option>
-                </select>
-            </div>
-        </div>
+                <!-- Category Selectors Moved Here -->
+                <div class="border rounded-xl bg-white p-4 grid gap-4 md:grid-cols-3 shadow-sm">
+                    <div class="space-y-1">
+                        <label class="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground">Gender</label>
+                        <select v-model="selectedGender" class="border rounded-lg p-2 w-full text-sm">
+                            <option v-for="gender in genderOptions" :key="gender" :value="gender">{{ gender }}</option>
+                        </select>
+                    </div>
+                    <div class="space-y-1">
+                        <label class="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground">Age Category</label>
+                        <select v-model="selectedAgeCategoryId" class="border rounded-lg p-2 w-full text-sm">
+                            <option v-for="ageCategory in ageCategoryOptions" :key="ageCategory.id" :value="ageCategory.id">{{ ageCategory.name }}</option>
+                        </select>
+                    </div>
+                    <div class="space-y-1">
+                        <label class="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground">Weight Category</label>
+                        <select v-model="selectedCategoryId" class="border rounded-lg p-2 w-full text-sm">
+                            <option v-for="category in weightCategoryOptions" :key="category.id" :value="category.id">{{ category.name }}</option>
+                        </select>
+                    </div>
+                </div>
 
-        <div v-if="selectedCategory" class="text-sm border rounded-lg bg-blue-50 border-blue-200 px-3 py-2">
-            Assigning players to
-            <strong>{{ selectedCategory.name }}</strong>
-            <span class="text-muted-foreground">({{ selectedCategory.age_category_name }} / {{ selectedCategory.gender }})</span>
-        </div>
-
-        <div class="flex gap-3 max-w-xl">
-            <input v-model="search" placeholder="Search player by name or club..." class="border rounded-lg p-2 w-full" />
-            <select v-model="playerGenderFilter" class="border rounded-lg p-2 w-36">
-                <option value="all">All</option>
-                <option value="male">Male</option>
-                <option value="female">Female</option>
-            </select>
+                <!-- Assignment Banner, Search Bar, and Gender Filter Row -->
+                <div class="flex flex-wrap items-center gap-3">
+                    <div v-if="selectedCategory" class="flex-1 min-w-[200px] text-xs border rounded-lg bg-blue-50/50 border-blue-200 px-3 py-2 flex items-center gap-1.5 shadow-sm">
+                        <span class="text-blue-700 font-medium">Assigning:</span>
+                        <strong class="text-blue-900">{{ selectedCategory.name }}</strong>
+                        <span class="text-blue-600/70 text-[10px]">({{ selectedCategory.age_category_name }} / {{ selectedCategory.gender }})</span>
+                    </div>
+                    
+                    <div class="flex-1 flex gap-2 min-w-[300px]">
+                        <div class="relative flex-1">
+                            <div class="absolute inset-y-0 left-0 pl-2.5 flex items-center pointer-events-none text-muted-foreground">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+                            </div>
+                            <input v-model="search" placeholder="Search player by name or club..." class="border rounded-lg py-2 pl-8 pr-3 w-full text-sm shadow-sm focus:ring-1 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all" />
+                        </div>
+                        <select v-model="playerGenderFilter" class="border rounded-lg p-2 text-sm w-32 shadow-sm focus:ring-1 focus:ring-blue-500 outline-none transition-all">
+                            <option value="all">All Genders</option>
+                            <option value="male">Male</option>
+                            <option value="female">Female</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
         </div>
 
         <div class="border rounded-lg overflow-hidden bg-white">

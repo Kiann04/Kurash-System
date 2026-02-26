@@ -157,9 +157,10 @@ const navItems = [
         <nav class="hidden lg:flex items-center gap-1 xl:gap-2 text-[10px] xl:text-xs font-bold tracking-widest uppercase h-full">
           <template v-for="item in navItems" :key="item.name">
             <a 
-              :href="item.route ? route(item.route) : '#'"
+              v-if="item.route"
+              :href="route(item.route)"
               :class="[
-                'relative h-full flex items-center px-2 transition-all duration-300 group whitespace-nowrap',
+                'relative h-full flex items-center px-4 transition-all duration-300 group whitespace-nowrap',
                 item.route === 'public.home' ? 'text-yellow-500' : 'text-gray-400 hover:text-white'
               ]"
             >
@@ -170,6 +171,14 @@ const navItems = [
                   item.route === 'public.home' ? 'w-full' : 'w-0 group-hover:w-full'
                 ]"
               ></span>
+            </a>
+            <a 
+              v-else
+              href="#" 
+              class="relative h-full flex items-center px-4 transition-all duration-300 group whitespace-nowrap text-gray-400 hover:text-white"
+            >
+              {{ item.name }}
+              <span class="absolute bottom-0 left-0 h-0.5 bg-yellow-500 transition-all duration-300 ease-out shadow-[0_0_10px_rgba(234,179,8,0.5)] w-0 group-hover:w-full"></span>
             </a>
           </template>
         </nav>
@@ -202,8 +211,8 @@ const navItems = [
            <!-- Background Image -->
            <div class="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1555597673-b21d5c935865?q=80&w=2000&auto=format&fit=crop')] bg-cover bg-center transition-transform duration-1000 group-hover:scale-105"></div>
            <div class="absolute inset-0 bg-linear-to-t from-[#050a14] via-[#050a14]/40 to-transparent"></div>
-         
-         <!-- Content -->
+           
+           <!-- Content -->
         <div class="absolute bottom-0 left-0 w-full p-10 md:p-20 z-10">
             <div class="max-w-4xl">
                 <div class="flex items-center gap-4 mb-6">

@@ -21,6 +21,18 @@ class TournamentController extends Controller
         ]);
     }
 
+    public function docs()
+    {
+        $tournaments = Tournament::query()
+            ->withCount(['registrations', 'brackets'])
+            ->latest()
+            ->get(['id', 'name', 'tournament_date', 'status']);
+
+        return Inertia::render('admin/tournament/Docs', [
+            'tournaments' => $tournaments,
+        ]);
+    }
+
     public function create()
     {
         $players = $this->mapPlayers();

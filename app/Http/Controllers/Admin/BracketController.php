@@ -115,6 +115,10 @@ class BracketController extends Controller
 
     public function show(Tournament $tournament): Response
     {
+        // Auto-advance any stuck BYE matches every time the bracket is viewed
+        // This ensures existing brackets get fixed automatically
+        $this->autoAdvanceAllByes($tournament);
+
         $categoryParticipants = $tournament->registrations()
             ->with([
                 'player:id,gender',
@@ -223,20 +227,28 @@ class BracketController extends Controller
             return back()->with('error', 'Cannot advance matches for a completed tournament.');
         }
 
-        $validated = $request->validate([
-            'winner_id' => 'required|exists:players,id',
-        ]);
+        // If it's a BYE match, we don't need a winner_id from the request
+        $isBye = ($match->player_one_id === null && $match->player_two_id !== null) ||
+                 ($match->player_one_id !== null && $match->player_two_id === null);
 
-        $winnerId = (int) $validated['winner_id'];
-        $allowedWinnerIds = array_filter([
-            $match->player_one_id,
-            $match->player_two_id,
-        ]);
-
-        if (!in_array($winnerId, $allowedWinnerIds, true)) {
-            throw ValidationException::withMessages([
-                'winner_id' => ['Winner must be one of the players in this match.'],
+        if ($isBye) {
+            $winnerId = $match->player_one_id ?? $match->player_two_id;
+        } else {
+            $validated = $request->validate([
+                'winner_id' => 'required|exists:players,id',
             ]);
+
+            $winnerId = (int) $validated['winner_id'];
+            $allowedWinnerIds = array_filter([
+                $match->player_one_id,
+                $match->player_two_id,
+            ]);
+
+            if (!in_array($winnerId, $allowedWinnerIds, true)) {
+                throw ValidationException::withMessages([
+                    'winner_id' => ['Winner must be one of the players in this match.'],
+                ]);
+            }
         }
 
         DB::transaction(function () use ($match, $winnerId) {
@@ -320,7 +332,7 @@ class BracketController extends Controller
         }
 
         $matchesCreated = 0;
-        $firstRoundMatches = (int) ($size / 2);
+        $firstRoundMatchesCount = (int) ($size / 2);
         $halfSize = (int) ($size / 2);
 
         [$eastParticipants, $westParticipants] = $this->splitByRegion($participants, $halfSize);
@@ -329,12 +341,15 @@ class BracketController extends Controller
         $westPairs = $this->buildFirstRoundPairs($westParticipants, $halfSize);
         $firstRoundPairs = array_merge($eastPairs, $westPairs);
 
-        for ($i = 0; $i < $firstRoundMatches; $i++) {
+        // 1. Create ALL matches for all rounds first (empty)
+        // Round 1
+        $firstRoundMatches = [];
+        for ($i = 0; $i < $firstRoundMatchesCount; $i++) {
             $pair = $firstRoundPairs[$i] ?? [null, null];
             $playerOneId = $pair[0]['id'] ?? null;
             $playerTwoId = $pair[1]['id'] ?? null;
 
-            TournamentMatch::create([
+            $match = TournamentMatch::create([
                 'bracket_id' => $bracketId,
                 'round_number' => 1,
                 'match_number' => $i + 1,
@@ -342,12 +357,13 @@ class BracketController extends Controller
                 'player_two_id' => $playerTwoId,
                 'status' => 'scheduled',
             ]);
-
+            $firstRoundMatches[] = $match;
             $matchesCreated++;
         }
 
+        // Subsequent rounds
         $round = 2;
-        $matchesInRound = (int) ($firstRoundMatches / 2);
+        $matchesInRound = (int) ($firstRoundMatchesCount / 2);
         while ($matchesInRound >= 1) {
             for ($matchNumber = 1; $matchNumber <= $matchesInRound; $matchNumber++) {
                 TournamentMatch::create([
@@ -366,10 +382,28 @@ class BracketController extends Controller
             $matchesInRound = (int) ($matchesInRound / 2);
         }
 
+        // 2. Now that all matches exist, trigger auto-advancement for Round 1
+        foreach ($firstRoundMatches as $match) {
+            $p1 = $match->player_one_id;
+            $p2 = $match->player_two_id;
+
+            if ($p1 === null && $p2 === null) {
+                // 0 players: complete with no winner
+                $match->update(['status' => 'completed', 'winner_id' => null]);
+                $this->advanceWinnerToNextRound($match, null);
+            } elseif ($p1 === null || $p2 === null) {
+                // 1 player: BYE
+                $winnerId = $p1 ?? $p2;
+                $match->update(['status' => 'completed', 'winner_id' => $winnerId]);
+                $this->advanceWinnerToNextRound($match, $winnerId);
+            }
+            // 2 players: leave scheduled
+        }
+
         return $matchesCreated;
     }
 
-    private function advanceWinnerToNextRound(TournamentMatch $match, int $winnerId): void
+    private function advanceWinnerToNextRound(TournamentMatch $match, ?int $winnerId): void
     {
         $bracket = $match->bracket;
         if (!$bracket) {
@@ -394,6 +428,106 @@ class BracketController extends Controller
 
         $slot = $match->match_number % 2 === 1 ? 'player_one_id' : 'player_two_id';
         $nextMatch->update([$slot => $winnerId]);
+
+        // After updating the slot (even if with NULL), check if the next match is now a BYE
+        $this->checkAndAdvanceIfBye($nextMatch);
+    }
+
+    private function checkAndAdvanceIfBye(TournamentMatch $match): void
+    {
+        if ($match->bracket?->format !== 'single_elimination') {
+            return;
+        }
+
+        if ($match->status === 'completed') {
+            return;
+        }
+
+        $p1 = $match->player_one_id;
+        $p2 = $match->player_two_id;
+
+        // A match can be auto-completed if its source matches are already done.
+        // For Round 1, source matches don't exist, but they are handled at creation.
+        if ($match->round_number === 1) {
+            return; 
+        }
+
+        $sourceMatch1 = $this->getSourceMatch($match, 1);
+        $sourceMatch2 = $this->getSourceMatch($match, 2);
+
+        // If a source match doesn't exist (shouldn't happen in single elimination), 
+        // we treat it as completed with no winner.
+        $s1Completed = !$sourceMatch1 || $sourceMatch1->status === 'completed';
+        $s2Completed = !$sourceMatch2 || $sourceMatch2->status === 'completed';
+
+        if ($s1Completed && $s2Completed) {
+            // Both source matches are done. 
+            // If both slots are now filled with players, it's a real match - don't auto-advance.
+            if ($p1 !== null && $p2 !== null) {
+                return;
+            }
+            
+            // If at least one slot is NULL, it's a BYE (or a dead match if both are NULL).
+            $winnerId = $p1 ?? $p2;
+            
+            DB::transaction(function () use ($match, $winnerId) {
+                $match->update([
+                    'winner_id' => $winnerId,
+                    'status' => 'completed',
+                ]);
+                $this->advanceWinnerToNextRound($match, $winnerId);
+            });
+        }
+    }
+
+    private function getSourceMatch(TournamentMatch $match, int $slot): ?TournamentMatch
+    {
+        if ($match->round_number <= 1) {
+            return null;
+        }
+
+        $prevRound = $match->round_number - 1;
+        $sourceMatchNumber = ($match->match_number * 2) - ($slot === 1 ? 1 : 0);
+
+        return TournamentMatch::where('bracket_id', $match->bracket_id)
+            ->where('round_number', $prevRound)
+            ->where('match_number', $sourceMatchNumber)
+            ->first();
+    }
+
+    private function autoAdvanceAllByes(Tournament $tournament): void
+    {
+        $matches = TournamentMatch::query()
+            ->whereHas('bracket', function ($query) use ($tournament) {
+                $query->where('tournament_id', $tournament->id)
+                      ->where('format', 'single_elimination');
+            })
+            ->orderBy('round_number')
+            ->orderBy('match_number')
+            ->get();
+
+        foreach ($matches as $match) {
+            if ($match->status === 'completed') {
+                // If completed, ensure winner is advanced (sync/heal)
+                $this->advanceWinnerToNextRound($match, $match->winner_id);
+            } else {
+                // If scheduled, check if it can be auto-completed (BYE)
+                if ($match->round_number === 1) {
+                    // Round 1 special case (handled primarily at generation, but heal here)
+                    $p1 = $match->player_one_id;
+                    $p2 = $match->player_two_id;
+                    if ($p1 === null || $p2 === null) {
+                        $winnerId = $p1 ?? $p2;
+                        DB::transaction(function () use ($match, $winnerId) {
+                            $match->update(['status' => 'completed', 'winner_id' => $winnerId]);
+                            $this->advanceWinnerToNextRound($match, $winnerId);
+                        });
+                    }
+                } else {
+                    $this->checkAndAdvanceIfBye($match);
+                }
+            }
+        }
     }
 
     private function splitByRegion(array $participants, int $halfSize): array
