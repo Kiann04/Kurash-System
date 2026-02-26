@@ -30,13 +30,28 @@ class TournamentController extends Controller
 
     public function show(Tournament $tournament): Response
     {
+        return Inertia::render('public/TournamentShow', $this->getTournamentData($tournament));
+    }
+
+    public function brackets(): Response
+    {
+        $tournament = Tournament::query()
+            ->whereIn('status', ['ongoing', 'completed', 'open'])
+            ->latest('tournament_date')
+            ->firstOrFail();
+
+        return Inertia::render('public/Brackets', $this->getTournamentData($tournament));
+    }
+
+    private function getTournamentData(Tournament $tournament): array
+    {
         $tournament->load([
             'brackets.ageCategory:id,name',
             'brackets.weightCategory:id,name',
             'brackets.matches' => function ($query) {
                 $query->with([
-                    'playerOne:id,full_name',
-                    'playerTwo:id,full_name',
+                    'playerOne:id,full_name,club,profile_image',
+                    'playerTwo:id,full_name,club,profile_image',
                     'winner:id,full_name',
                 ])->orderBy('round_number')->orderBy('match_number');
             },
@@ -65,7 +80,11 @@ class TournamentController extends Controller
                             'match_number' => $match->match_number,
                             'status' => $match->status,
                             'player_one' => $match->playerOne?->full_name,
+                            'player_one_club' => $match->playerOne?->club,
+                            'player_one_image' => $match->playerOne?->profile_image,
                             'player_two' => $match->playerTwo?->full_name,
+                            'player_two_club' => $match->playerTwo?->club,
+                            'player_two_image' => $match->playerTwo?->profile_image,
                             'winner' => $match->winner?->full_name,
                             'player_one_id' => $match->player_one_id,
                             'player_two_id' => $match->player_two_id,
@@ -77,7 +96,7 @@ class TournamentController extends Controller
             ->sortBy(['gender', 'age_category', 'weight_category'])
             ->values();
 
-        return Inertia::render('public/TournamentShow', [
+        return [
             'tournament' => [
                 'id' => $tournament->id,
                 'name' => $tournament->name,
@@ -85,6 +104,6 @@ class TournamentController extends Controller
                 'status' => $tournament->status,
             ],
             'categories' => $categories,
-        ]);
+        ];
     }
 }

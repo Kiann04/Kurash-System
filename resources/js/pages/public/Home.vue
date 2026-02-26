@@ -1,8 +1,14 @@
 
-<script setup>
+<script setup lang="ts">
 import { Head } from '@inertiajs/vue3';
 
-const route = window.route;
+declare global {
+  interface Window {
+    route: any;
+  }
+}
+
+const route = window.route || ((name: string) => name);
 import { 
   Search, 
   Instagram, 
@@ -14,6 +20,46 @@ import {
   Medal
 } from 'lucide-vue-next';
 import { ref, computed } from 'vue';
+
+const props = defineProps<{
+    players?: any[]
+}>();
+
+const getRankColor = (rank: number) => {
+    if (rank === 1) return 'text-yellow-400'
+    if (rank === 2) return 'text-gray-300'
+    if (rank === 3) return 'text-amber-600'
+    return 'text-slate-500'
+}
+
+const rankings = computed(() => {
+    const players = props.players || [];
+    const male = players
+        .filter(p => p.gender?.toLowerCase() === 'male')
+        .sort((a, b) => b.points - a.points)
+        .slice(0, 5)
+        .map((p, index) => ({
+            rank: index + 1,
+            name: p.full_name || p.name,
+            team: p.club,
+            points: p.points || 0,
+            image: p.profile_image ? `/storage/${p.profile_image}` : '/images/default-profile.svg'
+        }));
+
+    const female = players
+        .filter(p => p.gender?.toLowerCase() === 'female')
+        .sort((a, b) => b.points - a.points)
+        .slice(0, 5)
+        .map((p, index) => ({
+            rank: index + 1,
+            name: p.full_name || p.name,
+            team: p.club,
+            points: p.points || 0,
+            image: p.profile_image ? `/storage/${p.profile_image}` : '/images/default-profile.svg'
+        }));
+
+    return { male, female };
+});
 
 const eventData = {
   'Kids': {
@@ -75,23 +121,18 @@ const selectedCategory = ref('');
 const selectedGender = ref('');
 const selectedWeight = ref('');
 
-const currentView = ref('home');
-
 const navItems = [
     { name: 'Home', route: 'public.home' },
+    { name: 'About' },
     { name: 'Anti-doping' },
     { name: 'Tournaments', route: 'public.tournaments.index' },
     { name: 'Rankings', route: 'public.rankings.index' },
+    { name: 'Bracket', route: 'public.brackets.index' },
     { name: 'Academies' },
     { name: 'Athletes', route: 'public.athletes.index' },
     { name: 'Rules' },
     { name: 'News' },
 ];
-
-const activeRoute = computed(() => {
-    if (currentView.value === 'rankings') return 'Rankings';
-    return 'Home';
-});
 </script>
 
 <template>
@@ -113,38 +154,20 @@ const activeRoute = computed(() => {
         </a>
 
         <!-- Navigation -->
-        <nav class="hidden lg:flex items-center gap-2 xl:gap-4 text-[10px] xl:text-xs font-bold tracking-widest uppercase h-full">
+        <nav class="hidden lg:flex items-center gap-1 xl:gap-2 text-[10px] xl:text-xs font-bold tracking-widest uppercase h-full">
           <template v-for="item in navItems" :key="item.name">
             <a 
-              v-if="item.route"
-              :href="route(item.route)"
+              :href="item.route ? route(item.route) : '#'"
               :class="[
-                'relative h-full flex items-center px-4 transition-all duration-300 group whitespace-nowrap',
-                item.route === 'public.home' && currentView === 'home' ? 'text-yellow-500' : 'text-gray-400 hover:text-white'
+                'relative h-full flex items-center px-2 transition-all duration-300 group whitespace-nowrap',
+                item.route === 'public.home' ? 'text-yellow-500' : 'text-gray-400 hover:text-white'
               ]"
             >
               {{ item.name }}
               <span 
                 :class="[
                   'absolute bottom-0 left-0 h-0.5 bg-yellow-500 transition-all duration-300 ease-out shadow-[0_0_10px_rgba(234,179,8,0.5)]',
-                  item.route === 'public.home' && currentView === 'home' ? 'w-full' : 'w-0 group-hover:w-full'
-                ]"
-              ></span>
-            </a>
-            <a 
-              v-else
-              href="#" 
-              @click.prevent="item.name === 'Rankings' ? currentView = 'rankings' : null"
-              :class="[
-                'relative h-full flex items-center px-4 transition-all duration-300 group whitespace-nowrap',
-                (item.name === 'Rankings' && currentView === 'rankings') ? 'text-yellow-500' : 'text-gray-400 hover:text-white'
-              ]"
-            >
-              {{ item.name }}
-              <span 
-                :class="[
-                  'absolute bottom-0 left-0 h-0.5 bg-yellow-500 transition-all duration-300 ease-out shadow-[0_0_10px_rgba(234,179,8,0.5)]',
-                  (item.name === 'Rankings' && currentView === 'rankings') ? 'w-full' : 'w-0 group-hover:w-full'
+                  item.route === 'public.home' ? 'w-full' : 'w-0 group-hover:w-full'
                 ]"
               ></span>
             </a>
@@ -164,7 +187,7 @@ const activeRoute = computed(() => {
         </div>
       </div>
       <!-- Gold Line -->
-      <div class="absolute bottom-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-yellow-500/50 to-transparent"></div>
+      <div class="absolute bottom-0 left-0 w-full h-px bg-linear-to-r from-transparent via-yellow-500/50 to-transparent"></div>
     </header>
 
     <!-- Main Content -->
@@ -173,12 +196,12 @@ const activeRoute = computed(() => {
         <div class="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-3xl h-64 bg-blue-900/20 blur-[100px] rounded-full pointer-events-none"></div>
 
       <!-- Home View Content -->
-      <div v-show="currentView === 'home'" class="space-y-24">
-      <!-- Hero Section -->
-      <div class="relative w-full h-[700px] mb-12 rounded-[40px] overflow-hidden group shadow-2xl">
-         <!-- Background Image -->
-         <div class="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1555597673-b21d5c935865?q=80&w=2000&auto=format&fit=crop')] bg-cover bg-center transition-transform duration-1000 group-hover:scale-105"></div>
-         <div class="absolute inset-0 bg-gradient-to-t from-[#050a14] via-[#050a14]/40 to-transparent"></div>
+      <div class="space-y-24">
+        <!-- Hero Section -->
+        <div class="relative w-full h-175 mb-12 rounded-4xl overflow-hidden group shadow-2xl">
+           <!-- Background Image -->
+           <div class="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1555597673-b21d5c935865?q=80&w=2000&auto=format&fit=crop')] bg-cover bg-center transition-transform duration-1000 group-hover:scale-105"></div>
+           <div class="absolute inset-0 bg-linear-to-t from-[#050a14] via-[#050a14]/40 to-transparent"></div>
          
          <!-- Content -->
         <div class="absolute bottom-0 left-0 w-full p-10 md:p-20 z-10">
@@ -209,26 +232,6 @@ const activeRoute = computed(() => {
          </div>
       </div>
 
-      <!-- Stats Section -->
-      <div class="grid grid-cols-2 md:grid-cols-4 gap-8 mb-24 py-12 border-y border-white/5">
-          <div class="text-center group cursor-default">
-              <div class="text-4xl md:text-5xl font-serif font-bold text-white mb-2 group-hover:text-yellow-500 transition-colors">XX+</div>
-              <div class="text-[10px] text-slate-500 uppercase tracking-[0.3em] font-black">Statistic Label</div>
-          </div>
-          <div class="text-center group cursor-default">
-              <div class="text-4xl md:text-5xl font-serif font-bold text-white mb-2 group-hover:text-yellow-500 transition-colors">XXK+</div>
-              <div class="text-[10px] text-slate-500 uppercase tracking-[0.3em] font-black">Statistic Label</div>
-          </div>
-          <div class="text-center group cursor-default">
-              <div class="text-4xl md:text-5xl font-serif font-bold text-white mb-2 group-hover:text-yellow-500 transition-colors">XXXX+</div>
-              <div class="text-[10px] text-slate-500 uppercase tracking-[0.3em] font-black">Statistic Label</div>
-          </div>
-          <div class="text-center group cursor-default">
-              <div class="text-4xl md:text-5xl font-serif font-bold text-white mb-2 group-hover:text-yellow-500 transition-colors">24/7</div>
-              <div class="text-[10px] text-slate-500 uppercase tracking-[0.3em] font-black">Statistic Label</div>
-          </div>
-      </div>
-
       <!-- Upcoming Events -->
       <div class="mb-24">
           <div class="flex items-end justify-between mb-12 border-b border-slate-800 pb-6">
@@ -244,13 +247,13 @@ const activeRoute = computed(() => {
 
           <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
               <!-- Event Card 1 -->
-              <div class="group bg-[#0f172a] rounded-[32px] border border-slate-800/50 overflow-hidden hover:border-yellow-500/50 transition-all duration-500 hover:shadow-[0_20px_50px_rgba(234,179,8,0.1)] flex flex-col">
+              <div class="group bg-[#0f172a] rounded-4xl border border-slate-800/50 overflow-hidden hover:border-yellow-500/50 transition-all duration-500 hover:shadow-[0_20px_50px_rgba(234,179,8,0.1)] flex flex-col">
                   <div class="h-56 bg-slate-800 relative overflow-hidden">
                       <div class="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1599058917233-3583e71f462c?q=80&w=600&auto=format&fit=crop')] bg-cover bg-center opacity-70 group-hover:scale-110 transition-transform duration-1000"></div>
                       <div class="absolute top-6 right-6 bg-yellow-500 text-black font-black px-4 py-1 rounded-full text-[10px] uppercase tracking-widest">
                           Label
                       </div>
-                      <div class="absolute inset-0 bg-gradient-to-t from-[#0f172a] to-transparent opacity-60"></div>
+                      <div class="absolute inset-0 bg-linear-to-t from-[#0f172a] to-transparent opacity-60"></div>
                   </div>
                   <div class="p-8 flex-1 flex flex-col">
                       <div class="text-yellow-500 font-black text-[10px] uppercase tracking-[0.2em] mb-4">DD/MM - DD/MM, YYYY</div>
@@ -266,10 +269,10 @@ const activeRoute = computed(() => {
               </div>
 
                <!-- Event Card 2 -->
-              <div class="group bg-[#0f172a] rounded-[32px] border border-slate-800/50 overflow-hidden hover:border-yellow-500/50 transition-all duration-500 hover:shadow-[0_20px_50px_rgba(234,179,8,0.1)] flex flex-col">
+              <div class="group bg-[#0f172a] rounded-4xl border border-slate-800/50 overflow-hidden hover:border-yellow-500/50 transition-all duration-500 hover:shadow-[0_20px_50px_rgba(234,179,8,0.1)] flex flex-col">
                   <div class="h-56 bg-slate-800 relative overflow-hidden">
                       <div class="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?q=80&w=600&auto=format&fit=crop')] bg-cover bg-center opacity-70 group-hover:scale-110 transition-transform duration-1000"></div>
-                      <div class="absolute inset-0 bg-gradient-to-t from-[#0f172a] to-transparent opacity-60"></div>
+                      <div class="absolute inset-0 bg-linear-to-t from-[#0f172a] to-transparent opacity-60"></div>
                   </div>
                   <div class="p-8 flex-1 flex flex-col">
                       <div class="text-yellow-500 font-black text-[10px] uppercase tracking-[0.2em] mb-4">DD/MM - DD/MM, YYYY</div>
@@ -285,13 +288,13 @@ const activeRoute = computed(() => {
               </div>
 
                <!-- Event Card 3 -->
-              <div class="group bg-[#0f172a] rounded-[32px] border border-slate-800/50 overflow-hidden hover:border-yellow-500/50 transition-all duration-500 hover:shadow-[0_20px_50px_rgba(234,179,8,0.1)] flex flex-col">
+              <div class="group bg-[#0f172a] rounded-4xl border border-slate-800/50 overflow-hidden hover:border-yellow-500/50 transition-all duration-500 hover:shadow-[0_20px_50px_rgba(234,179,8,0.1)] flex flex-col">
                   <div class="h-56 bg-slate-800 relative overflow-hidden">
                       <div class="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1591117207239-788cd859dcb7?q=80&w=600&auto=format&fit=crop')] bg-cover bg-center opacity-70 group-hover:scale-110 transition-transform duration-1000"></div>
                       <div class="absolute top-6 right-6 bg-yellow-500 text-black font-black px-4 py-1 rounded-full text-[10px] uppercase tracking-widest">
                           Label
                       </div>
-                      <div class="absolute inset-0 bg-gradient-to-t from-[#0f172a] to-transparent opacity-60"></div>
+                      <div class="absolute inset-0 bg-linear-to-t from-[#0f172a] to-transparent opacity-60"></div>
                   </div>
                   <div class="p-8 flex-1 flex flex-col">
                       <div class="text-yellow-500 font-black text-[10px] uppercase tracking-[0.2em] mb-4">DD/MM - DD/MM, YYYY</div>
@@ -307,10 +310,10 @@ const activeRoute = computed(() => {
               </div>
 
               <!-- Event Card 4 -->
-              <div class="group bg-[#0f172a] rounded-[32px] border border-slate-800/50 overflow-hidden hover:border-yellow-500/50 transition-all duration-500 hover:shadow-[0_20px_50px_rgba(234,179,8,0.1)] flex flex-col">
+              <div class="group bg-[#0f172a] rounded-4xl border border-slate-800/50 overflow-hidden hover:border-yellow-500/50 transition-all duration-500 hover:shadow-[0_20px_50px_rgba(234,179,8,0.1)] flex flex-col">
                   <div class="h-56 bg-slate-800 relative overflow-hidden">
                       <div class="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1508672019048-805c876b67e2?q=80&w=600&auto=format&fit=crop')] bg-cover bg-center opacity-70 group-hover:scale-110 transition-transform duration-1000"></div>
-                      <div class="absolute inset-0 bg-gradient-to-t from-[#0f172a] to-transparent opacity-60"></div>
+                      <div class="absolute inset-0 bg-linear-to-t from-[#0f172a] to-transparent opacity-60"></div>
                   </div>
                   <div class="p-8 flex-1 flex flex-col">
                       <div class="text-yellow-500 font-black text-[10px] uppercase tracking-[0.2em] mb-4">DD/MM - DD/MM, YYYY</div>
@@ -324,20 +327,6 @@ const activeRoute = computed(() => {
                       </div>
                   </div>
               </div>
-          </div>
-      </div>
-
-      <!-- Partners Section -->
-      <div class="mb-24 py-12 border-y border-white/5 overflow-hidden">
-          <div class="text-center mb-10">
-              <div class="text-[10px] text-slate-500 uppercase tracking-[0.4em] font-black">Official Global Partners</div>
-          </div>
-          <div class="flex flex-wrap justify-center items-center gap-12 md:gap-24 opacity-30 hover:opacity-60 transition-opacity duration-500 grayscale hover:grayscale-0">
-              <div class="text-2xl font-black tracking-tighter text-white">PARTNER</div>
-              <div class="text-2xl font-black tracking-tighter text-white">PARTNER</div>
-              <div class="text-2xl font-black tracking-tighter text-white">PARTNER</div>
-              <div class="text-2xl font-black tracking-tighter text-white">PARTNER</div>
-              <div class="text-2xl font-black tracking-tighter text-white">PARTNER</div>
           </div>
       </div>
 
@@ -408,67 +397,117 @@ const activeRoute = computed(() => {
           </div>
       </div>
 
-      <!-- Rankings Section (Existing) -->
-      <section class="mb-24">
-         <div class="text-center mb-12">
-            <h2 class="text-4xl font-serif font-bold text-white mb-4">Top 10 Athletes</h2>
-            <p class="text-slate-400">Current Standings Season YYYY/YYYY</p>
+      <!-- Rankings Section -->
+      <section class="mb-24 relative overflow-hidden">
+         <!-- Section Header -->
+         <div class="flex flex-col md:flex-row md:items-end justify-between mb-16 gap-6">
+            <div class="relative">
+                <div class="flex items-center gap-3 text-yellow-500 font-black uppercase tracking-[0.3em] text-[10px] mb-4">
+                   <div class="h-px w-8 bg-yellow-500"></div>
+                   World Standings
+                </div>
+                <h2 class="text-5xl md:text-6xl font-serif font-bold text-white leading-none">
+                    TOP 5 <span class="text-yellow-500 italic">ATHLETES</span>
+                </h2>
+            </div>
+            <a :href="route('public.rankings.index')" class="bg-white/5 hover:bg-white/10 backdrop-blur-md text-white border border-white/20 font-black py-4 px-10 rounded-2xl transition-all uppercase tracking-widest text-xs flex items-center gap-3 group">
+                View Full Rankings
+                <span class="transform group-hover:translate-x-1 transition-transform">→</span>
+            </a>
          </div>
 
-      <!-- Athlete Grid -->
-      <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 mt-12">
-           <!-- Male Column -->
-           <div class="space-y-4">
-               <div class="flex items-center gap-4 mb-8">
-                   <h3 class="text-2xl font-bold text-white uppercase tracking-widest">Male</h3>
-                   <div class="h-px flex-1 bg-slate-800"></div>
-               </div>
-               <div v-for="athlete in rankings.male" :key="athlete.rank" class="flex items-center p-4 rounded-xl hover:bg-white/5 transition-colors border border-transparent hover:border-white/10 group">
-                   <div class="w-16 text-center shrink-0">
-                       <div class="text-3xl font-black italic" :class="getRankColor(athlete.rank)">#{{ athlete.rank }}</div>
+         <!-- Athlete Grid -->
+         <div class="grid grid-cols-1 lg:grid-cols-2 gap-12">
+           <!-- Male Column (Blue) -->
+           <div class="relative group">
+               <!-- Header Decor -->
+               <div class="flex items-center gap-4 mb-10">
+                   <div class="w-12 h-12 rounded-2xl bg-blue-600/20 flex items-center justify-center border border-blue-600/30">
+                       <Trophy class="w-6 h-6 text-blue-500" />
                    </div>
-                   <div class="relative mr-8 shrink-0">
-                       <div class="w-32 h-44 rounded-lg overflow-hidden border-2 border-slate-600 group-hover:border-blue-500 transition-colors shadow-xl">
-                           <img :src="athlete.image" class="w-full h-full object-cover" alt="Athlete" />
+                   <h3 class="text-3xl font-serif font-bold text-white uppercase tracking-wider italic">Male</h3>
+                   <div class="h-px flex-1 bg-linear-to-r from-blue-600/50 to-transparent"></div>
+               </div>
+
+               <div class="space-y-4">
+                   <div v-for="athlete in rankings.male" :key="athlete.rank" 
+                        class="relative flex items-center p-4 rounded-3xl bg-[#0f172a]/50 border border-slate-800/50 hover:border-blue-500/50 transition-all duration-500 group/card hover:shadow-[0_15px_40px_rgba(37,99,235,0.15)] overflow-hidden">
+                       <!-- Rank Badge -->
+                       <div class="w-14 text-center shrink-0 relative z-10">
+                           <div class="text-3xl font-black italic text-blue-500/30 group-hover/card:text-blue-500 transition-colors">#{{ athlete.rank }}</div>
+                       </div>
+                       <!-- Photo -->
+                       <div class="relative mx-6 shrink-0 z-10">
+                           <div class="w-24 h-32 rounded-2xl overflow-hidden border-2 border-slate-700 group-hover/card:border-blue-500 transition-all duration-500 shadow-xl bg-slate-800">
+                               <img :src="athlete.image" class="w-full h-full object-cover grayscale group-hover/card:grayscale-0 transition-all duration-700 group-hover/card:scale-110" alt="Athlete" />
+                           </div>
+                       </div>
+                       <!-- Info -->
+                       <div class="flex-1 z-10">
+                           <div class="text-blue-400 font-bold text-[10px] uppercase tracking-widest mb-1 opacity-70">{{ athlete.team }}</div>
+                           <h4 class="text-2xl font-serif font-bold text-white mb-2 group-hover/card:text-blue-400 transition-colors tracking-tight italic">{{ athlete.name }}</h4>
+                           <div class="flex items-center gap-3">
+                               <div class="px-3 py-1 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-500 text-[10px] font-black uppercase tracking-widest">
+                                   {{ athlete.points }} PTS
+                               </div>
+                           </div>
+                       </div>
+                       <!-- Decorative background text -->
+                       <div class="absolute -right-4 -bottom-4 text-6xl font-black text-white/[0.02] italic select-none group-hover/card:text-blue-500/[0.05] transition-colors uppercase">
+                           {{ athlete.rank }}
                        </div>
                    </div>
-                   <div class="flex-1">
-                       <div class="text-yellow-500 font-bold text-xs uppercase tracking-widest mb-1">{{ athlete.team }}</div>
-                       <h4 class="text-xl font-bold text-white mb-1 group-hover:text-yellow-500 transition-colors">{{ athlete.name }}</h4>
-                       <div class="text-slate-400 text-sm font-medium">{{ athlete.points }} pts</div>
+                   <div v-if="rankings.male.length === 0" class="p-12 text-center text-slate-500 italic bg-[#0f172a]/30 rounded-3xl border border-dashed border-slate-800">
+                       No male athletes found
                    </div>
                </div>
            </div>
            
-           <!-- Female Column -->
-           <div class="space-y-4">
-               <div class="flex items-center gap-4 mb-8">
-                   <h3 class="text-2xl font-bold text-white uppercase tracking-widest">Female</h3>
-                   <div class="h-px flex-1 bg-slate-800"></div>
-               </div>
-               <div v-for="athlete in rankings.female" :key="athlete.rank" class="flex items-center p-4 rounded-xl hover:bg-white/5 transition-colors border border-transparent hover:border-white/10 group">
-                   <div class="w-16 text-center shrink-0">
-                       <div class="text-3xl font-black italic" :class="getRankColor(athlete.rank)">#{{ athlete.rank }}</div>
+           <!-- Female Column (Green) -->
+           <div class="relative group">
+               <!-- Header Decor -->
+               <div class="flex items-center gap-4 mb-10">
+                   <div class="w-12 h-12 rounded-2xl bg-emerald-600/20 flex items-center justify-center border border-emerald-600/30">
+                       <Trophy class="w-6 h-6 text-emerald-500" />
                    </div>
-                   <div class="relative mr-8 shrink-0">
-                       <div class="w-32 h-44 rounded-lg overflow-hidden border-2 border-slate-600 group-hover:border-blue-500 transition-colors shadow-xl">
-                           <img :src="athlete.image" class="w-full h-full object-cover" alt="Athlete" />
+                   <h3 class="text-3xl font-serif font-bold text-white uppercase tracking-wider italic">Female</h3>
+                   <div class="h-px flex-1 bg-linear-to-r from-emerald-600/50 to-transparent"></div>
+               </div>
+
+               <div class="space-y-4">
+                   <div v-for="athlete in rankings.female" :key="athlete.rank" 
+                        class="relative flex items-center p-4 rounded-3xl bg-[#0f172a]/50 border border-slate-800/50 hover:border-emerald-500/50 transition-all duration-500 group/card hover:shadow-[0_15px_40px_rgba(16,185,129,0.15)] overflow-hidden">
+                       <!-- Rank Badge -->
+                       <div class="w-14 text-center shrink-0 relative z-10">
+                           <div class="text-3xl font-black italic text-emerald-500/30 group-hover/card:text-emerald-500 transition-colors">#{{ athlete.rank }}</div>
+                       </div>
+                       <!-- Photo -->
+                       <div class="relative mx-6 shrink-0 z-10">
+                           <div class="w-24 h-32 rounded-2xl overflow-hidden border-2 border-slate-700 group-hover/card:border-emerald-500 transition-all duration-500 shadow-xl bg-slate-800">
+                               <img :src="athlete.image" class="w-full h-full object-cover grayscale group-hover/card:grayscale-0 transition-all duration-700 group-hover/card:scale-110" alt="Athlete" />
+                           </div>
+                       </div>
+                       <!-- Info -->
+                       <div class="flex-1 z-10">
+                           <div class="text-emerald-400 font-bold text-[10px] uppercase tracking-widest mb-1 opacity-70">{{ athlete.team }}</div>
+                           <h4 class="text-2xl font-serif font-bold text-white mb-2 group-hover/card:text-emerald-400 transition-colors tracking-tight italic">{{ athlete.name }}</h4>
+                           <div class="flex items-center gap-3">
+                               <div class="px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-500 text-[10px] font-black uppercase tracking-widest">
+                                   {{ athlete.points }} PTS
+                               </div>
+                           </div>
+                       </div>
+                       <!-- Decorative background text -->
+                       <div class="absolute -right-4 -bottom-4 text-6xl font-black text-white/[0.02] italic select-none group-hover/card:text-emerald-500/[0.05] transition-colors uppercase">
+                           {{ athlete.rank }}
                        </div>
                    </div>
-                   <div class="flex-1">
-                       <div class="text-yellow-500 font-bold text-xs uppercase tracking-widest mb-1">{{ athlete.team }}</div>
-                       <h4 class="text-xl font-bold text-white mb-1 group-hover:text-yellow-500 transition-colors">{{ athlete.name }}</h4>
-                       <div class="text-slate-400 text-sm font-medium">{{ athlete.points }} pts</div>
+                   <div v-if="rankings.female.length === 0" class="p-12 text-center text-slate-500 italic bg-[#0f172a]/30 rounded-3xl border border-dashed border-slate-800">
+                       No female athletes found
                    </div>
                </div>
            </div>
-      </div>
-
-      <div class="flex justify-center mt-12">
-           <button @click="currentView = 'rankings'" class="bg-transparent border border-slate-700 hover:border-yellow-500 text-white hover:text-yellow-500 font-bold py-3 px-8 rounded-lg transition-all uppercase tracking-widest text-sm">
-               View Full Rankings
-           </button>
-      </div>
+         </div>
       </section>
 
       <!-- Membership & Rules -->
@@ -476,7 +515,7 @@ const activeRoute = computed(() => {
           <!-- Membership -->
           <div class="relative h-80 rounded-3xl overflow-hidden group cursor-pointer">
                <div class="absolute inset-0 bg-[url('/images/membership-bg.jpg')] bg-cover bg-center transition-transform duration-1000 group-hover:scale-110"></div>
-               <div class="absolute inset-0 bg-gradient-to-r from-blue-900/90 to-blue-900/40"></div>
+               <div class="absolute inset-0 bg-linear-to-r from-blue-900/90 to-blue-900/40"></div>
                <div class="absolute inset-0 flex flex-col justify-center p-10">
                    <h3 class="text-3xl font-serif font-bold text-white mb-4">Membership</h3>
                    <p class="text-blue-100 max-w-md mb-8 text-lg">
@@ -505,6 +544,7 @@ const activeRoute = computed(() => {
                <!-- Book Graphic Overlay -->
                <div class="absolute -right-4 top-1/2 -translate-y-1/2 w-48 h-64 bg-white shadow-2xl rounded-l-lg transform group-hover:-translate-x-4 transition-transform duration-500 border-l-4 border-blue-900"></div>
           </div>
+      </div>
       </div>
     </main>
     

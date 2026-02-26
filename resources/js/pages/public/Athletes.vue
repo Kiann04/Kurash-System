@@ -1,5 +1,12 @@
 <script setup lang="ts">
 import { Head } from '@inertiajs/vue3'
+
+declare global {
+  interface Window {
+    route: any;
+  }
+}
+
 const route = window.route;
 import Pagination from '@/components/Pagination.vue'
 import { Instagram, Facebook } from 'lucide-vue-next'
@@ -25,9 +32,11 @@ const defaultProfileImage = '/images/default-profile.svg'
 
 const navItems = [
     { name: 'Home', route: 'public.home' },
+    { name: 'About' },
     { name: 'Anti-doping' },
     { name: 'Tournaments', route: 'public.tournaments.index' },
     { name: 'Rankings', route: 'public.rankings.index' },
+    { name: 'Bracket', route: 'public.brackets.index' },
     { name: 'Academies' },
     { name: 'Athletes', route: 'public.athletes.index' },
     { name: 'Rules' },
@@ -51,13 +60,13 @@ const navItems = [
           </div>
         </a>
 
-        <nav class="hidden lg:flex items-center gap-2 xl:gap-4 text-[10px] xl:text-xs font-bold tracking-widest uppercase h-full">
+        <nav class="hidden lg:flex items-center gap-1 xl:gap-2 text-[10px] xl:text-xs font-bold tracking-widest uppercase h-full">
           <template v-for="item in navItems" :key="item.name">
             <a 
               v-if="item.route"
               :href="route(item.route)"
               :class="[
-                'relative h-full flex items-center px-4 transition-all duration-300 group whitespace-nowrap',
+                'relative h-full flex items-center px-2 transition-all duration-300 group whitespace-nowrap',
                 item.route === 'public.athletes.index' ? 'text-yellow-500' : 'text-gray-400 hover:text-white'
               ]"
             >
@@ -72,7 +81,7 @@ const navItems = [
             <a 
               v-else
               href="#" 
-              class="relative h-full flex items-center px-4 transition-all duration-300 group whitespace-nowrap text-gray-400 hover:text-white"
+              class="relative h-full flex items-center px-2 transition-all duration-300 group whitespace-nowrap text-gray-400 hover:text-white"
             >
               {{ item.name }}
               <span class="absolute bottom-0 left-0 h-0.5 bg-yellow-500 transition-all duration-300 ease-out shadow-[0_0_10px_rgba(234,179,8,0.5)] w-0 group-hover:w-full"></span>
@@ -91,7 +100,7 @@ const navItems = [
           </div>
         </div>
       </div>
-      <div class="absolute bottom-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-yellow-500/50 to-transparent"></div>
+      <div class="absolute bottom-0 left-0 w-full h-px bg-linear-to-r from-transparent via-yellow-500/50 to-transparent"></div>
     </header>
 
     <main class="max-w-7xl mx-auto px-4 py-12 relative">
@@ -109,14 +118,14 @@ const navItems = [
 
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
             <div v-for="player in props.players.data" :key="player.id" 
-                 class="group bg-[#0f172a] rounded-[32px] border border-slate-800/50 overflow-hidden hover:border-yellow-500/50 transition-all duration-500 hover:shadow-[0_20px_50px_rgba(234,179,8,0.1)] flex flex-col">
+                 class="group bg-[#0f172a] rounded-4xl border border-slate-800/50 overflow-hidden hover:border-yellow-500/50 transition-all duration-500 hover:shadow-[0_20px_50px_rgba(234,179,8,0.1)] flex flex-col">
                 <div class="h-64 bg-slate-800 relative overflow-hidden">
                     <img 
                         :src="player.profile_image ? `/storage/${player.profile_image}` : defaultProfileImage" 
                         alt="Profile" 
                         class="w-full h-full object-cover opacity-80 group-hover:scale-110 transition-transform duration-1000"
                     />
-                    <div class="absolute inset-0 bg-gradient-to-t from-[#0f172a] to-transparent opacity-60"></div>
+                    <div class="absolute inset-0 bg-linear-to-t from-[#0f172a] to-transparent opacity-60"></div>
                     <div class="absolute bottom-4 left-6">
                         <div class="text-yellow-500 font-black text-[10px] uppercase tracking-[0.2em] mb-1">{{ player.gender }}</div>
                         <h3 class="text-2xl font-serif font-bold text-white group-hover:text-yellow-500 transition-colors leading-tight">{{ player.full_name }}</h3>

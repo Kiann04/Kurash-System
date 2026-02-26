@@ -17,6 +17,7 @@ class Player extends Model
         'club',
         'address',
         'email',
+        'profile_image',
         'emergency_contact',
         'emergency_contact_number',
         'registered_at',
@@ -64,7 +65,6 @@ class Player extends Model
                     'status' => 'inactive'
                 ]);
             }
-
         });
     }
 }

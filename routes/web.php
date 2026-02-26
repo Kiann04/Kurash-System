@@ -21,6 +21,7 @@ Route::get('/', function () {
 Route::get('home', [PublicHomeController::class, 'index'])->name('public.home');
 Route::get('public/tournaments', [PublicTournamentController::class, 'index'])->name('public.tournaments.index');
 Route::get('public/tournaments/{tournament}', [PublicTournamentController::class, 'show'])->name('public.tournaments.show');
+Route::get('public/brackets', [PublicTournamentController::class, 'brackets'])->name('public.brackets.index');
 Route::get('public/athletes', [PublicAthleteController::class, 'index'])->name('public.athletes.index');
 Route::get('public/rankings', [PublicRankingController::class, 'index'])->name('public.rankings.index');
 

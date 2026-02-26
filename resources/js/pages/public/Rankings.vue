@@ -30,6 +30,8 @@ const defaultProfileImage = '/images/default-profile.svg'
 const search = ref('')
 const selectedGender = ref('')
 const selectedAcademy = ref('')
+const maleLimit = ref(10)
+const femaleLimit = ref(10)
 
 const genders = ['male', 'female']
 const academies = computed(() => {
@@ -61,6 +63,9 @@ const femaleRankings = computed(() => {
         .map((p, index) => ({ ...p, rank: index + 1 }))
 })
 
+const visibleMaleRankings = computed(() => maleRankings.value.slice(0, maleLimit.value))
+const visibleFemaleRankings = computed(() => femaleRankings.value.slice(0, femaleLimit.value))
+
 const getRankColor = (rank: number) => {
     if (rank === 1) return 'text-yellow-400'
     if (rank === 2) return 'text-gray-300'
@@ -77,9 +82,11 @@ const getRankBorder = (rank: number) => {
 
 const navItems = [
     { name: 'Home', route: 'public.home' },
+    { name: 'About' },
     { name: 'Anti-doping' },
     { name: 'Tournaments', route: 'public.tournaments.index' },
     { name: 'Rankings', route: 'public.rankings.index' },
+    { name: 'Bracket', route: 'public.brackets.index' },
     { name: 'Academies' },
     { name: 'Athletes', route: 'public.athletes.index' },
     { name: 'Rules' },
@@ -103,13 +110,13 @@ const navItems = [
                     </div>
                 </a>
 
-                <nav class="hidden lg:flex items-center gap-2 xl:gap-4 text-[10px] xl:text-xs font-bold tracking-widest uppercase h-full">
+                <nav class="hidden lg:flex items-center gap-1 xl:gap-2 text-[10px] xl:text-xs font-bold tracking-widest uppercase h-full">
                     <template v-for="item in navItems" :key="item.name">
                         <a 
                             v-if="item.route"
                             :href="route(item.route)"
                             :class="[
-                                'relative h-full flex items-center px-4 transition-all duration-300 group whitespace-nowrap',
+                                'relative h-full flex items-center px-2 transition-all duration-300 group whitespace-nowrap',
                                 item.route === 'public.rankings.index' ? 'text-yellow-500' : 'text-gray-400 hover:text-white'
                             ]"
                         >
@@ -124,7 +131,7 @@ const navItems = [
                         <a 
                             v-else
                             href="#" 
-                            class="relative h-full flex items-center px-4 transition-all duration-300 group whitespace-nowrap text-gray-400 hover:text-white"
+                            class="relative h-full flex items-center px-2 transition-all duration-300 group whitespace-nowrap text-gray-400 hover:text-white"
                         >
                             {{ item.name }}
                             <span class="absolute bottom-0 left-0 h-0.5 bg-yellow-500 transition-all duration-300 ease-out shadow-[0_0_10px_rgba(234,179,8,0.5)] w-0 group-hover:w-full"></span>
@@ -143,7 +150,7 @@ const navItems = [
                     </div>
                 </div>
             </div>
-            <div class="absolute bottom-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-yellow-500/50 to-transparent"></div>
+            <div class="absolute bottom-0 left-0 w-full h-px bg-linear-to-r from-transparent via-yellow-500/50 to-transparent"></div>
         </header>
 
         <main class="max-w-7xl mx-auto px-4 py-12 relative">
@@ -204,7 +211,7 @@ const navItems = [
                         </div>
 
                         <div class="p-4 space-y-3">
-                            <div v-for="athlete in maleRankings" :key="athlete.id" 
+                            <div v-for="athlete in visibleMaleRankings" :key="athlete.id" 
                                  class="flex items-center gap-6 p-4 rounded-3xl bg-slate-900/50 hover:bg-blue-600/10 transition-all group cursor-pointer border border-slate-800 hover:border-blue-500/30 shadow-lg relative overflow-hidden">
                                 <div class="absolute -right-4 -bottom-8 text-8xl font-black text-white/5 italic select-none group-hover:text-blue-500/10 transition-colors">
                                     {{ athlete.rank }}
@@ -246,6 +253,17 @@ const navItems = [
                                     </div>
                                 </div>
                             </div>
+                            
+                            <!-- Show More Button -->
+                            <div v-if="maleRankings.length > maleLimit" class="pt-4 flex justify-center">
+                                <button 
+                                    @click="maleLimit += 10"
+                                    class="px-8 py-3 bg-blue-600/20 hover:bg-blue-600 text-blue-400 hover:text-white rounded-xl border border-blue-500/30 hover:border-blue-500 transition-all duration-300 text-xs font-black uppercase tracking-widest"
+                                >
+                                    Show More
+                                </button>
+                            </div>
+
                             <div v-if="maleRankings.length === 0" class="p-8 text-center text-slate-500 italic">No male athletes found</div>
                         </div>
                     </div>
@@ -263,7 +281,7 @@ const navItems = [
                         </div>
 
                         <div class="p-4 space-y-3">
-                            <div v-for="athlete in femaleRankings" :key="athlete.id" 
+                            <div v-for="athlete in visibleFemaleRankings" :key="athlete.id" 
                                  class="flex items-center gap-6 p-4 rounded-3xl bg-slate-900/50 hover:bg-green-600/10 transition-all group cursor-pointer border border-slate-800 hover:border-green-500/30 shadow-lg relative overflow-hidden">
                                 <div class="absolute -right-4 -bottom-8 text-8xl font-black text-white/5 italic select-none group-hover:text-green-500/10 transition-colors">
                                     {{ athlete.rank }}
@@ -305,6 +323,17 @@ const navItems = [
                                     </div>
                                 </div>
                             </div>
+                            
+                            <!-- Show More Button -->
+                            <div v-if="femaleRankings.length > femaleLimit" class="pt-4 flex justify-center">
+                                <button 
+                                    @click="femaleLimit += 10"
+                                    class="px-8 py-3 bg-green-600/20 hover:bg-green-600 text-green-400 hover:text-white rounded-xl border border-green-500/30 hover:border-green-500 transition-all duration-300 text-xs font-black uppercase tracking-widest"
+                                >
+                                    Show More
+                                </button>
+                            </div>
+
                             <div v-if="femaleRankings.length === 0" class="p-8 text-center text-slate-500 italic">No female athletes found</div>
                         </div>
                     </div>
