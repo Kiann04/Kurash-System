@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Tournament;
 use App\Models\Player;
 use App\Models\WeightCategory;
+use App\Services\PlayerListImportService;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\DB;
@@ -94,6 +95,24 @@ class TournamentController extends Controller
         return redirect()
             ->route('admin.tournaments.index')
             ->with('success', 'Tournament created successfully.');
+    }
+
+    public function importRegistrations(Request $request, PlayerListImportService $importService)
+    {
+        $validated = $request->validate([
+            'file' => 'required|file|mimes:xlsx,csv,docx|max:10240',
+            'fallback_category_id' => 'nullable|exists:weight_categories,id',
+        ]);
+
+        $analysis = $importService->analyze(
+            $validated['file'],
+            isset($validated['fallback_category_id']) ? (int) $validated['fallback_category_id'] : null
+        );
+
+        return response()->json([
+            'message' => 'File analyzed successfully.',
+            'analysis' => $analysis,
+        ]);
     }
 
     public function show(Tournament $tournament)
@@ -226,5 +245,4 @@ class TournamentController extends Controller
             ->values();
     }
 }
-
 

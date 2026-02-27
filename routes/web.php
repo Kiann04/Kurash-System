@@ -45,6 +45,8 @@ Route::prefix('admin')
 
         Route::resource('tournaments', AdminTournamentController::class);
         Route::get('tournamentDocs', [AdminTournamentController::class, 'docs'])->name('tournaments.docs');
+        Route::post('tournaments/import-registrations', [AdminTournamentController::class, 'importRegistrations'])
+            ->name('tournaments.import-registrations');
 
         Route::get('brackets', [AdminBracketController::class, 'index'])->name('brackets.index');
         Route::get('tournaments/{tournament}/brackets', [AdminBracketController::class, 'show'])
