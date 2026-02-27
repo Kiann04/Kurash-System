@@ -145,11 +145,11 @@ const navItems = [
         <!-- Logo -->
         <a :href="route('public.home')" class="flex items-center gap-3">
           <div class="font-black text-2xl tracking-tighter text-yellow-500 flex flex-col leading-none">
-            <span>IKF</span>
+            <span>KSF</span>
           </div>
           <div class="h-8 w-px bg-white/20"></div>
           <div class="text-xs font-bold text-white leading-tight tracking-wide">
-            INTERNATIONAL<br/>KURASH<br/>FEDERATION
+            KURASH<br/>SPORTS<br/>FEDERATION 
           </div>
         </a>
 
