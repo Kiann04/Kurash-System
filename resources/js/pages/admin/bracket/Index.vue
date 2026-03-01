@@ -18,6 +18,13 @@ const props = defineProps<{
 const generate = (tournamentId: number) => {
     router.post(route('admin.tournaments.brackets.generate', tournamentId))
 }
+const formatDate = (date: string) => {
+    return new Date(date).toLocaleDateString('en-PH', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+    })
+}
 </script>
 
 <template>
@@ -44,7 +51,7 @@ const generate = (tournamentId: number) => {
                     <tbody>
                         <tr v-for="tournament in props.tournaments" :key="tournament.id" class="border-t">
                             <td class="p-3 font-medium">{{ tournament.name }}</td>
-                            <td class="p-3 text-center">{{ tournament.tournament_date }}</td>
+                            <td class="p-3 text-center">{{ formatDate(tournament.tournament_date) }}</td>
                             <td class="p-3 text-center">{{ tournament.status }}</td>
                             <td class="p-3 text-center">{{ tournament.registrations_count }}</td>
                             <td class="p-3 text-center">
