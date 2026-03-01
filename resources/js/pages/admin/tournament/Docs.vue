@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import { Head, Link } from '@inertiajs/vue3'
 import AppLayout from '@/layouts/AppLayout.vue'
-import { FileText, Download, Eye, Trophy, Users } from 'lucide-vue-next'
+import { FileText, Eye, Trophy, Users } from 'lucide-vue-next'
+import { route } from 'ziggy-js'
 
 interface Tournament {
     id: number
