@@ -60,6 +60,13 @@ const deleteTournament = (id: number) => {
         });
     }
 };
+const formatDate = (date: string) => {
+    return new Date(date).toLocaleDateString('en-PH', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+    })
+}
 </script>
 
 <template>
@@ -136,16 +143,9 @@ const deleteTournament = (id: number) => {
                         >
                             <td class="p-3 font-mono text-xs">{{ t.id }}</td>
                             <td class="p-3">{{ t.name }}</td>
-                            <td class="p-3">{{ t.tournament_date }}</td>
+                            <td class="p-3">{{ formatDate(t.tournament_date) }}</td>
                             <td class="p-3">{{ t.status }}</td>
                             <td class="p-3 text-right space-x-3">
-                                <Link
-                                    :href="route('admin.tournaments.show', t.id)"
-                                    class="text-blue-600 hover:underline"
-                                >
-                                    View
-                                </Link>
-
                                 <Link
                                     :href="route('admin.tournaments.edit', t.id)"
                                     class="text-yellow-600 hover:underline"
