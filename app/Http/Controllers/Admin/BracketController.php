@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Bracket;
 use App\Models\Tournament;
 use App\Models\TournamentMatch;
+use App\Services\BronzeMatchService;
 use Illuminate\Http\Request;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\DB;
@@ -15,6 +16,10 @@ use Inertia\Response;
 
 class BracketController extends Controller
 {
+    public function __construct(private BronzeMatchService $bronzeMatchService)
+    {
+    }
+
     public function index(): Response
     {
         $tournaments = Tournament::query()
@@ -174,11 +179,14 @@ class BracketController extends Controller
             ],
             'category_participants' => $categoryParticipants,
             'brackets' => $brackets->map(function (Bracket $bracket) {
-                $champion = $bracket->matches
+                $matches = $bracket->matches->where('is_bronze', false);
+                $bronzeMatch = $bracket->matches->firstWhere('is_bronze', true);
+
+                $champion = $matches
                     ->where('round_number', $bracket->rounds)
                     ->first()?->winner?->full_name;
 
-                $entrantCount = $bracket->matches
+                $entrantCount = $matches
                     ->flatMap(function (TournamentMatch $match) {
                         return [$match->player_one_id, $match->player_two_id];
                     })
@@ -195,8 +203,20 @@ class BracketController extends Controller
                     'rounds' => $bracket->rounds,
                     'entrant_count' => $entrantCount,
                     'champion' => $champion,
-                    'awards' => $this->resolveAwards($bracket),
-                    'matches' => $bracket->matches->map(function (TournamentMatch $match) {
+                    'awards' => $this->resolveAwards($bracket, $bronzeMatch),
+                    'bronze_match' => $bronzeMatch ? [
+                        'id' => $bronzeMatch->id,
+                        'round_number' => $bronzeMatch->round_number,
+                        'match_number' => $bronzeMatch->match_number,
+                        'status' => $bronzeMatch->status,
+                        'player_one_id' => $bronzeMatch->player_one_id,
+                        'player_one' => $bronzeMatch->playerOne?->full_name,
+                        'player_two_id' => $bronzeMatch->player_two_id,
+                        'player_two' => $bronzeMatch->playerTwo?->full_name,
+                        'winner_id' => $bronzeMatch->winner_id,
+                        'winner' => $bronzeMatch->winner?->full_name,
+                    ] : null,
+                    'matches' => $matches->map(function (TournamentMatch $match) {
                         return [
                             'id' => $match->id,
                             'round_number' => $match->round_number,
@@ -259,6 +279,7 @@ class BracketController extends Controller
 
             if ($match->bracket?->format === 'single_elimination') {
                 $this->advanceWinnerToNextRound($match, $winnerId);
+                $this->bronzeMatchService->syncForBracket($match->bracket);
             }
         });
 
@@ -400,11 +421,28 @@ class BracketController extends Controller
             // 2 players: leave scheduled
         }
 
+        if ($rounds >= 2) {
+            TournamentMatch::create([
+                'bracket_id' => $bracketId,
+                'round_number' => $rounds + 1,
+                'match_number' => 1,
+                'player_one_id' => null,
+                'player_two_id' => null,
+                'status' => 'scheduled',
+                'is_bronze' => true,
+            ]);
+            $matchesCreated++;
+        }
+
         return $matchesCreated;
     }
 
     private function advanceWinnerToNextRound(TournamentMatch $match, ?int $winnerId): void
     {
+        if ($match->is_bronze) {
+            return;
+        }
+
         $bracket = $match->bracket;
         if (!$bracket) {
             return;
@@ -435,6 +473,10 @@ class BracketController extends Controller
 
     private function checkAndAdvanceIfBye(TournamentMatch $match): void
     {
+        if ($match->is_bronze) {
+            return;
+        }
+
         if ($match->bracket?->format !== 'single_elimination') {
             return;
         }
@@ -477,6 +519,10 @@ class BracketController extends Controller
                 ]);
                 $this->advanceWinnerToNextRound($match, $winnerId);
             });
+
+            if ($match->bracket) {
+                $this->bronzeMatchService->syncForBracket($match->bracket);
+            }
         }
     }
 
@@ -502,6 +548,7 @@ class BracketController extends Controller
                 $query->where('tournament_id', $tournament->id)
                       ->where('format', 'single_elimination');
             })
+            ->where('is_bronze', false)
             ->orderBy('round_number')
             ->orderBy('match_number')
             ->get();
@@ -528,6 +575,13 @@ class BracketController extends Controller
                 }
             }
         }
+
+        $tournament->brackets()
+            ->where('format', 'single_elimination')
+            ->get()
+            ->each(function (Bracket $bracket) {
+                $this->bronzeMatchService->syncForBracket($bracket);
+            });
     }
 
     private function splitByRegion(array $participants, int $halfSize): array
@@ -633,7 +687,7 @@ class BracketController extends Controller
         return $pairs;
     }
 
-    private function resolveAwards(Bracket $bracket): array
+    private function resolveAwards(Bracket $bracket, ?TournamentMatch $bronzeMatch = null): array
     {
         if ($bracket->format !== 'single_elimination') {
             return ['gold' => null, 'silver' => null, 'bronze' => []];
@@ -650,14 +704,20 @@ class BracketController extends Controller
         }
 
         $bronze = [];
-        $semiRound = $bracket->rounds - 1;
-        if ($semiRound >= 1) {
-            foreach ($bracket->matches->where('round_number', $semiRound) as $semi) {
-                if (!$semi->winner_id) continue;
-                $loser = (int) $semi->winner_id === (int) $semi->player_one_id
-                    ? $semi->playerTwo?->full_name
-                    : $semi->playerOne?->full_name;
-                if ($loser) $bronze[] = $loser;
+        if ($bronzeMatch) {
+            if ($bronzeMatch->winner) {
+                $bronze[] = $bronzeMatch->winner->full_name;
+            }
+        } else {
+            $semiRound = $bracket->rounds - 1;
+            if ($semiRound >= 1) {
+                foreach ($bracket->matches->where('round_number', $semiRound) as $semi) {
+                    if (!$semi->winner_id) continue;
+                    $loser = (int) $semi->winner_id === (int) $semi->player_one_id
+                        ? $semi->playerTwo?->full_name
+                        : $semi->playerOne?->full_name;
+                    if ($loser) $bronze[] = $loser;
+                }
             }
         }
 
@@ -668,5 +728,3 @@ class BracketController extends Controller
         ];
     }
 }
-
-

@@ -32,6 +32,7 @@ interface BracketItem {
         silver: string | null
         bronze: string[]
     }
+    bronze_match?: MatchItem | null
     matches?: MatchItem[]
 }
 
@@ -117,13 +118,31 @@ const grandFinalMatches = (bracket: BracketItem) => {
     return final?.matches ?? []
 }
 
-const roundLabel = (totalRounds: number, roundNumber: number, conference?: 'East' | 'West') => {
-    if (roundNumber === totalRounds) return 'Grand Final'
+const bracketSize = (entrants: number | undefined, totalRounds: number) => {
+    if (entrants && entrants > 0) {
+        let size = 1
+        while (size < entrants) size *= 2
+        return size
+    }
+    return Math.pow(2, totalRounds)
+}
 
-    const distance = totalRounds - roundNumber
-    if (distance === 1) return conference ? `${conference} Final` : 'Final'
-    if (distance === 2) return 'Semifinal'
-    if (distance === 3) return 'Quarterfinal'
+const roundLabel = (
+    totalRounds: number,
+    roundNumber: number,
+    entrants?: number,
+    format?: BracketItem['format']
+) => {
+    if (format !== 'single_elimination') {
+        return `Round ${roundNumber}`
+    }
+
+    const size = bracketSize(entrants, totalRounds)
+    const remaining = size / Math.pow(2, roundNumber - 1)
+    if (remaining <= 2) return `Final (${remaining} -> ${remaining / 2})`
+    if (remaining === 4) return 'Semifinal (4 -> 2)'
+    if (remaining === 8) return 'Quarterfinal (8 -> 4)'
+    if (remaining >= 16) return `Round of ${remaining} (${remaining} -> ${remaining / 2})`
 
     return `Round ${roundNumber}`
 }
@@ -140,6 +159,10 @@ const roundColumnStyle = (roundNumber: number) => {
         marginTop: `${(multiplier - 1) * 18}px`,
         rowGap: `${multiplier * 14}px`,
     }
+}
+
+const bronzeMatchFor = (bracket: BracketItem) => {
+    return bracket.bronze_match ?? null
 }
 
 const isBye = (match: MatchItem) => {
@@ -372,7 +395,7 @@ onUnmounted(() => {
                                 <span class="font-semibold text-slate-900">{{ safeAwards(bracket).silver || '-' }}</span>
                             </div>
                             <div class="rounded-lg border border-orange-200 bg-orange-50/50 p-3 flex flex-col gap-1 shadow-sm">
-                                <span class="text-[10px] uppercase font-bold text-orange-600 tracking-wider">Bronze Medalists</span>
+                                <span class="text-[10px] uppercase font-bold text-orange-600 tracking-wider">Bronze Medalist</span>
                                 <span class="font-semibold text-slate-900" v-if="safeAwards(bracket).bronze.length">{{ safeAwards(bracket).bronze.join(', ') }}</span>
                                 <span class="font-semibold text-slate-900" v-else>-</span>
                             </div>
@@ -389,7 +412,7 @@ onUnmounted(() => {
                                     class="se-round"
                                     :style="roundColumnStyle(round.round)"
                                 >
-                                    <h3 class="round-title">{{ roundLabel(finalRoundNumber(bracket), round.round, 'East') }}</h3>
+                                    <h3 class="round-title">{{ roundLabel(finalRoundNumber(bracket), round.round, bracket.entrant_count, 'single_elimination') }}</h3>
                                     <div class="se-round-stack">
                                         <article v-for="match in round.matches" :key="`east-${match.id}`" class="se-match">
                                             <div class="match-head">
@@ -425,7 +448,7 @@ onUnmounted(() => {
                             </div>
 
                             <div class="conference-center">
-                                <h3 class="round-title">{{ roundLabel(finalRoundNumber(bracket), finalRoundNumber(bracket)) }}</h3>
+                                <h3 class="round-title">{{ roundLabel(finalRoundNumber(bracket), finalRoundNumber(bracket), bracket.entrant_count, 'single_elimination') }}</h3>
                                 <div class="se-round-stack final-stack">
                                     <article
                                         v-for="match in grandFinalMatches(bracket)"
@@ -433,7 +456,7 @@ onUnmounted(() => {
                                         class="se-match grand-final"
                                     >
                                         <div class="match-head">
-                                            <span>Grand Final</span>
+                                            <span>Final</span>
                                             <div class="flex items-center gap-2">
                                                 <span v-if="isBye(match) && match.status !== 'completed'" class="px-1.5 py-0.5 rounded bg-blue-100 text-blue-700 text-[10px] font-bold animate-pulse">
                                                     BYE
@@ -468,7 +491,7 @@ onUnmounted(() => {
                                     class="se-round"
                                     :style="roundColumnStyle(round.round)"
                                 >
-                                    <h3 class="round-title">{{ roundLabel(finalRoundNumber(bracket), round.round, 'West') }}</h3>
+                                    <h3 class="round-title">{{ roundLabel(finalRoundNumber(bracket), round.round, bracket.entrant_count, 'single_elimination') }}</h3>
                                     <div class="se-round-stack">
                                         <article v-for="match in round.matches" :key="`west-${match.id}`" class="se-match">
                                             <div class="match-head">
@@ -503,10 +526,39 @@ onUnmounted(() => {
                                 </div>
                             </div>
                         </div>
+                        <div v-if="bronzeMatchFor(bracket)" class="bronze-board">
+                            <h3 class="round-title">Bronze Match</h3>
+                            <div class="se-round-stack">
+                                <article class="se-match bronze-match">
+                                    <div class="match-head">
+                                        <span>Bronze Match</span>
+                                        <div class="flex items-center gap-2">
+                                            <span>{{ bronzeMatchFor(bracket)?.status }}</span>
+                                        </div>
+                                    </div>
+                                    <button
+                                         class="fighter fighter-blue"
+                                         :class="{ 'winner': bronzeMatchFor(bracket)?.winner_id === bronzeMatchFor(bracket)?.player_one_id }"
+                                         :disabled="isCompleted || (bronzeMatchFor(bracket)?.status === 'completed' && bronzeMatchFor(bracket)?.winner_id !== bronzeMatchFor(bracket)?.player_one_id)"
+                                         @click="chooseWinner(bronzeMatchFor(bracket) as MatchItem, bronzeMatchFor(bracket)?.player_one_id ?? null)"
+                                     >
+                                         {{ bronzeMatchFor(bracket)?.player_one || 'TBD' }}
+                                     </button>
+                                     <button
+                                         class="fighter fighter-green"
+                                         :class="{ 'winner': bronzeMatchFor(bracket)?.winner_id === bronzeMatchFor(bracket)?.player_two_id }"
+                                         :disabled="isCompleted || (bronzeMatchFor(bracket)?.status === 'completed' && bronzeMatchFor(bracket)?.winner_id !== bronzeMatchFor(bracket)?.player_two_id)"
+                                         @click="chooseWinner(bronzeMatchFor(bracket) as MatchItem, bronzeMatchFor(bracket)?.player_two_id ?? null)"
+                                     >
+                                         {{ bronzeMatchFor(bracket)?.player_two || 'TBD' }}
+                                     </button>
+                                </article>
+                            </div>
+                        </div>
                     </div>
                     <div v-else class="rr-board">
                         <div v-for="round in roundsForBracket(bracket)" :key="round.round" class="rr-round">
-                            <h3 class="round-title">{{ roundLabel(finalRoundNumber(bracket), round.round) }}</h3>
+                            <h3 class="round-title">{{ roundLabel(finalRoundNumber(bracket), round.round, bracket.entrant_count, 'round_robin') }}</h3>
                             <div class="rr-grid">
                                 <article v-for="match in round.matches" :key="match.id" class="rr-match">
                                     <div class="match-head">
@@ -655,6 +707,17 @@ onUnmounted(() => {
 .se-board {
     overflow-x: auto;
     padding-bottom: 6px;
+}
+
+.bronze-board {
+    margin-top: 18px;
+    display: grid;
+    justify-items: center;
+}
+
+.bronze-board .bronze-match {
+    border-color: #fdba74;
+    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.08), 0 0 0 1px rgba(251, 146, 60, 0.25);
 }
 
 .conference-board {

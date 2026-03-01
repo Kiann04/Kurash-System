@@ -41,9 +41,11 @@ interface Category {
     weight_category: string
     format: 'round_robin' | 'single_elimination'
     rounds: number
+    entrant_count?: number
     matches_count: number
     completed_matches: number
     champion: string | null
+    bronze_match?: MatchItem | null
     matches: MatchItem[]
 }
 
@@ -137,12 +139,30 @@ const grandFinalMatches = (category: Category | null) => {
     return final?.matches ?? []
 }
 
-const roundLabel = (totalRounds: number, roundNumber: number, conference?: 'East' | 'West') => {
-    if (roundNumber === totalRounds) return 'Grand Final'
-    const distance = totalRounds - roundNumber
-    if (distance === 1) return conference ? `${conference} Final` : 'Final'
-    if (distance === 2) return 'Semifinal'
-    if (distance === 3) return 'Quarterfinal'
+const bracketSize = (entrants: number | undefined, totalRounds: number) => {
+    if (entrants && entrants > 0) {
+        let size = 1
+        while (size < entrants) size *= 2
+        return size
+    }
+    return Math.pow(2, totalRounds)
+}
+
+const roundLabel = (
+    totalRounds: number,
+    roundNumber: number,
+    entrants?: number,
+    format?: Category['format']
+) => {
+    if (format !== 'single_elimination') {
+        return `Round ${roundNumber}`
+    }
+    const size = bracketSize(entrants, totalRounds)
+    const remaining = size / Math.pow(2, roundNumber - 1)
+    if (remaining <= 2) return `Final (${remaining} -> ${remaining / 2})`
+    if (remaining === 4) return 'Semifinal (4 -> 2)'
+    if (remaining === 8) return 'Quarterfinal (8 -> 4)'
+    if (remaining >= 16) return `Round of ${remaining} (${remaining} -> ${remaining / 2})`
     return `Round ${roundNumber}`
 }
 
@@ -397,7 +417,7 @@ const getStatusColor = (status: string) => {
                         <div class="flex gap-12">
                             <div v-for="round in eastRounds(selectedCategory)" :key="`east-${round.round}`" class="flex flex-col gap-8">
                                 <h4 class="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 text-center mb-4">
-                                    {{ roundLabel(selectedCategory.rounds, round.round, 'East') }}
+                                    {{ roundLabel(selectedCategory.rounds, round.round, selectedCategory.entrant_count, 'single_elimination') }}
                                 </h4>
                                 <div class="flex flex-col justify-around flex-1" :style="roundColumnStyle(round.round)">
                                     <div v-for="match in round.matches" :key="match.id" class="w-72">
@@ -440,7 +460,7 @@ const getStatusColor = (status: string) => {
                         <!-- Grand Final (Center) -->
                         <div class="flex flex-col gap-8">
                             <h4 class="text-[10px] font-black uppercase tracking-[0.2em] text-yellow-500 text-center mb-4">
-                                {{ roundLabel(selectedCategory.rounds, selectedCategory.rounds) }}
+                                {{ roundLabel(selectedCategory.rounds, selectedCategory.rounds, selectedCategory.entrant_count, 'single_elimination') }}
                             </h4>
                             <div v-for="match in grandFinalMatches(selectedCategory)" :key="match.id" class="w-80">
                                 <div class="bg-linear-to-b from-yellow-500/10 to-transparent border-2 border-yellow-500/20 rounded-3xl p-6 shadow-[0_0_50px_rgba(234,179,8,0.1)]">
@@ -502,11 +522,49 @@ const getStatusColor = (status: string) => {
                             </div>
                         </div>
 
+                        <div v-if="selectedCategory.bronze_match" class="flex flex-col gap-6">
+                            <h4 class="text-[10px] font-black uppercase tracking-[0.2em] text-orange-400 text-center mb-2">
+                                Bronze Match
+                            </h4>
+                            <div class="w-80">
+                                <div class="bg-linear-to-b from-orange-500/10 to-transparent border border-orange-500/30 rounded-3xl p-5">
+                                    <div class="space-y-3">
+                                        <div :class="[
+                                            'p-4 rounded-2xl transition-all duration-300',
+                                            selectedCategory.bronze_match.winner_id === selectedCategory.bronze_match.player_one_id
+                                                ? 'bg-orange-500/20 border border-orange-500/40'
+                                                : 'bg-blue-500/10 border border-blue-500/20'
+                                        ]">
+                                            <div :class="['text-[10px] font-black uppercase tracking-widest mb-1', selectedCategory.bronze_match.winner_id === selectedCategory.bronze_match.player_one_id ? 'text-orange-300' : 'text-blue-400']">
+                                                Bronze Contender
+                                            </div>
+                                            <div :class="['text-lg font-serif font-bold italic', selectedCategory.bronze_match.winner_id === selectedCategory.bronze_match.player_one_id ? 'text-orange-200' : 'text-white']">
+                                                {{ selectedCategory.bronze_match.player_one || 'TBD' }}
+                                            </div>
+                                        </div>
+                                        <div :class="[
+                                            'p-4 rounded-2xl transition-all duration-300',
+                                            selectedCategory.bronze_match.winner_id === selectedCategory.bronze_match.player_two_id
+                                                ? 'bg-orange-500/20 border border-orange-500/40'
+                                                : 'bg-emerald-500/10 border border-emerald-500/20'
+                                        ]">
+                                            <div :class="['text-[10px] font-black uppercase tracking-widest mb-1', selectedCategory.bronze_match.winner_id === selectedCategory.bronze_match.player_two_id ? 'text-orange-300' : 'text-emerald-400']">
+                                                Bronze Contender
+                                            </div>
+                                            <div :class="['text-lg font-serif font-bold italic', selectedCategory.bronze_match.winner_id === selectedCategory.bronze_match.player_two_id ? 'text-orange-200' : 'text-white']">
+                                                {{ selectedCategory.bronze_match.player_two || 'TBD' }}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
                         <!-- West Side (Right) -->
                         <div class="flex gap-12">
                             <div v-for="round in [...westRounds(selectedCategory)].reverse()" :key="`west-${round.round}`" class="flex flex-col gap-8">
                                 <h4 class="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 text-center mb-4">
-                                    {{ roundLabel(selectedCategory.rounds, round.round, 'West') }}
+                                    {{ roundLabel(selectedCategory.rounds, round.round, selectedCategory.entrant_count, 'single_elimination') }}
                                 </h4>
                                 <div class="flex flex-col justify-around flex-1" :style="roundColumnStyle(round.round)">
                                     <div v-for="match in round.matches" :key="match.id" class="w-72">

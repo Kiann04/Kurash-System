@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\MatchResult;
 use App\Models\Tournament;
 use App\Models\TournamentMatch;
+use App\Services\BronzeMatchService;
 use App\Services\MatchSchedulerService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -14,10 +15,12 @@ use Illuminate\Support\Facades\Validator;
 class TournamentApiController extends Controller
 {
     protected $matchScheduler;
+    protected $bronzeMatchService;
 
-    public function __construct(MatchSchedulerService $matchScheduler)
+    public function __construct(MatchSchedulerService $matchScheduler, BronzeMatchService $bronzeMatchService)
     {
         $this->matchScheduler = $matchScheduler;
+        $this->bronzeMatchService = $bronzeMatchService;
     }
 
     /**
@@ -294,7 +297,7 @@ class TournamentApiController extends Controller
         try {
             DB::beginTransaction();
 
-            $match = TournamentMatch::findOrFail($id);
+            $match = TournamentMatch::with('bracket')->findOrFail($id);
             $match->winner_id = $request->winner_id;
             $match->status = 'completed';
             $match->save();
@@ -310,6 +313,10 @@ class TournamentApiController extends Controller
             );
 
             DB::commit();
+
+            if ($match->bracket) {
+                $this->bronzeMatchService->syncForBracket($match->bracket);
+            }
 
             return response()->json([
                 'message' => 'Match result updated successfully',

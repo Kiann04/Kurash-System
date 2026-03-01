@@ -21,10 +21,12 @@ class TournamentMatch extends Model
         'winner_id',
         'status',
         'global_match_order',
+        'is_bronze',
     ];
 
     protected $casts = [
         'match_date' => 'datetime',
+        'is_bronze' => 'boolean',
     ];
 
     public function bracket()

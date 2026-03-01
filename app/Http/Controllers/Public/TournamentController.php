@@ -74,9 +74,20 @@ class TournamentController extends Controller
 
         $categories = $tournament->brackets
             ->map(function ($bracket) {
-                $champion = $bracket->matches
+                $matches = $bracket->matches->where('is_bronze', false);
+                $bronzeMatch = $bracket->matches->firstWhere('is_bronze', true);
+
+                $champion = $matches
                     ->where('round_number', $bracket->rounds)
                     ->first()?->winner?->full_name;
+
+                $entrantCount = $matches
+                    ->flatMap(function ($match) {
+                        return [$match->player_one_id, $match->player_two_id];
+                    })
+                    ->filter()
+                    ->unique()
+                    ->count();
 
                 return [
                     'id' => $bracket->id,
@@ -85,10 +96,27 @@ class TournamentController extends Controller
                     'weight_category' => $bracket->weightCategory?->name ?? '-',
                     'format' => $bracket->format,
                     'rounds' => $bracket->rounds,
-                    'matches_count' => $bracket->matches->count(),
-                    'completed_matches' => $bracket->matches->where('status', 'completed')->count(),
+                    'entrant_count' => $entrantCount,
+                    'matches_count' => $matches->count(),
+                    'completed_matches' => $matches->where('status', 'completed')->count(),
                     'champion' => $champion,
-                    'matches' => $bracket->matches->map(function ($match) {
+                    'bronze_match' => $bronzeMatch ? [
+                        'id' => $bronzeMatch->id,
+                        'round_number' => $bronzeMatch->round_number,
+                        'match_number' => $bronzeMatch->match_number,
+                        'status' => $bronzeMatch->status,
+                        'player_one' => $bronzeMatch->playerOne?->full_name,
+                        'player_one_club' => $bronzeMatch->playerOne?->club,
+                        'player_one_image' => $bronzeMatch->playerOne?->profile_image,
+                        'player_two' => $bronzeMatch->playerTwo?->full_name,
+                        'player_two_club' => $bronzeMatch->playerTwo?->club,
+                        'player_two_image' => $bronzeMatch->playerTwo?->profile_image,
+                        'winner' => $bronzeMatch->winner?->full_name,
+                        'player_one_id' => $bronzeMatch->player_one_id,
+                        'player_two_id' => $bronzeMatch->player_two_id,
+                        'winner_id' => $bronzeMatch->winner_id,
+                    ] : null,
+                    'matches' => $matches->map(function ($match) {
                         return [
                             'id' => $match->id,
                             'round_number' => $match->round_number,
