@@ -31,6 +31,31 @@ interface Registration {
     tournament_weight_category_id: number
 }
 
+interface ImportRegistration {
+    player_id: number
+    tournament_weight_category_id: number
+    player_name: string
+    category_name: string
+}
+
+interface ImportRowResult {
+    row: number
+    status: 'matched' | 'unmatched_player' | 'unresolved_category' | 'duplicate'
+    player: string
+    category: string | null
+    reason: string
+}
+
+interface ImportAnalysis {
+    total_rows: number
+    matched_count: number
+    unmatched_player_count: number
+    unresolved_category_count: number
+    duplicate_count: number
+    registrations: ImportRegistration[]
+    rows: ImportRowResult[]
+}
+
 const props = defineProps<{
     tournament: {
         id: number
@@ -64,6 +89,79 @@ const form = useForm({
 const search = ref('')
 const playerGenderFilter = ref<'all' | 'male' | 'female'>('all')
 const openedSummaryCategoryId = ref<number | null>(null)
+const importFile = ref<File | null>(null)
+const importProcessing = ref(false)
+const importError = ref('')
+const importAnalysis = ref<ImportAnalysis | null>(null)
+
+const getCsrfToken = () => {
+    const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content')
+    return token ?? ''
+}
+
+const onImportFileChange = (event: Event) => {
+    const target = event.target as HTMLInputElement
+    importFile.value = target.files?.[0] ?? null
+    importError.value = ''
+}
+
+const analyzeAndImportFile = async () => {
+    if (!importFile.value) {
+        importError.value = 'Please select a file first.'
+        return
+    }
+
+    importError.value = ''
+    importProcessing.value = true
+
+    try {
+        const payload = new FormData()
+        payload.append('file', importFile.value)
+        if (selectedCategoryId.value) {
+            payload.append('fallback_category_id', String(selectedCategoryId.value))
+        }
+
+        const response = await fetch(route('admin.tournaments.import-registrations', undefined, false), {
+            method: 'POST',
+            credentials: 'same-origin',
+            headers: {
+                'X-CSRF-TOKEN': getCsrfToken(),
+                'X-Requested-With': 'XMLHttpRequest',
+                'Accept': 'application/json',
+            },
+            body: payload,
+        })
+
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => ({}))
+            const message = errorData?.message ?? 'Failed to analyze the file.'
+            throw new Error(message)
+        }
+
+        const data = await response.json()
+        const analysis = data.analysis as ImportAnalysis
+        importAnalysis.value = analysis
+
+        const existing = new Set(form.registrations.map((r) => `${r.player_id}-${r.tournament_weight_category_id}`))
+
+        analysis.registrations.forEach((registration) => {
+            const key = `${registration.player_id}-${registration.tournament_weight_category_id}`
+            if (existing.has(key)) {
+                return
+            }
+
+            form.registrations.push({
+                player_id: registration.player_id,
+                tournament_weight_category_id: registration.tournament_weight_category_id,
+            })
+            existing.add(key)
+        })
+    } catch (error) {
+        importError.value = error instanceof Error ? error.message : 'Failed to analyze the file.'
+    } finally {
+        importProcessing.value = false
+    }
+}
 
 const normalizeGender = (value: string | null | undefined): 'male' | 'female' | '' => {
     const normalized = String(value ?? '').trim().toLowerCase()
@@ -295,6 +393,80 @@ const submit = () => form.put(route('admin.tournaments.update', props.tournament
     </div>
 
     <div class="space-y-4">
+        <div class="border rounded-xl bg-white p-4 space-y-3 shadow-sm">
+            <div class="flex flex-wrap items-center justify-between gap-3">
+                <div>
+                    <h2 class="text-sm font-semibold text-slate-900">Import Player List (Excel / Word)</h2>
+                    <p class="text-xs text-muted-foreground">
+                        Upload <code>.xlsx</code>, <code>.csv</code>, or <code>.docx</code>. System auto-maps by gender + age category + Uweight.
+                    </p>
+                </div>
+                <Button size="sm" :disabled="importProcessing || !importFile" @click="analyzeAndImportFile">
+                    {{ importProcessing ? 'Analyzing...' : 'Analyze & Add' }}
+                </Button>
+            </div>
+
+            <div class="flex flex-wrap items-center gap-3">
+                <input
+                    type="file"
+                    accept=".xlsx,.csv,.docx"
+                    class="border rounded-md text-sm p-2"
+                    @change="onImportFileChange"
+                />
+                <span v-if="selectedCategoryId" class="text-xs text-muted-foreground">
+                    Fallback category: {{ getCategoryById(selectedCategoryId)?.name ?? '-' }}
+                </span>
+            </div>
+
+            <p v-if="importError" class="text-xs text-red-600 font-medium">{{ importError }}</p>
+
+            <div v-if="importAnalysis" class="grid grid-cols-2 md:grid-cols-5 gap-2 text-xs">
+                <div class="border rounded-md p-2 bg-slate-50">
+                    <p class="text-muted-foreground">Rows</p>
+                    <p class="font-semibold">{{ importAnalysis.total_rows }}</p>
+                </div>
+                <div class="border rounded-md p-2 bg-emerald-50">
+                    <p class="text-muted-foreground">Matched</p>
+                    <p class="font-semibold">{{ importAnalysis.matched_count }}</p>
+                </div>
+                <div class="border rounded-md p-2 bg-amber-50">
+                    <p class="text-muted-foreground">Unmatched Players</p>
+                    <p class="font-semibold">{{ importAnalysis.unmatched_player_count }}</p>
+                </div>
+                <div class="border rounded-md p-2 bg-orange-50">
+                    <p class="text-muted-foreground">Unresolved Categories</p>
+                    <p class="font-semibold">{{ importAnalysis.unresolved_category_count }}</p>
+                </div>
+                <div class="border rounded-md p-2 bg-slate-100">
+                    <p class="text-muted-foreground">Duplicates</p>
+                    <p class="font-semibold">{{ importAnalysis.duplicate_count }}</p>
+                </div>
+            </div>
+
+            <div v-if="importAnalysis && importAnalysis.rows.some((row) => row.status !== 'matched')" class="border rounded-lg overflow-hidden">
+                <table class="w-full text-xs">
+                    <thead class="bg-slate-50">
+                        <tr>
+                            <th class="p-2 text-left">Row</th>
+                            <th class="p-2 text-left">Player</th>
+                            <th class="p-2 text-left">Issue</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr
+                            v-for="row in importAnalysis.rows.filter((item) => item.status !== 'matched').slice(0, 20)"
+                            :key="`${row.row}-${row.status}-${row.player}`"
+                            class="border-t"
+                        >
+                            <td class="p-2">{{ row.row }}</td>
+                            <td class="p-2">{{ row.player }}</td>
+                            <td class="p-2">{{ row.reason }}</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
         <div class="flex flex-wrap justify-between items-center gap-3">
             <h2 class="text-xl font-semibold">Category First Registration</h2>
             <span class="text-sm text-muted-foreground">Total Registered: {{ totalRegistered }}</span>

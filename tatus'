@@ -1,0 +1,425 @@
+[33mcommit 58dc2475fae93652261f594943db9eb8085a7abf[m
+Author: Kiann04 <kiansantos06@gmail.com>
+Date:   Fri Feb 27 17:31:18 2026 +0800
+
+    Test The Create Tournament
+    
+    Automatic send word file and generate the players based on the database
+
+[1mdiff --git a/app/Http/Controllers/Admin/TournamentController.php b/app/Http/Controllers/Admin/TournamentController.php[m
+[1mindex 0945925..ddbf9aa 100644[m
+[1m--- a/app/Http/Controllers/Admin/TournamentController.php[m
+[1m+++ b/app/Http/Controllers/Admin/TournamentController.php[m
+[36m@@ -6,6 +6,7 @@[m
+ use App\Models\Tournament;[m
+ use App\Models\Player;[m
+ use App\Models\WeightCategory;[m
+[32m+[m[32muse App\Services\PlayerListImportService;[m
+ use Illuminate\Http\Request;[m
+ use Inertia\Inertia;[m
+ use Illuminate\Support\Facades\DB;[m
+[36m@@ -96,6 +97,24 @@[m [mpublic function store(Request $request)[m
+             ->with('success', 'Tournament created successfully.');[m
+     }[m
+ [m
+[32m+[m[32m    public function importRegistrations(Request $request, PlayerListImportService $importService)[m
+[32m+[m[32m    {[m
+[32m+[m[32m        $validated = $request->validate([[m
+[32m+[m[32m            'file' => 'required|file|mimes:xlsx,csv,docx|max:10240',[m
+[32m+[m[32m            'fallback_category_id' => 'nullable|exists:weight_categories,id',[m
+[32m+[m[32m        ]);[m
+[32m+[m
+[32m+[m[32m        $analysis = $importService->analyze([m
+[32m+[m[32m            $validated['file'],[m
+[32m+[m[32m            isset($validated['fallback_category_id']) ? (int) $validated['fallback_category_id'] : null[m
+[32m+[m[32m        );[m
+[32m+[m
+[32m+[m[32m        return response()->json([[m
+[32m+[m[32m            'message' => 'File analyzed successfully.',[m
+[32m+[m[32m            'analysis' => $analysis,[m
+[32m+[m[32m        ]);[m
+[32m+[m[32m    }[m
+[32m+[m
+     public function show(Tournament $tournament)[m
+     {[m
+         $tournament->load('registrations.player', 'registrations.ageCategory', 'registrations.weightCategory');[m
+[36m@@ -227,4 +246,3 @@[m [mprivate function mapTournamentWeightCategories()[m
+     }[m
+ }[m
+ [m
+[31m-[m
+[1mdiff --git a/app/Services/PlayerListImportService.php b/app/Services/PlayerListImportService.php[m
+[1mnew file mode 100644[m
+[1mindex 0000000..aecd178[m
+[1m--- /dev/null[m
+[1m+++ b/app/Services/PlayerListImportService.php[m
+[36m@@ -0,0 +1,917 @@[m
+[32m+[m[32m<?php[m
+[32m+[m
+[32m+[m[32mnamespace App\Services;[m
+[32m+[m
+[32m+[m[32muse App\Models\Player;[m
+[32m+[m[32muse App\Models\WeightCategory;[m
+[32m+[m[32muse DOMDocument;[m
+[32m+[m[32muse DOMNode;[m
+[32m+[m[32muse DOMXPath;[m
+[32m+[m[32muse Illuminate\Http\UploadedFile;[m
+[32m+[m[32muse Illuminate\Support\Collection;[m
+[32m+[m[32muse Illuminate\Support\Str;[m
+[32m+[m[32muse ZipArchive;[m
+[32m+[m
+[32m+[m[32mclass PlayerListImportService[m
+[32m+[m[32m{[m
+[32m+[m[32m    public function analyze(UploadedFile $file, ?int $fallbackCategoryId = null): array[m
+[32m+[m[32m    {[m
+[32m+[m[32m        $rows = $this->readRows($file);[m
+[32m+[m[32m        $normalizedRows = $this->normalizeRows($rows);[m
+[32m+[m
+[32m+[m[32m        $players = Player::query()[m
+[32m+[m[32m            ->select('id', 'full_name', 'email', 'club', 'gender', 'birthday')[m
+[32m+[m[32m            ->get();[m
+[32m+[m
+[32m+[m[32m        $playersById = $players->keyBy('id');[m
+[32m+[m[32m        $playersByEmail = $players->filter(fn (Player $p) => filled($p->email))[m
+[32m+[m[32m            ->keyBy(fn (Player $p) => Str::lower(trim((string) $p->email)));[m
+[32m+[m[32m        $playersByName = collect();[m
+[32m+[m[32m        foreach ($players as $player) {[m
+[32m+[m[32m            foreach ($this->buildNameKeys((string) $player->full_name) as $nameKey) {[m
+[32m+[m[32m                $bucket = $playersByName->get($nameKey, collect());[m
+[32m+[m[32m                $bucket->push($player);[m
+[32m+[m[32m                $playersByName->put($nameKey, $bucket->unique('id')->values());[m
+[32m+[m[32m            }[m
+[32m+[m[32m        }[m
+[32m+[m
+[32m+[m[32m        $categories = WeightCategory::query()[m
+[32m+[m[32m            ->with('ageCategory:id,name,min_age,max_age')[m
+[32m+[m[32m            ->select('id', 'name', 'gender', 'age_category_id', 'min_weight', 'max_weight')[m
+[32m+[m[32m            ->get();[m
+[32m+[m
+[32m+[m[32m        $categoriesById = $categories->keyBy('id');[m
+[32m+[m[32m        $categoriesByName = $categories->groupBy(fn (WeightCategory $c) => $this->normalizeString($c->name));[m
+[32m+[m
+[32m+[m[32m        $fallbackCategory = $fallbackCategoryId ? $categoriesById->get($fallbackCategoryId) : null;[m
+[32m+[m
+[32m+[m[32m        $registrations = [];[m
+[32m+[m[32m        $rowResults = [];[m
+[32m+[m
+[32m+[m[32m        foreach ($normalizedRows as $index => $row) {[m
+[32m+[m[32m            $sourceRow = $index + 1;[m
+[32m+[m[32m            $player = $this->resolvePlayer($row, $playersById, $playersByEmail, $playersByName);[m
+[32m+[m
+[32m+[m[32m            if (!$player) {[m
+[32m+[m[32m                $rowResults[] = [[m
+[32m+[m[32m                    'row' => $sourceRow,[m
+[32m+[m[32m                    'status' => 'unmatched_player',[m
+[32m+[m[32m                    'player' => $row['full_name'] ?? $row['email'] ?? $row['player_id'] ?? '(unknown)',[m
+[32m+[m[32m                    'category' => $row['category'] ?? $row['uweight'] ?? $row['weight'] ?? $row['weight_category_id'] ?? null,[m
+[32m+[m[32m                    'reason' => 'Player not found in database.',[m
+[32m+[m[32m                ];[m
+[32m+[m[32m                continue;[m
+[32m+[m[32m            }[m
+[32m+[m
+[32m+[m[32m            [$categoryId, $categoryReason] = $this->resolveCategoryId([m
+[32m+[m[32m                $row,[m
+[32m+[m[32m                $player,[m
+[32m+[m[32m                $categoriesById,[m
+[32m+[m[32m                $categoriesByName,[m
+[32m+[m[32m                $categories,[m
+[32m+[m[32m                $fallbackCategory[m
+[32m+[m[32m            );[m
+[32m+[m
+[32m+[m[32m            if (!$categoryId) {[m
+[32m+[m[32m                $rowResults[] = [[m
+[32m+[m[32m                    'row' => $sourceRow,[m
+[32m+[m[32m                    'status' => 'unresolved_category',[m
+[32m+[m[32m                    'player' => $player->full_name,[m
+[32m+[m[32m                    'category' => $row['category'] ?? $row['uweight'] ?? $row['weight'] ?? $row['weight_category_id'] ?? null,[m
+[32m+[m[32m                    'reason' => $categoryReason ?? 'Weight category could not be resolved.',[m
+[32m+[m[32m                ];[m
+[32m+[m[32m                continue;[m
+[32m+[m[32m            }[m
+[32m+[m
+[32m+[m[32m            $key = $player->id.'-'.$categoryId;[m
+[32m+[m
+[32m+[m[32m            if (isset($registrations[$key])) {[m
+[32m+[m[32m                $rowResults[] = [[m
+[32m+[m[32m                    'row' => $sourceRow,[m
+[32m+[m[32m                    'status' => 'duplicate',[m
+[32m+[m[32m                    'player' => $player->full_name,[m
+[32m+[m[32m                    'category' => $categoriesById->get($categoryId)?->name,[m
+[32m+[m[32m                    'reason' => 'Duplicate player/category pair skipped.',[m
+[32m+[m[32m                ];[m
+[32m+[m[32m                continue;[m
+[32m+[m[32m            }[m
+[32m+[m
+[32m+[m[32m            $registrations[$key] = [[m
+[32m+[m[32m                'player_id' => $player->id,[m
+[32m+[m[32m                'tournament_weight_category_id' => $categoryId,[m
+[32m+[m[32m                'player_name' => $player->full_name,[m
+[32m+[m[32m                'category_name' => $categoriesById->get($categoryId)?->name ?? (string) $categoryId,[m
+[32m+[m[32m            ];[m
+[32m+[m
+[32m+[m[32m            $rowResults[] = [[m
+[32m+[m[32m                'row' => $sourceRow,[m
+[32m+[m[32m                'status' => 'matched',[m
+[32m+[m[32m                'player' => $player->full_name,[m
+[32m+[m[32m                'category' => $categoriesById->get($categoryId)?->name,[m
+[32m+[m[32m                'reason' => 'Matched and queued for registration.',[m
+[32m+[m[32m            ];[m
+[32m+[m[32m        }[m
+[32m+[m
+[32m+[m[32m        return [[m
+[32m+[m[32m            'total_rows' => count($normalizedRows),[m
+[32m+[m[32m            'matched_count' => count($registrations),[m
+[32m+[m[32m            'unmatched_player_count' => collect($rowResults)->where('status', 'unmatched_player')->count(),[m
+[32m+[m[32m            'unresolved_category_count' => collect($rowResults)->where('status', 'unresolved_category')->count(),[m
+[32m+[m[32m            'duplicate_count' => collect($rowResults)->where('status', 'duplicate')->count(),[m
+[32m+[m[32m            'registrations' => array_values($registrations),[m
+[32m+[m[32m            'rows' => $rowResults,[m
+[32m+[m[32m        ];[m
+[32m+[m[32m    }[m
+[32m+[m
+[32m+[m[32m    private function readRows(UploadedFile $file): array[m
+[32m+[m[32m    {[m
+[32m+[m[32m        $ext = Str::lower((string) $file->getClientOriginalExtension());[m
+[32m+[m
+[32m+[m[32m        return match ($ext) {[m
+[32m+[m[32m            'csv' => $this->readCsvRows($file->getRealPath()),[m
+[32m+[m[32m            'xlsx' => $this->readXlsxRows($file->getRealPath()),[m
+[32m+[m[32m            'docx' => $this->readDocxRows($file->getRealPath()),[m
+[32m+[m[32m            default => [],[m
+[32m+[m[32m        };[m
+[32m+[m[32m    }[m
+[32m+[m
+[32m+[m[32m    private function readCsvRows(string $path): array[m
+[32m+[m[32m    {[m
+[32m+[m[32m        $rows = [];[m
+[32m+[m[32m        $handle = fopen($path, 'r');[m
+[32m+[m
+[32m+[m[32m        if (!$handle) {[m
+[32m+[m[32m            return $rows;[m
+[32m+[m[32m        }[m
+[32m+[m
+[32m+[m[32m        while (($data = fgetcsv($handle)) !== false) {[m
+[32m+[m[32m            $rows[] = array_map([m
+[32m+[m[32m                fn ($value) => is_string($value) ? trim($value) : (string) $value,[m
+[32m+[m[32m                $data[m
+[32m+[m[32m            );[m
+[32m+[m[32m        }[m
+[32m+[m
+[32m+[m[32m        fclose($handle);[m
+[32m+[m
+[32m+[m[32m        return $rows;[m
+[32m+[m[32m    }[m
+[32m+[m
+[32m+[m[32m    private function readXlsxRows(string $path): array[m
+[32m+[m[32m    {[m
+[32m+[m[32m        $zip = new ZipArchive();[m
+[32m+[m[32m        if ($zip->open($path) !== true) {[m
+[32m+[m[32m            return [];[m
+[32m+[m[32m        }[m
+[32m+[m
+[32m+[m[32m        $sharedStrings = [];[m
+[32m+[m[32m        $sharedXml = $zip->getFromName('xl/sharedStrings.xml');[m
+[32m+[m[32m        if ($sharedXml !== false) {[m
+[32m+[m[32m            $sharedStrings = $this->parseSharedStrings($sharedXml);[m
+[32m+[m[32m        }[m
+[32m+[m
+[32m+[m[32m        $sheetPath = $this->resolveFirstWorksheetPath($zip);[m
+[32m+[m[32m        $sheetXml = $sheetPath ? $zip->getFromName($sheetPath) : false;[m
+[32m+[m[32m        $zip->close();[m
+[32m+[m
+[32m+[m[32m        if ($sheetXml === false) {[m
+[32m+[m[32m            return [];[m
+[32m+[m[32m        }[m
+[32m+[m
+[32m+[m[32m        return $this->parseSheetRows($sheetXml, $sharedStrings);[m
+[32m+[m[32m    }[m
+[32m+[m
+[32m+[m[32m    private function readDocxRows(string $path): array[m
+[32m+[m[32m    {[m
+[32m+[m[32m        $zip = new ZipArchive();[m
+[32m+[m[32m        if ($zip->open($path) !== true) {[m
+[32m+[m[32m            return [];[m
+[32m+[m[32m        }[m
+[32m+[m
+[32m+[m[32m        $documentXml = $zip->getFromName('word/document.xml');[m
+[32m+[m[32m        $zip->close();[m
+[32m+[m
+[32m+[m[32m        if ($documentXml === false) {[m
+[32m+[m[32m            return [];[m
+[32m+[m[32m        }[m
+[32m+[m
+[32m+[m[32m        $dom = new DOMDocument();[m
+[32m+[m[32m        if (!@$dom->loadXML($documentXml, LIBXML_NOERROR | LIBXML_NOWARNING | LIBXML_NONET)) {[m
+[32m+[m[32m            return [];[m
+[32m+[m[32m        }[m
+[32m+[m
+[32m+[m[32m        $xpath = new DOMXPath($dom);[m
+[32m+[m[32m        $xpath->registerNamespace('w', 'http://schemas.openxmlformats.org/wordprocessingml/2006/main');[m
+[32m+[m
+[32m+[m[32m        $rows = [];[m
+[32m+[m[32m        $tableRows = $xpath->query('//w:tbl/w:tr');[m
+[32m+[m[32m        if ($tableRows !== false) {[m
+[32m+[m[32m            foreach ($tableRows as $tableRow) {[m
+[32m+[m[32m                $cells = [];[m
+[32m+[m[32m                $cellNodes = $xpath->query('./w:tc', $tableRow);[m
+[32m+[m[32m                if ($cellNodes === false) {[m
+[32m+[m[32m                    continue;[m
+[32m+[m[32m                }[m
+[32m+[m
+[32m+[m[32m                foreach ($cellNodes as $cellNode) {[m
+[32m+[m[32m                    $cells[] = trim($this->extractWordText($xpath, $cellNode));[m
+[32m+[m[32m                }[m
+[32m+[m
+[32m+[m[32m                if ($this->isNonEmptyRow($cells)) {[m
+[32m+[m[32m                    $rows[] = $cells;[m
+[32m+[m[32m                }[m
+[32m+[m[32m            }[m
+[32m+[m[32m        }[m
+[32m+[m
+[32m+[m[32m        if (!empty($rows)) {[m
+[32m+[m[32m            return $rows;[m
+[32m+[m[32m        }[m
+[32m+[m
+[32m+[m[32m        $paragraphs = $xpath->query('//w:p');[m
+[32m+[m[32m        if ($paragraphs !== false) {[m
+[32m+[m[32m            foreach ($paragraphs as $paragraph) {[m
+[32m+[m[32m                $text = trim($this->extractWordText($xpath, $paragraph));[m
+[32m+[m[32m                if ($text !== '') {[m
+[32m+[m[32m                    $rows[] = [$text];[m
+[32m+[m[32m                }[m
+[32m+[m[32m            }[m
+[32m+[m[32m        }[m
+[32m+[m
+[32m+[m[32m        return $rows;[m
+[32m+[m[32m    }[m
+[32m+[m
+[32m+[m[32m    private function extractWordText(DOMXPath $xpath, DOMNode $node): string[m
+[32m+[m[32m    {[m
+[32m+[m[32m        $parts = [];[m
+[32m+[m[32m        $textNodes = $xpath->query('.//w:t', $node);[m
+[32m+[m
+[32m+[m[32m        if ($textNodes === false) {[m
+[32m+[m[32m            return '';[m
+[32m+[m[32m        }[m
+[32m+[m
+[32m+[m[32m        foreach ($textNodes as $textNode) {[m
+[32m+[m[32m            $parts[] = $textNode->textContent ?? '';[m
+[32m+[m[32m        }[m
+[32m+[m
+[32m+[m[32m        return implode(' ', $parts);[m
+[32m+[m[32m    }[m
+[32m+[m
+[32m+[m[32m    private function parseSharedStrings(string $xml): array[m
+[32m+[m[32m    {[m
+[32m+[m[32m        $shared = [];[m
+[32m+[m[32m        $sx = @simplexml_load_string($xml);[m
+[32m+[m[32m        if (!$sx) {[m
+[32m+[m[32m            return $shared;[m
+[32m+[m[32m        }[m
+[32m+[m
+[32m+[m[32m        $sx->registerXPathNamespace('x', 'http://schemas.openxmlformats.org/spreadsheetml/2006/main');[m
+[32m+[m
+[32m+[m[32m        foreach (($sx->xpath('//x:si') ?: []) as $si) {[m
+[32m+[m[32m            $parts = $si->xpath('.//x:t') ?: [];[m
+[32m+[m[32m            $shared[] = trim(implode('', array_map(fn ($node) => (string) $node, $parts)));[m
+[32m+[m[32m        }[m
+[32m+[m
+[32m+[m[32m        return $shared;[m
+[32m+[m[32m    }[m
+[32m+[m
+[32m+[m[32m    private function resolveFirstWorksheetPath(ZipArchive $zip): ?string[m
+[32m+[m[32m    {[m
+[32m+[m[32m        $workbookXml = $zip->getFromName('xl/workbook.xml');[m
+[32m+[m[32m        $relsXml = $zip->getFromName('xl/_rels/workbook.xml.rels');[m
+[32m+[m
+[32m+[m[32m        if ($workbookXml === false || $relsXml === false) {[m
+[32m+[m[32m            return 'xl/worksheets/sheet1.xml';[m
+[32m+[m[32m        }[m
+[32m+[m
+[32m+[m[32m        $workbook = @simplexml_load_string($workbookXml);[m
+[32m+[m[32m        $rels = @simplexml_load_string($relsXml);[m
+[32m+[m
+[32m+[m[32m        if (!$workbook || !$rels) {[m
+[32m+[m[32m            return 'xl/worksheets/sheet1.xml';[m
+[32m+[m[32m        }[m
+[32m+[m
+[32m+[m[32m        $workbook->registerXPathNamespace('x', 'http://schemas.openxmlformats.org/spreadsheetml/2006/main');[m
+[32m+[m[32m        $workbook->registerXPathNamespace('r', 'http://schemas.openxmlformats.org/officeDocument/2006/relationships');[m
+[32m+[m[32m        $rels->registerXPathNamespace('r', 'http://schemas.openxmlformats.org/package/2006/relationships');[m
+[32m+[m
+[32m+[m[32m        $firstSheet = ($workbook->xpath('//x:sheets/x:sheet[1]') ?: [])[0] ?? null;[m
+[32m+[m[32m        if (!$firstSheet) {[m
+[32m+[m[32m            return 'xl/worksheets/sheet1.xml';[m
+[32m+[m[32m        }[m
+[32m+[m
+[32m+[m[32m        $relationshipId = (string) ($firstSheet->attributes('http://schemas.openxmlformats.org/officeDocument/2006/relationships')['id'] ?? '');[m
+[32m+[m[32m        if ($relationshipId === '') {[m
+[32m+[m[32m            return 'xl/worksheets/sheet1.xml';[m
+[32m+[m[32m        }[m
+[32m+[m
+[32m+[m[32m        foreach (($rels->xpath('//r:Relationship') ?: []) as $relationship) {[m
+[32m+[m[32m            if ((string) $relationship['Id'] !== $relationshipId) {[m
+[32m+[m[32m                continue;[m
+[32m+[m[32m            }[m
+[32m+[m
+[32m+[m[32m            $target = (string) $relationship['Target'];[m
+[32m+[m[32m            if ($target === '') {[m
+[32m+[m[32m                break;[m
+[32m+[m[32m            }[m
+[32m+[m
+[32m+[m[32m            if (str_starts_with($target, '/')) {[m
+[32m+[m[32m                return ltrim($target, '/');[m
+[32m+[m[32m            }[m
+[32m+[m
+[32m+[m[32m            return 'xl/'.ltrim($target, '/');[m
+[32m+[m[32m        }[m
+[32m+[m
+[32m+[m[32m        return 'xl/worksheets/sheet1.xml';[m
+[32m+[m[32m    }[m
+[32m+[m
+[32m+[m[32m    private function parseSheetRows(string $sheetXml, array $sharedStrings): array[m
+[32m+[m[32m    {[m
+[32m+[m[32m        $sx = @simplexml_load_string($sheetXml);[m
+[32m+[m[32m        if (!$sx) {[m
+[32m+[m[32m            return [];[m
+[32m+[m[32m        }[m
+[32m+[m
+[32m+[m[32m        $sx->registerXPathNamespace('x', 'http://schemas.openxmlformats.org/spreadsheetml/2006/main');[m
+[32m+[m[32m        $rows = [];[m
+[32m+[m
+[32m+[m[32m        foreach (($sx->xpath('//x:sheetData/x:row') ?: []) as $rowNode) {[m
+[32m+[m[32m            $row = [];[m
+[32m+[m
+[32m+[m[32m            foreach (($rowNode->xpath('./x:c') ?: []) as $cell) {[m
+[32m+[m[32m                $reference = (string) $cell['r'];[m
+[32m+[m[32m                preg_match('/([A-Z]+)/', $reference, $matches);[m
+[32m+[m[32m                $columnLetters = $matches[1] ?? 'A';[m
+[32m+[m[32m                $index = $this->columnLettersToIndex($columnLetters);[m
+[32m+[m
+[32m+[m[32m                $type = (string) $cell['t'];[m
+[32m+[m[32m                $value = '';[m
+[32m+[m
+[32m+[m[32m                if ($type === 's') {[m
+[32m+[m[32m                    $sharedIndex = (int) ($cell->v ?? 0);[m
+[32m+[m[32m                    $value = $sharedStrings[$sharedIndex] ?? '';[m
+[32m+[m[32m                } elseif ($type === 'inlineStr') {[m
+[32m+[m[32m                    $parts = $cell->xpath('.//x:t') ?: [];[m
+[32m+[m[32m                    $value = implode('', array_map(fn ($node) => (string) $node, $parts));[m
+[32m+[m[32m                } else {[m
+[32m+[m[32m                    $value = (string) ($cell->v ?? '');[m
+[32m+[m[32m                }[m
+[32m+[m
+[32m+[m[32m                $row[$index] = trim($value);[m
+[32m+[m[32m            }[m
+[32m+[m
+[32m+[m[32m            if (empty($row)) {[m
+[32m+[m[32m                continue;[m
+[32m+[m[32m            }[m
+[32m+[m
+[32m+[m[32m            ksort($row);[m
+[32m+[m[32m            $filled = [];[m
+[32m+[m[32m            $max = max(array_keys($row));[m
+[32m+[m[32m            for ($i = 1; $i <= $max; $i++) {[m
+[32m+[m[32m       

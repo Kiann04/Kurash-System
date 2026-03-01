@@ -33,6 +33,31 @@ interface Registration {
     tournament_weight_category_id: number
 }
 
+interface ImportRegistration {
+    player_id: number
+    tournament_weight_category_id: number
+    player_name: string
+    category_name: string
+}
+
+interface ImportRowResult {
+    row: number
+    status: 'matched' | 'unmatched_player' | 'unresolved_category' | 'duplicate'
+    player: string
+    category: string | null
+    reason: string
+}
+
+interface ImportAnalysis {
+    total_rows: number
+    matched_count: number
+    unmatched_player_count: number
+    unresolved_category_count: number
+    duplicate_count: number
+    registrations: ImportRegistration[]
+    rows: ImportRowResult[]
+}
+
 const props = defineProps<{
     players: Player[]
     tournamentWeightCategories: TournamentWeightCategory[]
@@ -53,6 +78,10 @@ const form = useForm({
 const search = ref('')
 const playerGenderFilter = ref<'all' | 'male' | 'female'>('all')
 const openedSummaryCategoryId = ref<number | null>(null)
+const importFile = ref<File | null>(null)
+const importProcessing = ref(false)
+const importError = ref('')
+const importAnalysis = ref<ImportAnalysis | null>(null)
 
 const normalizeGender = (value: string | null | undefined): 'male' | 'female' | '' => {
     const normalized = String(value ?? '').trim().toLowerCase()
@@ -259,6 +288,75 @@ const submit = () => {
     isConfirmModalOpen.value = false
     form.post(route('admin.tournaments.store'))
 }
+
+const onImportFileChange = (event: Event) => {
+    const target = event.target as HTMLInputElement
+    importFile.value = target.files?.[0] ?? null
+    importError.value = ''
+}
+
+const getCsrfToken = () => {
+    const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content')
+    return token ?? ''
+}
+
+const analyzeAndImportFile = async () => {
+    if (!importFile.value) {
+        importError.value = 'Please select a file first.'
+        return
+    }
+
+    importError.value = ''
+    importProcessing.value = true
+
+    try {
+        const payload = new FormData()
+        payload.append('file', importFile.value)
+        if (selectedCategoryId.value) {
+            payload.append('fallback_category_id', String(selectedCategoryId.value))
+        }
+
+        const response = await fetch(route('admin.tournaments.import-registrations', undefined, false), {
+            method: 'POST',
+            credentials: 'same-origin',
+            headers: {
+                'X-CSRF-TOKEN': getCsrfToken(),
+                'X-Requested-With': 'XMLHttpRequest',
+                'Accept': 'application/json',
+            },
+            body: payload,
+        })
+
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => ({}))
+            const message = errorData?.message ?? 'Failed to analyze the file.'
+            throw new Error(message)
+        }
+
+        const data = await response.json()
+        const analysis = data.analysis as ImportAnalysis
+        importAnalysis.value = analysis
+
+        const existing = new Set(form.registrations.map((r) => `${r.player_id}-${r.tournament_weight_category_id}`))
+
+        analysis.registrations.forEach((registration) => {
+            const key = `${registration.player_id}-${registration.tournament_weight_category_id}`
+            if (existing.has(key)) {
+                return
+            }
+
+            form.registrations.push({
+                player_id: registration.player_id,
+                tournament_weight_category_id: registration.tournament_weight_category_id,
+            })
+            existing.add(key)
+        })
+    } catch (error) {
+        importError.value = error instanceof Error ? error.message : 'Failed to analyze the file.'
+    } finally {
+        importProcessing.value = false
+    }
+}
 </script>
 
 <template>
@@ -339,6 +437,80 @@ const submit = () => {
     </Dialog>
 
     <div class="space-y-4">
+        <div class="border rounded-xl bg-white p-4 space-y-3 shadow-sm">
+            <div class="flex flex-wrap items-center justify-between gap-3">
+                <div>
+                    <h2 class="text-sm font-semibold text-slate-900">Import Player List (Excel / Word)</h2>
+                    <p class="text-xs text-muted-foreground">
+                        Upload <code>.xlsx</code>, <code>.csv</code>, or <code>.docx</code>. System auto-maps by gender + age category + Uweight.
+                    </p>
+                </div>
+                <Button size="sm" :disabled="importProcessing || !importFile" @click="analyzeAndImportFile">
+                    {{ importProcessing ? 'Analyzing...' : 'Analyze & Add' }}
+                </Button>
+            </div>
+
+            <div class="flex flex-wrap items-center gap-3">
+                <input
+                    type="file"
+                    accept=".xlsx,.csv,.docx"
+                    class="border rounded-md text-sm p-2"
+                    @change="onImportFileChange"
+                />
+                <span v-if="selectedCategoryId" class="text-xs text-muted-foreground">
+                    Fallback category: {{ getCategoryById(selectedCategoryId)?.name ?? '-' }}
+                </span>
+            </div>
+
+            <p v-if="importError" class="text-xs text-red-600 font-medium">{{ importError }}</p>
+
+            <div v-if="importAnalysis" class="grid grid-cols-2 md:grid-cols-5 gap-2 text-xs">
+                <div class="border rounded-md p-2 bg-slate-50">
+                    <p class="text-muted-foreground">Rows</p>
+                    <p class="font-semibold">{{ importAnalysis.total_rows }}</p>
+                </div>
+                <div class="border rounded-md p-2 bg-emerald-50">
+                    <p class="text-muted-foreground">Matched</p>
+                    <p class="font-semibold">{{ importAnalysis.matched_count }}</p>
+                </div>
+                <div class="border rounded-md p-2 bg-amber-50">
+                    <p class="text-muted-foreground">Unmatched Players</p>
+                    <p class="font-semibold">{{ importAnalysis.unmatched_player_count }}</p>
+                </div>
+                <div class="border rounded-md p-2 bg-orange-50">
+                    <p class="text-muted-foreground">Unresolved Categories</p>
+                    <p class="font-semibold">{{ importAnalysis.unresolved_category_count }}</p>
+                </div>
+                <div class="border rounded-md p-2 bg-slate-100">
+                    <p class="text-muted-foreground">Duplicates</p>
+                    <p class="font-semibold">{{ importAnalysis.duplicate_count }}</p>
+                </div>
+            </div>
+
+            <div v-if="importAnalysis && importAnalysis.rows.some((row) => row.status !== 'matched')" class="border rounded-lg overflow-hidden">
+                <table class="w-full text-xs">
+                    <thead class="bg-slate-50">
+                        <tr>
+                            <th class="p-2 text-left">Row</th>
+                            <th class="p-2 text-left">Player</th>
+                            <th class="p-2 text-left">Issue</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr
+                            v-for="row in importAnalysis.rows.filter((item) => item.status !== 'matched').slice(0, 20)"
+                            :key="`${row.row}-${row.status}-${row.player}`"
+                            class="border-t"
+                        >
+                            <td class="p-2">{{ row.row }}</td>
+                            <td class="p-2">{{ row.player }}</td>
+                            <td class="p-2">{{ row.reason }}</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
         <div class="grid grid-cols-1 lg:grid-cols-4 gap-6 items-start">
             <!-- Left Side: Summary Stats -->
             <div class="space-y-4">
@@ -436,96 +608,138 @@ const submit = () => {
                     <div v-if="selectedCategory" class="flex-1 min-w-[200px] text-xs border rounded-lg bg-blue-50/50 border-blue-200 px-3 py-2 flex items-center gap-1.5 shadow-sm">
                         <span class="text-blue-700 font-medium">Assigning:</span>
                         <strong class="text-blue-900">{{ selectedCategory.name }}</strong>
-                        <span class="text-blue-600/70 text-[10px]">({{ selectedCategory.age_category_name }} / {{ selectedCategory.gender }})</span>
+                        <span class="text-blue-400">|</span>
+                        <span class="text-blue-700 capitalize">{{ selectedCategory.gender }}</span>
+                        <span class="text-blue-400">|</span>
+                        <span class="text-blue-700">{{ selectedCategory.age_category_name }}</span>
                     </div>
-                    
-                    <div class="flex-1 flex gap-2 min-w-[300px]">
-                        <div class="relative flex-1">
-                            <div class="absolute inset-y-0 left-0 pl-2.5 flex items-center pointer-events-none text-muted-foreground">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
-                            </div>
-                            <input v-model="search" placeholder="Search player by name or club..." class="border rounded-lg py-2 pl-8 pr-3 w-full text-sm shadow-sm focus:ring-1 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all" />
+
+                    <div class="flex items-center gap-2 bg-white border rounded-lg px-3 py-1 shadow-sm">
+                        <label class="text-[10px] uppercase font-bold text-slate-400">Filter:</label>
+                        <div class="flex items-center gap-1">
+                            <button 
+                                v-for="option in (['all', 'male', 'female'] as const)" 
+                                :key="option"
+                                @click="playerGenderFilter = option"
+                                class="px-2 py-0.5 rounded text-[10px] font-bold uppercase transition-colors"
+                                :class="playerGenderFilter === option ? 'bg-slate-900 text-white' : 'text-slate-500 hover:bg-slate-100'"
+                            >
+                                {{ option }}
+                            </button>
                         </div>
-                        <select v-model="playerGenderFilter" class="border rounded-lg p-2 text-sm w-32 shadow-sm focus:ring-1 focus:ring-blue-500 outline-none transition-all">
-                            <option value="all">All Genders</option>
-                            <option value="male">Male</option>
-                            <option value="female">Female</option>
-                        </select>
+                    </div>
+
+                    <div class="relative flex-1 min-w-[200px]">
+                        <input 
+                            v-model="search" 
+                            type="text" 
+                            placeholder="Search players by name or club..." 
+                            class="w-full border rounded-lg pl-8 pr-3 py-1.5 text-sm shadow-sm focus:ring-2 focus:ring-blue-500/20 transition-all"
+                        />
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+                    </div>
+                </div>
+
+                <!-- Players Grid -->
+                <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
+                    <div 
+                        v-for="player in filteredPlayers" 
+                        :key="player.id"
+                        class="group border rounded-xl p-3 bg-white hover:border-blue-300 hover:shadow-md transition-all cursor-pointer relative overflow-hidden"
+                        :class="[
+                            isSelectedInCurrentCategory(player.id) ? 'border-blue-500 bg-blue-50/30' : 'border-slate-200'
+                        ]"
+                        @click="togglePlayerForSelectedCategory(player)"
+                    >
+                        <div v-if="isSelectedInCurrentCategory(player.id)" class="absolute top-0 right-0 p-1.5">
+                            <div class="bg-blue-500 text-white rounded-full p-0.5">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+                            </div>
+                        </div>
+
+                        <div class="space-y-2">
+                            <div>
+                                <h3 class="font-bold text-slate-900 text-sm leading-tight group-hover:text-blue-700 transition-colors">
+                                    {{ player.full_name }}
+                                </h3>
+                                <p class="text-[10px] text-muted-foreground font-medium uppercase tracking-wider mt-0.5">{{ player.club || 'No Club' }}</p>
+                            </div>
+
+                            <div class="flex items-center gap-2">
+                                <span 
+                                    class="text-[9px] font-bold uppercase px-1.5 py-0.5 rounded border"
+                                    :class="normalizeGender(player.gender) === 'male' ? 'bg-blue-50 text-blue-700 border-blue-100' : 'bg-pink-50 text-pink-700 border-pink-100'"
+                                >
+                                    {{ player.gender }}
+                                </span>
+                                
+                                <div v-if="isPlayerRegisteredAnywhere(player.id)" class="flex flex-wrap gap-1">
+                                    <span class="text-[9px] font-bold bg-slate-100 text-slate-600 px-1.5 py-0.5 rounded border border-slate-200">
+                                        Registered
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div v-if="filteredPlayers.length === 0" class="p-12 text-center border-2 border-dashed rounded-xl bg-slate-50/50">
+                    <p class="text-slate-400 font-medium italic">No players found matching your search or filters.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Player Registration Detail Modal -->
+<Dialog :open="!!openedSummary" @update:open="closeSummary">
+    <DialogContent class="sm:max-w-[600px] max-h-[80vh] flex flex-col p-0">
+        <DialogHeader class="p-6 pb-0">
+            <DialogTitle class="flex items-center gap-3">
+                <span class="text-2xl">📋</span>
+                <div>
+                    <span class="block text-xl font-bold">{{ openedSummary?.category_name }}</span>
+                    <span class="text-sm font-medium text-muted-foreground uppercase tracking-wider">
+                        {{ openedSummary?.age_category }} / {{ openedSummary?.gender }}
+                    </span>
+                </div>
+            </DialogTitle>
+        </DialogHeader>
+
+        <div class="flex-1 overflow-y-auto p-6">
+            <div class="space-y-4">
+                <div class="flex items-center justify-between">
+                    <h3 class="text-sm font-bold text-slate-900">Registered Players ({{ openedSummary?.player_count }})</h3>
+                </div>
+
+                <div class="grid gap-2">
+                    <div 
+                        v-for="player in openedSummary?.players" 
+                        :key="player.player_id"
+                        class="flex items-center justify-between p-3 rounded-lg border border-slate-100 bg-slate-50/50 hover:bg-slate-50 transition-colors group"
+                    >
+                        <div class="flex items-center gap-3">
+                            <div class="w-8 h-8 rounded-full bg-white border border-slate-200 flex items-center justify-center text-xs font-bold text-slate-400">
+                                {{ player.full_name.charAt(0) }}
+                            </div>
+                            <span class="font-semibold text-slate-900">{{ player.full_name }}</span>
+                        </div>
+                        <button 
+                            @click="removeFromSummary(openedSummary!.category_id, player.player_id)"
+                            class="text-xs font-bold text-red-500 hover:text-red-700 opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1"
+                        >
+                            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+                            Remove
+                        </button>
                     </div>
                 </div>
             </div>
         </div>
 
-        <div class="border rounded-lg overflow-hidden bg-white">
-            <table class="w-full text-sm">
-                <thead class="bg-muted/70">
-                    <tr>
-                        <th class="p-3">Select</th>
-                        <th class="p-3 text-left">Player</th>
-                        <th class="p-3">Club</th>
-                        <th class="p-3">Age Category</th>
-                        <th class="p-3">Assigned Category</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr v-for="player in filteredPlayers" :key="player.id" class="border-t" :class="isSelectedInCurrentCategory(player.id) ? 'bg-emerald-50' : ''">
-                        <td class="p-3 text-center">
-                            <input type="checkbox" :checked="isSelectedInCurrentCategory(player.id)" :disabled="!selectedCategoryId" @change="togglePlayerForSelectedCategory(player)" />
-                        </td>
-                        <td class="p-3 font-medium">
-                            <div>{{ player.full_name }}</div>
-                            <div v-if="isPlayerRegisteredAnywhere(player.id) && !isSelectedInCurrentCategory(player.id)" class="text-xs text-amber-700">
-                                Already in another category
-                            </div>
-                        </td>
-                        <td class="p-3 text-center">{{ player.club }}</td>
-                        <td class="p-3 text-center">{{ getAssignedAgeCategoryName(player.id) }}</td>
-                        <td class="p-3 text-center">{{ getAssignedCategoryName(player.id) }}</td>
-                    </tr>
-                    <tr v-if="filteredPlayers.length === 0">
-                        <td colspan="5" class="p-4 text-center text-muted-foreground">No players found.</td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
-    </div>
-
-    <div v-if="openedSummary" class="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4">
-        <div class="bg-white rounded-xl w-full max-w-2xl p-5 space-y-4">
-            <div class="flex items-center justify-between">
-                <div>
-                    <h3 class="text-lg font-semibold">{{ openedSummary.category_name }} ({{ openedSummary.gender }} / {{ openedSummary.age_category }})</h3>
-                    <p class="text-sm text-muted-foreground">{{ openedSummary.player_count }} registered</p>
-                </div>
-                <button type="button" class="px-3 py-1 rounded border" @click="closeSummary">Close</button>
-            </div>
-
-            <div class="border rounded-lg overflow-hidden max-h-80 overflow-y-auto">
-                <table class="w-full text-sm">
-                    <thead class="bg-muted sticky top-0">
-                        <tr>
-                            <th class="p-3 text-left">Player</th>
-                            <th class="p-3 text-right">Action</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr v-for="player in openedSummary.players" :key="`${openedSummary.category_id}-${player.player_id}`" class="border-t">
-                            <td class="p-3">{{ player.full_name }}</td>
-                            <td class="p-3 text-right">
-                                <button type="button" class="px-2 py-1 rounded border text-red-600 border-red-200 hover:bg-red-50" @click="removeFromSummary(openedSummary.category_id, player.player_id)">
-                                    Remove
-                                </button>
-                            </td>
-                        </tr>
-                        <tr v-if="openedSummary.players.length === 0">
-                            <td colspan="2" class="p-4 text-center text-muted-foreground">No players in this category.</td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    </div>
-
-</div>
+        <DialogFooter class="p-6 bg-slate-50 border-t">
+            <Button variant="outline" @click="closeSummary">Close</Button>
+        </DialogFooter>
+    </DialogContent>
+</Dialog>
 </AppLayout>
 </template>

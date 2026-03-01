@@ -746,11 +746,6 @@ class PlayerListImportService
 
     private function resolveAgeCategoryIdFromRow(?string $ageCategory, Collection $allCategories, ?Player $player = null): ?int
     {
-        $value = $this->normalizeString((string) $ageCategory);
-        if ($value === '') {
-            return null;
-        }
-
         $ageCategories = $allCategories
             ->map(function (WeightCategory $category) {
                 return $category->ageCategory;
@@ -758,6 +753,22 @@ class PlayerListImportService
             ->filter()
             ->unique('id')
             ->values();
+
+        $value = $this->normalizeString((string) $ageCategory);
+        if ($value === '') {
+            if ($player) {
+                $age = $this->resolvePlayerAge($player);
+                if ($age !== null) {
+                    $ageMatched = $ageCategories->first(function ($category) use ($age) {
+                        return $age >= (int) $category->min_age && $age <= (int) $category->max_age;
+                    });
+                    if ($ageMatched) {
+                        return (int) $ageMatched->id;
+                    }
+                }
+            }
+            return null;
+        }
 
         $exact = $ageCategories->first(function ($age) use ($value) {
             return $this->normalizeString((string) $age->name) === $value;
