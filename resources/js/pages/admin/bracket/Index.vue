@@ -31,7 +31,8 @@ interface Tournament {
 }
 
 const props = defineProps<{
-    tournaments: Tournament[]
+    generated: Tournament[]
+    not_generated: Tournament[]
 }>()
 
 const generate = (tournamentId: number) => {
@@ -60,96 +61,90 @@ const getStatusVariant = (status: string) => {
 
     <AppLayout>
         <div class="p-6 space-y-6">
-            <div class="flex flex-col gap-2">
-                <h1 class="text-2xl font-bold tracking-tight flex items-center gap-2">
-                    <ListTree class="h-6 w-6 text-primary" />
-                    Bracket Management
-                </h1>
-                <p class="text-muted-foreground">
-                    Generate and manage tournament brackets. Rules: 2-5 players (Round Robin), 6+ players (Single Elimination).
-                </p>
+            <h1 class="text-2xl font-bold">Generate Brackets</h1>
+            <p class="text-sm text-muted-foreground">
+                2-5 players: round-robin, 6+ players: single elimination.
+            </p>
+
+            <div class="border rounded-lg overflow-hidden">
+                <div class="p-3 bg-muted font-semibold">Without Generated Brackets</div>
+                <table class="w-full text-sm">
+                    <thead class="bg-muted">
+                        <tr>
+                            <th class="p-3 text-left">Tournament</th>
+                            <th class="p-3 text-center">Date</th>
+                            <th class="p-3 text-center">Status</th>
+                            <th class="p-3 text-center">Registrations</th>
+                            <th class="p-3 text-center">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr v-for="tournament in props.not_generated" :key="tournament.id" class="border-t">
+                            <td class="p-3 font-medium">{{ tournament.name }}</td>
+                            <td class="p-3 text-center">{{ formatDate(tournament.tournament_date) }}</td>
+                            <td class="p-3 text-center">{{ tournament.status }}</td>
+                            <td class="p-3 text-center">{{ tournament.registrations_count }}</td>
+                            <td class="p-3 text-center">
+                                <div class="flex items-center justify-center gap-2">
+                                    <button
+                                        class="px-3 py-1 rounded bg-blue-600 text-white disabled:opacity-50"
+                                        :disabled="tournament.registrations_count < 2"
+                                        @click="generate(tournament.id)"
+                                    >
+                                        Generate
+                                    </button>
+                                    <Link
+                                        :href="route('admin.tournaments.brackets.show', tournament.id)"
+                                        class="px-3 py-1 rounded border"
+                                    >
+                                        View
+                                    </Link>
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
             </div>
 
-            <Card>
-                <CardHeader>
-                    <CardTitle>Tournaments</CardTitle>
-                    <CardDescription>Select a tournament to manage its brackets.</CardDescription>
-                </CardHeader>
-                <CardContent>
-                    <Table>
-                        <TableHeader>
-                            <TableRow>
-                                <TableHead>Tournament</TableHead>
-                                <TableHead class="text-center">Date</TableHead>
-                                <TableHead class="text-center">Status</TableHead>
-                                <TableHead class="text-center">Registrations</TableHead>
-                                <TableHead class="text-center">Action</TableHead>
-                            </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                            <TableRow v-for="tournament in props.tournaments" :key="tournament.id">
-                                <TableCell class="font-medium">
-                                    <div class="flex items-center gap-2">
-                                        <Trophy class="h-4 w-4 text-amber-500" />
-                                        {{ tournament.name }}
-                                    </div>
-                                </TableCell>
-                                <TableCell class="text-center">
-                                    <div class="flex items-center justify-center gap-2 text-muted-foreground">
-                                        <Calendar class="h-4 w-4" />
-                                        {{ formatDate(tournament.tournament_date) }}
-                                    </div>
-                                </TableCell>
-                                <TableCell class="text-center">
-                                    <Badge :variant="getStatusVariant(tournament.status)" class="capitalize">
-                                        {{ tournament.status }}
-                                    </Badge>
-                                </TableCell>
-                                <TableCell class="text-center">
-                                    <div class="flex items-center justify-center gap-2">
-                                        <Users class="h-4 w-4 text-muted-foreground" />
-                                        {{ tournament.registrations_count }}
-                                    </div>
-                                </TableCell>
-                                <TableCell class="text-center">
-                                    <div class="flex items-center justify-center gap-2">
-                                        <Button
-                                            v-if="tournament.registrations_count >= 2"
-                                            size="sm"
-                                            @click="generate(tournament.id)"
-                                        >
-                                            <Play class="h-4 w-4 mr-1" />
-                                            Generate
-                                        </Button>
-                                        <Button
-                                            v-else
-                                            size="sm"
-                                            variant="secondary"
-                                            disabled
-                                            title="Need at least 2 players"
-                                        >
-                                            <Play class="h-4 w-4 mr-1" />
-                                            Generate
-                                        </Button>
-
-                                        <Button as-child variant="outline" size="sm">
-                                            <Link :href="route('admin.tournaments.brackets.show', tournament.id)">
-                                                <Eye class="h-4 w-4 mr-1" />
-                                                View
-                                            </Link>
-                                        </Button>
-                                    </div>
-                                </TableCell>
-                            </TableRow>
-                            <TableRow v-if="props.tournaments.length === 0">
-                                <TableCell colspan="5" class="h-24 text-center text-muted-foreground">
-                                    No tournaments found.
-                                </TableCell>
-                            </TableRow>
-                        </TableBody>
-                    </Table>
-                </CardContent>
-            </Card>
+            <div class="border rounded-lg overflow-hidden">
+                <div class="p-3 bg-muted font-semibold">With Generated Brackets</div>
+                <table class="w-full text-sm">
+                    <thead class="bg-muted">
+                        <tr>
+                            <th class="p-3 text-left">Tournament</th>
+                            <th class="p-3 text-center">Date</th>
+                            <th class="p-3 text-center">Status</th>
+                            <th class="p-3 text-center">Registrations</th>
+                            <th class="p-3 text-center">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr v-for="tournament in props.generated" :key="tournament.id" class="border-t">
+                            <td class="p-3 font-medium">{{ tournament.name }}</td>
+                            <td class="p-3 text-center">{{ formatDate(tournament.tournament_date) }}</td>
+                            <td class="p-3 text-center">{{ tournament.status }}</td>
+                            <td class="p-3 text-center">{{ tournament.registrations_count }}</td>
+                            <td class="p-3 text-center">
+                                <div class="flex items-center justify-center gap-2">
+                                    <button
+                                        class="px-3 py-1 rounded bg-blue-600 text-white disabled:opacity-50"
+                                        :disabled="tournament.registrations_count < 2"
+                                        @click="generate(tournament.id)"
+                                    >
+                                        Regenerate
+                                    </button>
+                                    <Link
+                                        :href="route('admin.tournaments.brackets.show', tournament.id)"
+                                        class="px-3 py-1 rounded border"
+                                    >
+                                        View
+                                    </Link>
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
         </div>
     </AppLayout>
 </template>

@@ -54,4 +54,6 @@ Route::prefix('admin')
             ->name('tournaments.brackets.generate');
         Route::post('tournaments/{tournament}/matches/{match}/advance', [AdminBracketController::class, 'advance'])
             ->name('tournaments.matches.advance');
+        Route::post('tournaments/{tournament}/matches/{match}/revert', [AdminBracketController::class, 'revert'])
+            ->name('tournaments.matches.revert');
     });

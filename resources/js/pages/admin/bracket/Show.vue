@@ -2,8 +2,8 @@
 import { Head, Link, router } from '@inertiajs/vue3'
 import { route } from 'ziggy-js'
 import AppLayout from '@/layouts/AppLayout.vue'
-import { Maximize2, Minimize2, Trophy, ArrowLeft, Download, Medal, AlertCircle, Info, User, Check } from 'lucide-vue-next'
-import { ref, onMounted, onUnmounted } from 'vue'
+import { Maximize2, Minimize2, Trophy, ArrowLeft, Download, Medal, AlertCircle, Info, User, Check, Calendar } from 'lucide-vue-next'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { Button } from '@/components/ui/button'
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -182,6 +182,65 @@ const isBye = (match: MatchItem) => {
            (match.player_one_id !== null && match.player_two_id === null)
 }
 
+const matchReady = (match: MatchItem) => {
+    return match.player_one_id !== null && match.player_two_id !== null
+}
+
+const globalScheduledMatches = computed(() => {
+    const items: Array<MatchItem & { bracket: BracketItem }> = []
+    props.brackets.forEach((br) => {
+        (br.matches ?? []).forEach((m) => {
+            if (m.status === 'scheduled') {
+                items.push({ ...m, bracket: br })
+            }
+        })
+    })
+    // Order: by round_number asc, then by bracket order (already sorted from backend), then match_number asc
+    return items
+        .sort((a, b) => {
+            if (a.round_number !== b.round_number) return a.round_number - b.round_number
+            if (a.bracket.id !== b.bracket.id) return a.bracket.id - b.bracket.id
+            return a.match_number - b.match_number
+        })
+})
+
+const globalCompletedMatches = computed(() => {
+    const items: Array<MatchItem & { bracket: BracketItem }> = []
+    props.brackets.forEach((br) => {
+        (br.matches ?? []).forEach((m) => {
+            if (m.status === 'completed') {
+                items.push({ ...m, bracket: br })
+            }
+        })
+    })
+    // Most recent first by id as a simple proxy
+    return items.sort((a, b) => b.id - a.id)
+})
+
+const confirmAndChooseWinner = (match: MatchItem, winnerId: number | null) => {
+    if (isCompleted) return
+    if (!matchReady(match)) return
+    if (!winnerId) return
+    const p1 = match.player_one || 'BYE'
+    const p2 = match.player_two || 'BYE'
+    const chosen = winnerId === match.player_one_id ? p1 : p2
+    if (!window.confirm(`Confirm winner?\n\n${p1} vs ${p2}\nWinner: ${chosen}`)) return
+    chooseWinner(match, winnerId)
+}
+
+const revertMatch = (match: MatchItem) => {
+    if (isCompleted) return
+    if (!window.confirm('Revert this match result?')) return
+    router.post(
+        route('admin.tournaments.matches.revert', {
+            tournament: props.tournament.id,
+            match: match.id,
+        }),
+        {},
+        { preserveScroll: true }
+    )
+}
+
 const chooseWinner = (match: MatchItem, winnerId: number | null) => {
     if (isCompleted) return
 
@@ -284,6 +343,104 @@ onUnmounted(() => {
                         </Link>
                     </Button>
                 </div>
+            </div>
+            <!-- Global Match List -->
+            <div class="rounded-xl border border-slate-200 bg-white overflow-hidden shadow-sm">
+                <div class="p-4 border-b bg-slate-50/50 flex justify-between items-center">
+                    <h2 class="text-sm font-semibold text-slate-700 uppercase tracking-wider">Match List (All Brackets)</h2>
+                    <span class="text-xs text-slate-500">{{ globalScheduledMatches.length }} Scheduled</span>
+                </div>
+                <table class="w-full text-sm">
+                    <thead class="bg-slate-50/50">
+                        <tr>
+                            <th class="p-3 text-left">ID</th>
+                            <th class="p-3 text-left">Category</th>
+                            <th class="p-3 text-center">Round</th>
+                            <th class="p-3 text-center">Match</th>
+                            <th class="p-3 text-left">Player One</th>
+                            <th class="p-3 text-left">Player Two</th>
+                            <th class="p-3 text-center">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr v-for="m in globalScheduledMatches" :key="m.id" class="border-t">
+                            <td class="p-3 text-slate-500">{{ m.id }}</td>
+                            <td class="p-3">
+                                {{ (m.bracket.gender || 'unknown') }} · {{ m.bracket.age_category || '-' }} · {{ m.bracket.weight_category || '-' }}
+                            </td>
+                            <td class="p-3 text-center">{{ m.round_number }}</td>
+                            <td class="p-3 text-center">
+                                {{ roundLabel(finalRoundNumber(m.bracket), m.round_number, m.bracket.entrant_count, m.bracket.format) }}
+                            </td>
+                            <td class="p-3">{{ m.player_one || 'BYE' }}</td>
+                            <td class="p-3">{{ m.player_two || 'BYE' }}</td>
+                            <td class="p-3 text-center">
+                                <div class="flex items-center justify-center gap-2">
+                                    <button
+                                         class="fighter fighter-blue"
+                                         :class="{ 'winner': m.winner_id === m.player_one_id }"
+                                         :disabled="m.player_one_id === null || isCompleted"
+                                         @click="confirmAndChooseWinner(m, m.player_one_id)"
+                                     >
+                                         {{ m.player_one || 'BYE' }}
+                                     </button>
+                                     <button
+                                         class="fighter fighter-green"
+                                         :class="{ 'winner': m.winner_id === m.player_two_id }"
+                                         :disabled="m.player_two_id === null || isCompleted"
+                                         @click="confirmAndChooseWinner(m, m.player_two_id)"
+                                     >
+                                         {{ m.player_two || 'BYE' }}
+                                     </button>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr v-if="globalScheduledMatches.length === 0">
+                            <td colspan="6" class="p-4 text-center text-slate-500">No scheduled matches.</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Match History -->
+            <div class="rounded-xl border border-slate-200 bg-white overflow-hidden shadow-sm">
+                <div class="p-4 border-b bg-slate-50/50 flex justify-between items-center">
+                    <h2 class="text-sm font-semibold text-slate-700 uppercase tracking-wider">Match History</h2>
+                    <span class="text-xs text-slate-500">{{ globalCompletedMatches.length }} Completed</span>
+                </div>
+                <table class="w-full text-sm">
+                    <thead class="bg-slate-50/50">
+                        <tr>
+                            <th class="p-3 text-left">Category</th>
+                            <th class="p-3 text-center">Round</th>
+                            <th class="p-3 text-center">Match</th>
+                            <th class="p-3 text-left">Winner</th>
+                            <th class="p-3 text-center">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr v-for="m in globalCompletedMatches" :key="`hist-${m.id}`" class="border-t">
+                            <td class="p-3">
+                                {{ (m.bracket.gender || 'unknown') }} · {{ m.bracket.age_category || '-' }} · {{ m.bracket.weight_category || '-' }}
+                            </td>
+                            <td class="p-3 text-center">{{ m.round_number }}</td>
+                            <td class="p-3 text-center">M{{ m.match_number }}</td>
+                            <td class="p-3">{{ m.winner || '—' }}</td>
+                            <td class="p-3 text-center">
+                                <button
+                                    class="px-3 py-1 rounded border hover:bg-slate-50 disabled:opacity-50"
+                                    :disabled="isCompleted"
+                                    @click="revertMatch(m)"
+                                >
+                                    Revert
+                                </button>
+                            </td>
+                        </tr>
+                        <tr v-if="globalCompletedMatches.length === 0">
+                            <td colspan="5" class="p-4 text-center text-slate-500">No completed matches.</td>
+                        </tr>
+                    </tbody>
+                </table>
             </div>
 
             <Alert v-if="props.brackets.length === 0" variant="default">
@@ -430,6 +587,7 @@ onUnmounted(() => {
 
                     <!-- Bracket Board Renderers -->
                     <div class="overflow-auto pb-6">
+                        <template v-if="bracket.format === 'single_elimination'">
                         <div class="conference-board">
                             <div class="conference-side east">
                                 <div
@@ -505,7 +663,7 @@ onUnmounted(() => {
                                         <button
                                              class="fighter fighter-blue"
                                              :class="{ 'winner': match.winner_id === match.player_one_id }"
-                                             :disabled="isCompleted || (match.status === 'completed' && match.winner_id !== match.player_one_id)"
+                                             :disabled="isCompleted || !matchReady(match) || (match.status === 'completed' && match.winner_id !== match.player_one_id)"
                                              @click="chooseWinner(match, match.player_one_id)"
                                          >
                                             <div class="flex items-center justify-between w-full">
@@ -519,7 +677,7 @@ onUnmounted(() => {
                                          <button
                                              class="fighter fighter-green"
                                              :class="{ 'winner': match.winner_id === match.player_two_id }"
-                                             :disabled="isCompleted || (match.status === 'completed' && match.winner_id !== match.player_two_id)"
+                                             :disabled="isCompleted || !matchReady(match) || (match.status === 'completed' && match.winner_id !== match.player_two_id)"
                                              @click="chooseWinner(match, match.player_two_id)"
                                          >
                                             <div class="flex items-center justify-between w-full">
@@ -628,8 +786,9 @@ onUnmounted(() => {
                                 </article>
                             </div>
                         </div>
-                    </div>
-                    <div v-else class="rr-board">
+                        </template>
+                        <template v-else>
+                    <div class="rr-board">
                         <div v-for="round in roundsForBracket(bracket)" :key="round.round" class="rr-round">
                             <h3 class="round-title">{{ roundLabel(finalRoundNumber(bracket), round.round, bracket.entrant_count, 'round_robin') }}</h3>
                             <div class="rr-grid">
@@ -646,7 +805,7 @@ onUnmounted(() => {
                                     <button
                                          class="fighter fighter-blue"
                                          :class="{ 'winner': match.winner_id === match.player_one_id }"
-                                         :disabled="isCompleted || (match.status === 'completed' && match.winner_id !== match.player_one_id)"
+                                         :disabled="isCompleted || !matchReady(match) || (match.status === 'completed' && match.winner_id !== match.player_one_id)"
                                          @click="chooseWinner(match, match.player_one_id)"
                                      >
                                         <div class="flex items-center justify-between w-full">
@@ -660,7 +819,7 @@ onUnmounted(() => {
                                      <button
                                          class="fighter fighter-green"
                                          :class="{ 'winner': match.winner_id === match.player_two_id }"
-                                         :disabled="isCompleted || (match.status === 'completed' && match.winner_id !== match.player_two_id)"
+                                         :disabled="isCompleted || !matchReady(match) || (match.status === 'completed' && match.winner_id !== match.player_two_id)"
                                          @click="chooseWinner(match, match.player_two_id)"
                                      >
                                         <div class="flex items-center justify-between w-full">
@@ -675,6 +834,8 @@ onUnmounted(() => {
                             </div>
                         </div>
                     </div>
+                        </template>
+                </div>
                 </div>
             </template>
         </div>

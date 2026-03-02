@@ -522,41 +522,14 @@ const getStatusColor = (status: string) => {
                             </div>
                         </div>
 
-                        <div v-if="selectedCategory.bronze_match" class="flex flex-col gap-6">
-                            <h4 class="text-[10px] font-black uppercase tracking-[0.2em] text-orange-400 text-center mb-2">
-                                Bronze Match
+                        <div v-if="selectedCategory.awards?.bronze?.length" class="flex flex-col gap-3 items-center">
+                            <h4 class="text-[10px] font-black uppercase tracking-[0.2em] text-orange-400 text-center">
+                                Bronze Medalists
                             </h4>
-                            <div class="w-80">
-                                <div class="bg-linear-to-b from-orange-500/10 to-transparent border border-orange-500/30 rounded-3xl p-5">
-                                    <div class="space-y-3">
-                                        <div :class="[
-                                            'p-4 rounded-2xl transition-all duration-300',
-                                            selectedCategory.bronze_match.winner_id === selectedCategory.bronze_match.player_one_id
-                                                ? 'bg-orange-500/20 border border-orange-500/40'
-                                                : 'bg-blue-500/10 border border-blue-500/20'
-                                        ]">
-                                            <div :class="['text-[10px] font-black uppercase tracking-widest mb-1', selectedCategory.bronze_match.winner_id === selectedCategory.bronze_match.player_one_id ? 'text-orange-300' : 'text-blue-400']">
-                                                Bronze Contender
-                                            </div>
-                                            <div :class="['text-lg font-serif font-bold italic', selectedCategory.bronze_match.winner_id === selectedCategory.bronze_match.player_one_id ? 'text-orange-200' : 'text-white']">
-                                                {{ selectedCategory.bronze_match.player_one || 'TBD' }}
-                                            </div>
-                                        </div>
-                                        <div :class="[
-                                            'p-4 rounded-2xl transition-all duration-300',
-                                            selectedCategory.bronze_match.winner_id === selectedCategory.bronze_match.player_two_id
-                                                ? 'bg-orange-500/20 border border-orange-500/40'
-                                                : 'bg-emerald-500/10 border border-emerald-500/20'
-                                        ]">
-                                            <div :class="['text-[10px] font-black uppercase tracking-widest mb-1', selectedCategory.bronze_match.winner_id === selectedCategory.bronze_match.player_two_id ? 'text-orange-300' : 'text-emerald-400']">
-                                                Bronze Contender
-                                            </div>
-                                            <div :class="['text-lg font-serif font-bold italic', selectedCategory.bronze_match.winner_id === selectedCategory.bronze_match.player_two_id ? 'text-orange-200' : 'text-white']">
-                                                {{ selectedCategory.bronze_match.player_two || 'TBD' }}
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
+                            <div class="flex gap-2 flex-wrap items-center justify-center">
+                                <span v-for="name in selectedCategory.awards.bronze" :key="name" class="px-3 py-1 rounded-full bg-orange-500/10 border border-orange-500/30 text-orange-200 text-xs font-bold">
+                                    {{ name }}
+                                </span>
                             </div>
                         </div>
 

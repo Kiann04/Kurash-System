@@ -51,7 +51,7 @@ class TournamentController extends Controller
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'tournament_date' => 'required|date',
-            'status' => 'required|in:draft,open,ongoing,completed',
+            'status' => 'required|in:draft,open',
             'registrations' => 'array',
             'registrations.*.player_id' => 'required|exists:players,id',
             'registrations.*.tournament_weight_category_id' => 'required|exists:weight_categories,id',
@@ -245,5 +245,3 @@ class TournamentController extends Controller
             ->values();
     }
 }
-
-

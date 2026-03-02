@@ -40,3 +40,45 @@
  }[m
  [m
 [31m-[m
+[1mdiff --git a/app/Http/Controllers/Admin/TournamentController.php b/app/Http/Controllers/Admin/TournamentController.php[m
+[1mindex ddbf9aa..0945925 100644[m
+[1m--- a/app/Http/Controllers/Admin/TournamentController.php[m
+[1m+++ b/app/Http/Controllers/Admin/TournamentController.php[m
+[36m@@ -6,7 +6,6 @@[m
+ use App\Models\Tournament;[m
+ use App\Models\Player;[m
+ use App\Models\WeightCategory;[m
+[31m-use App\Services\PlayerListImportService;[m
+ use Illuminate\Http\Request;[m
+ use Inertia\Inertia;[m
+ use Illuminate\Support\Facades\DB;[m
+[36m@@ -97,24 +96,6 @@[m [mpublic function store(Request $request)[m
+             ->with('success', 'Tournament created successfully.');[m
+     }[m
+ [m
+[31m-    public function importRegistrations(Request $request, PlayerListImportService $importService)[m
+[31m-    {[m
+[31m-        $validated = $request->validate([[m
+[31m-            'file' => 'required|file|mimes:xlsx,csv,docx|max:10240',[m
+[31m-            'fallback_category_id' => 'nullable|exists:weight_categories,id',[m
+[31m-        ]);[m
+[31m-[m
+[31m-        $analysis = $importService->analyze([m
+[31m-            $validated['file'],[m
+[31m-            isset($validated['fallback_category_id']) ? (int) $validated['fallback_category_id'] : null[m
+[31m-        );[m
+[31m-[m
+[31m-        return response()->json([[m
+[31m-            'message' => 'File analyzed successfully.',[m
+[31m-            'analysis' => $analysis,[m
+[31m-        ]);[m
+[31m-    }[m
+[31m-[m
+     public function show(Tournament $tournament)[m
+     {[m
+         $tournament->load('registrations.player', 'registrations.ageCategory', 'registrations.weightCategory');[m
+[36m@@ -246,3 +227,4 @@[m [mprivate function mapTournamentWeightCategories()[m
+     }[m
+ }[m
+ [m
+[41m+[m

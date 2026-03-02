@@ -163,8 +163,6 @@ const getStatusColor = (status: string) => {
                                 >
                                     <option value="draft">Draft (Setup Mode)</option>
                                     <option value="open">Open for Registration</option>
-                                    <option value="ongoing">Ongoing</option>
-                                    <option value="completed">Completed</option>
                                 </select>
                             </div>
                         </div>

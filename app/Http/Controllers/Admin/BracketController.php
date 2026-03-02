@@ -22,13 +22,17 @@ class BracketController extends Controller
 
     public function index(): Response
     {
-        $tournaments = Tournament::query()
-            ->withCount('registrations')
+        $all = Tournament::query()
+            ->withCount(['registrations', 'brackets'])
             ->latest()
             ->get(['id', 'name', 'tournament_date', 'status']);
 
+        $generated = $all->where('brackets_count', '>', 0)->values();
+        $notGenerated = $all->where('brackets_count', 0)->values();
+
         return Inertia::render('admin/bracket/Index', [
-            'tournaments' => $tournaments,
+            'generated' => $generated,
+            'not_generated' => $notGenerated,
         ]);
     }
 
@@ -79,11 +83,11 @@ class BracketController extends Controller
                     ->all();
 
                 $playerCount = count($participants);
-                if ($playerCount < 2) {
-                    continue;
-                }
 
-                if ($playerCount <= 5) {
+                if ($playerCount === 1) {
+                    $rounds = $this->singleEliminationRounds($playerCount);
+                    $format = 'single_elimination';
+                } elseif ($playerCount >= 2 && $playerCount <= 5) {
                     $rounds = $this->roundRobinRounds($playerCount);
                     $format = 'round_robin';
                 } else {
@@ -113,6 +117,10 @@ class BracketController extends Controller
             }
         });
 
+        if ($createdBrackets > 0) {
+            $tournament->update(['status' => 'ongoing']);
+        }
+
         return redirect()
             ->route('admin.tournaments.brackets.show', $tournament)
             ->with('success', "Brackets generated: {$createdBrackets}, matches generated: {$createdMatches}.");
@@ -123,6 +131,7 @@ class BracketController extends Controller
         // Auto-advance any stuck BYE matches every time the bracket is viewed
         // This ensures existing brackets get fixed automatically
         $this->autoAdvanceAllByes($tournament);
+        $this->updateTournamentStatus($tournament);
 
         $categoryParticipants = $tournament->registrations()
             ->with([
@@ -179,8 +188,8 @@ class BracketController extends Controller
             ],
             'category_participants' => $categoryParticipants,
             'brackets' => $brackets->map(function (Bracket $bracket) {
-                $matches = $bracket->matches->where('is_bronze', false);
-                $bronzeMatch = $bracket->matches->firstWhere('is_bronze', true);
+                $matches = $bracket->matches;
+                $bronzeMatch = null;
 
                 $champion = $matches
                     ->where('round_number', $bracket->rounds)
@@ -204,18 +213,7 @@ class BracketController extends Controller
                     'entrant_count' => $entrantCount,
                     'champion' => $champion,
                     'awards' => $this->resolveAwards($bracket, $bronzeMatch),
-                    'bronze_match' => $bronzeMatch ? [
-                        'id' => $bronzeMatch->id,
-                        'round_number' => $bronzeMatch->round_number,
-                        'match_number' => $bronzeMatch->match_number,
-                        'status' => $bronzeMatch->status,
-                        'player_one_id' => $bronzeMatch->player_one_id,
-                        'player_one' => $bronzeMatch->playerOne?->full_name,
-                        'player_two_id' => $bronzeMatch->player_two_id,
-                        'player_two' => $bronzeMatch->playerTwo?->full_name,
-                        'winner_id' => $bronzeMatch->winner_id,
-                        'winner' => $bronzeMatch->winner?->full_name,
-                    ] : null,
+                    'bronze_match' => null,
                     'matches' => $matches->map(function (TournamentMatch $match) {
                         return [
                             'id' => $match->id,
@@ -247,28 +245,25 @@ class BracketController extends Controller
             return back()->with('error', 'Cannot advance matches for a completed tournament.');
         }
 
-        // If it's a BYE match, we don't need a winner_id from the request
-        $isBye = ($match->player_one_id === null && $match->player_two_id !== null) ||
-                 ($match->player_one_id !== null && $match->player_two_id === null);
+        $bothPresent = $match->player_one_id !== null && $match->player_two_id !== null;
+        if (!$bothPresent) {
+            return back()->with('error', 'Match not ready: opponent not assigned yet.');
+        }
 
-        if ($isBye) {
-            $winnerId = $match->player_one_id ?? $match->player_two_id;
-        } else {
-            $validated = $request->validate([
-                'winner_id' => 'required|exists:players,id',
+        $validated = $request->validate([
+            'winner_id' => 'required|exists:players,id',
+        ]);
+
+        $winnerId = (int) $validated['winner_id'];
+        $allowedWinnerIds = array_filter([
+            $match->player_one_id,
+            $match->player_two_id,
+        ]);
+
+        if (!in_array($winnerId, $allowedWinnerIds, true)) {
+            throw ValidationException::withMessages([
+                'winner_id' => ['Winner must be one of the players in this match.'],
             ]);
-
-            $winnerId = (int) $validated['winner_id'];
-            $allowedWinnerIds = array_filter([
-                $match->player_one_id,
-                $match->player_two_id,
-            ]);
-
-            if (!in_array($winnerId, $allowedWinnerIds, true)) {
-                throw ValidationException::withMessages([
-                    'winner_id' => ['Winner must be one of the players in this match.'],
-                ]);
-            }
         }
 
         DB::transaction(function () use ($match, $winnerId) {
@@ -279,13 +274,75 @@ class BracketController extends Controller
 
             if ($match->bracket?->format === 'single_elimination') {
                 $this->advanceWinnerToNextRound($match, $winnerId);
-                $this->bronzeMatchService->syncForBracket($match->bracket);
             }
         });
+
+        $this->updateTournamentStatus($tournament);
 
         return back()->with('success', 'Winner updated.');
     }
 
+    public function revert(Request $request, Tournament $tournament, TournamentMatch $match): RedirectResponse
+    {
+        $match->load('bracket');
+        if (!$match->bracket || $match->bracket->tournament_id !== $tournament->id) {
+            abort(404);
+        }
+        if ($tournament->status === 'completed') {
+            return back()->with('error', 'Cannot revert matches for a completed tournament.');
+        }
+
+        $winnerId = $match->winner_id;
+
+        DB::transaction(function () use ($match, $winnerId) {
+            // Reset current match
+            $match->update([
+                'winner_id' => null,
+                'status' => 'scheduled',
+            ]);
+
+            // Remove propagated slot in the next match if exists
+            $bracket = $match->bracket;
+            if ($bracket && $bracket->format === 'single_elimination') {
+                $nextRound = $match->round_number + 1;
+                $nextMatchNumber = (int) ceil($match->match_number / 2);
+                $nextMatch = TournamentMatch::query()
+                    ->where('bracket_id', $bracket->id)
+                    ->where('round_number', $nextRound)
+                    ->where('match_number', $nextMatchNumber)
+                    ->first();
+
+                if ($nextMatch) {
+                    $slot = $match->match_number % 2 === 1 ? 'player_one_id' : 'player_two_id';
+                    if ($winnerId && (int) ($nextMatch->{$slot}) === (int) $winnerId) {
+                        $nextMatch->update([$slot => null, 'winner_id' => null, 'status' => 'scheduled']);
+                    }
+                }
+            }
+        });
+
+        $this->updateTournamentStatus($tournament);
+
+        return back()->with('success', 'Match reverted successfully.');
+    }
+    private function updateTournamentStatus(Tournament $tournament): void
+    {
+        $brackets = $tournament->brackets()->with('matches')->get();
+        if ($brackets->isEmpty()) {
+            if ($tournament->status !== 'draft') {
+                $tournament->update(['status' => 'draft']);
+            }
+            return;
+        }
+        $allComplete = $brackets->every(function (Bracket $bracket) {
+            $final = $bracket->matches->firstWhere('round_number', $bracket->rounds);
+            return $final && $final->winner_id !== null;
+        });
+        $newStatus = $allComplete ? 'completed' : 'ongoing';
+        if ($tournament->status !== $newStatus) {
+            $tournament->update(['status' => $newStatus]);
+        }
+    }
     private function roundRobinRounds(int $playerCount): int
     {
         return $playerCount % 2 === 0 ? $playerCount - 1 : $playerCount;
@@ -422,19 +479,6 @@ class BracketController extends Controller
             // 2 players: leave scheduled
         }
 
-        if ($rounds >= 2) {
-            TournamentMatch::create([
-                'bracket_id' => $bracketId,
-                'round_number' => $rounds + 1,
-                'match_number' => 1,
-                'player_one_id' => null,
-                'player_two_id' => null,
-                'status' => 'scheduled',
-                'is_bronze' => true,
-            ]);
-            $matchesCreated++;
-        }
-
         return $matchesCreated;
     }
 
@@ -521,9 +565,6 @@ class BracketController extends Controller
                 $this->advanceWinnerToNextRound($match, $winnerId);
             });
 
-            if ($match->bracket) {
-                $this->bronzeMatchService->syncForBracket($match->bracket);
-            }
         }
     }
 
@@ -549,7 +590,6 @@ class BracketController extends Controller
                 $query->where('tournament_id', $tournament->id)
                       ->where('format', 'single_elimination');
             })
-            ->where('is_bronze', false)
             ->orderBy('round_number')
             ->orderBy('match_number')
             ->get();
@@ -577,12 +617,6 @@ class BracketController extends Controller
             }
         }
 
-        $tournament->brackets()
-            ->where('format', 'single_elimination')
-            ->get()
-            ->each(function (Bracket $bracket) {
-                $this->bronzeMatchService->syncForBracket($bracket);
-            });
     }
 
     private function splitByRegion(array $participants, int $halfSize): array
@@ -646,43 +680,51 @@ class BracketController extends Controller
     {
         $pairCount = (int) ($halfSize / 2);
         $players = array_values($participants);
-        $pairs = [];
+        $pairs = array_fill(0, $pairCount, [null, null]);
 
         $nullSlots = max(0, $halfSize - count($players));
+        $evenIndices = [];
+        for ($i = 0; $i < $pairCount; $i += 2) {
+            $evenIndices[] = $i;
+        }
 
-        while ($nullSlots > 0 && !empty($players)) {
-            $pairs[] = [array_shift($players), null];
+        $byeIndices = [];
+        foreach ($evenIndices as $idx) {
+            if ($nullSlots <= 0) break;
+            $byeIndices[] = $idx;
+            $nullSlots--;
+        }
+        for ($i = 0; $i < $pairCount && $nullSlots > 0; $i++) {
+            if (in_array($i, $byeIndices, true)) continue;
+            $byeIndices[] = $i;
             $nullSlots--;
         }
 
-        while (count($players) >= 2) {
-            $first = array_shift($players);
-            $secondIndex = null;
-
-            foreach ($players as $index => $candidate) {
-                if (($candidate['club'] ?? '') !== ($first['club'] ?? '')) {
-                    $secondIndex = $index;
-                    break;
-                }
-            }
-
-            if ($secondIndex === null) {
-                $second = array_shift($players);
+        for ($i = 0; $i < $pairCount; $i++) {
+            if (in_array($i, $byeIndices, true)) {
+                $first = array_shift($players) ?? null;
+                $pairs[$i] = [$first, null];
             } else {
-                $second = $players[$secondIndex];
-                unset($players[$secondIndex]);
-                $players = array_values($players);
+                $first = array_shift($players) ?? null;
+                $second = null;
+                if (!empty($players)) {
+                    $secondIndex = null;
+                    foreach ($players as $index => $candidate) {
+                        if (($candidate['club'] ?? '') !== ($first['club'] ?? '')) {
+                            $secondIndex = $index;
+                            break;
+                        }
+                    }
+                    if ($secondIndex === null) {
+                        $second = array_shift($players) ?? null;
+                    } else {
+                        $second = $players[$secondIndex] ?? null;
+                        unset($players[$secondIndex]);
+                        $players = array_values($players);
+                    }
+                }
+                $pairs[$i] = [$first, $second];
             }
-
-            $pairs[] = [$first, $second];
-        }
-
-        if (!empty($players)) {
-            $pairs[] = [array_shift($players), null];
-        }
-
-        while (count($pairs) < $pairCount) {
-            $pairs[] = [null, null];
         }
 
         return $pairs;
