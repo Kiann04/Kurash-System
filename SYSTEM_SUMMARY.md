@@ -91,5 +91,48 @@ Files: `tests/Feature/*`, `tests/Unit/*`
 - There is both `TournamentMatch` (mapped to `matches` table) and a `Matches` model. This looks like legacy or unused duplication.
 - Membership status auto-updates on player retrieval if expired.
 
----
-Generated on 2026-03-02.
+
+Suggested Architectural Improvements
+1. Introduce a Domain/Service Layer for core operations
+Move bracket creation, advancement logic, and awards computation into dedicated services or action classes.
+
+Benefits: easier tests, reuse, and future API usage.
+Example: app/Services/BracketGenerator.php, app/Services/BracketAdvancer.php, app/Services/AwardResolver.php.
+2. Formalize a Tournament Aggregation Boundary
+Create a “TournamentAggregate” service or query object that assembles tournament + brackets + matches for API/public usage.
+
+Benefits: single place to optimize queries and caching.
+Replace repeated assembly in TournamentApiController.
+3. Replace side-effecting reads with scheduled maintenance
+Move membership expiration checks to a scheduled job or command.
+
+Benefits: predictable writes and no surprise updates during read.
+File to adjust: app/Models/Player.php.
+4. Clean up model duplication
+Remove or deprecate Matches model if TournamentMatch is the canonical one.
+
+Benefits: avoids accidental use of wrong model.
+Files: app/Models/Matches.php, app/Models/TournamentMatch.php.
+5. Introduce DTOs or Resource classes for API output
+Use Laravel Resources for API responses.
+
+Benefits: consistent shape, easy versioning, reduced controller complexity.
+File to add: app/Http/Resources/*.
+6. Add domain-specific tests (highest ROI)
+
+Bracket generation (round robin vs single elimination)
+BYE auto-advance behavior
+Bronze match sync
+Registration import resolution logic
+API contract tests for sync endpoints
+Files: tests/Feature/, tests/Unit/.
+7. Consider an event-driven flow for match updates
+Emit events on MatchResultUpdated, MatchAdvanced, BracketGenerated.
+
+Benefits: easier scoreboard sync, logging, and future integrations.
+8. Performance safeguards
+
+Add pagination for API sync endpoints or filters by tournament/date.
+Cache static reference data (age/weight categories).
+Use eager loading consistently in APIs.
+If you want, I can propose a concrete refactor plan or start extracting the bracket logic into a service layer with tests.
