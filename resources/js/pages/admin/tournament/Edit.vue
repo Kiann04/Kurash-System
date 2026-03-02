@@ -3,8 +3,49 @@ import { Head, useForm } from '@inertiajs/vue3'
 import AppLayout from '@/layouts/AppLayout.vue'
 import { route } from 'ziggy-js'
 import { Button } from '@/components/ui/button'
-import { type BreadcrumbItem } from '@/types'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Badge } from '@/components/ui/badge'
+import { Separator } from '@/components/ui/separator'
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import {
+    Card,
+    CardContent,
+    CardDescription,
+    CardFooter,
+    CardHeader,
+    CardTitle,
+} from '@/components/ui/card'
+import {
+    Table,
+    TableBody,
+    TableCell,
+    TableHead,
+    TableHeader,
+    TableRow,
+} from '@/components/ui/table'
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+    DialogTrigger,
+} from '@/components/ui/dialog'
+import { 
+    Upload, 
+    Users, 
+    Search, 
+    Check, 
+    X,
+    UserPlus,
+    FileSpreadsheet,
+    AlertCircle,
+    Save
+} from 'lucide-vue-next'
 import { ref, computed, watch } from 'vue'
+import { type BreadcrumbItem } from '@/types'
 
 interface Player {
     id: number
@@ -94,73 +135,13 @@ const importProcessing = ref(false)
 const importError = ref('')
 const importAnalysis = ref<ImportAnalysis | null>(null)
 
-const getCsrfToken = () => {
-    const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content')
-    return token ?? ''
-}
-
-const onImportFileChange = (event: Event) => {
-    const target = event.target as HTMLInputElement
-    importFile.value = target.files?.[0] ?? null
-    importError.value = ''
-}
-
-const analyzeAndImportFile = async () => {
-    if (!importFile.value) {
-        importError.value = 'Please select a file first.'
-        return
-    }
-
-    importError.value = ''
-    importProcessing.value = true
-
-    try {
-        const payload = new FormData()
-        payload.append('file', importFile.value)
-        if (selectedCategoryId.value) {
-            payload.append('fallback_category_id', String(selectedCategoryId.value))
-        }
-
-        const response = await fetch(route('admin.tournaments.import-registrations', undefined, false), {
-            method: 'POST',
-            credentials: 'same-origin',
-            headers: {
-                'X-CSRF-TOKEN': getCsrfToken(),
-                'X-Requested-With': 'XMLHttpRequest',
-                'Accept': 'application/json',
-            },
-            body: payload,
-        })
-
-        if (!response.ok) {
-            const errorData = await response.json().catch(() => ({}))
-            const message = errorData?.message ?? 'Failed to analyze the file.'
-            throw new Error(message)
-        }
-
-        const data = await response.json()
-        const analysis = data.analysis as ImportAnalysis
-        importAnalysis.value = analysis
-
-        const existing = new Set(form.registrations.map((r) => `${r.player_id}-${r.tournament_weight_category_id}`))
-
-        analysis.registrations.forEach((registration) => {
-            const key = `${registration.player_id}-${registration.tournament_weight_category_id}`
-            if (existing.has(key)) {
-                return
-            }
-
-            form.registrations.push({
-                player_id: registration.player_id,
-                tournament_weight_category_id: registration.tournament_weight_category_id,
-            })
-            existing.add(key)
-        })
-    } catch (error) {
-        importError.value = error instanceof Error ? error.message : 'Failed to analyze the file.'
-    } finally {
-        importProcessing.value = false
-    }
+const getInitials = (name: string) => {
+    return name
+        .split(' ')
+        .map((n) => n[0])
+        .join('')
+        .toUpperCase()
+        .substring(0, 2)
 }
 
 const normalizeGender = (value: string | null | undefined): 'male' | 'female' | '' => {
@@ -283,21 +264,6 @@ const getAssignedCategoryName = (playerId: number) => {
         .join(', ')
 }
 
-const getAssignedAgeCategoryName = (playerId: number) => {
-    const registrations = getPlayerRegistrations(playerId)
-    if (registrations.length === 0) {
-        return '-'
-    }
-
-    return Array.from(
-        new Set(
-            registrations.map((registration) =>
-                getCategoryById(registration.tournament_weight_category_id)?.age_category_name ?? '-',
-            ),
-        ),
-    ).join(', ')
-}
-
 const registeredCategorySummary = computed(() => {
     const grouped = new Map<number, number[]>()
 
@@ -326,10 +292,6 @@ const registeredCategorySummary = computed(() => {
         .sort((a, b) => b.player_count - a.player_count || a.category_name.localeCompare(b.category_name))
 })
 
-const openedSummary = computed(() =>
-    registeredCategorySummary.value.find((item) => item.category_id === openedSummaryCategoryId.value) ?? null,
-)
-
 const openSummary = (categoryId: number) => {
     openedSummaryCategoryId.value = categoryId
 }
@@ -352,281 +314,536 @@ const selectedCategoryRegisteredCount = computed(() => {
 
     return form.registrations.filter((registration) => registration.tournament_weight_category_id === selectedCategoryId.value).length
 })
-const isPlayerRegisteredAnywhere = (playerId: number) =>
-    form.registrations.some((registration) => registration.player_id === playerId)
 
-const submit = () => form.put(route('admin.tournaments.update', props.tournament.id))
+const isConfirmModalOpen = ref(false)
+
+const submit = () => {
+    isConfirmModalOpen.value = false
+    form.put(route('admin.tournaments.update', props.tournament.id))
+}
+
+const onImportFileChange = (event: Event) => {
+    const target = event.target as HTMLInputElement
+    importFile.value = target.files?.[0] ?? null
+    importError.value = ''
+}
+
+const getCsrfToken = () => {
+    const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content')
+    return token ?? ''
+}
+
+const analyzeAndImportFile = async () => {
+    if (!importFile.value) {
+        importError.value = 'Please select a file first.'
+        return
+    }
+
+    importError.value = ''
+    importProcessing.value = true
+
+    try {
+        const payload = new FormData()
+        payload.append('file', importFile.value)
+        if (selectedCategoryId.value) {
+            payload.append('fallback_category_id', String(selectedCategoryId.value))
+        }
+
+        const response = await fetch(route('admin.tournaments.import-registrations', undefined, false), {
+            method: 'POST',
+            credentials: 'same-origin',
+            headers: {
+                'X-CSRF-TOKEN': getCsrfToken(),
+                'X-Requested-With': 'XMLHttpRequest',
+                'Accept': 'application/json',
+            },
+            body: payload,
+        })
+
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => ({}))
+            const message = errorData?.message ?? 'Failed to analyze the file.'
+            throw new Error(message)
+        }
+
+        const data = await response.json()
+        const analysis = data.analysis as ImportAnalysis
+        importAnalysis.value = analysis
+
+        const existing = new Set(form.registrations.map((r) => `${r.player_id}-${r.tournament_weight_category_id}`))
+
+        analysis.registrations.forEach((registration) => {
+            const key = `${registration.player_id}-${registration.tournament_weight_category_id}`
+            if (existing.has(key)) {
+                return
+            }
+
+            form.registrations.push({
+                player_id: registration.player_id,
+                tournament_weight_category_id: registration.tournament_weight_category_id,
+            })
+            existing.add(key)
+        })
+    } catch (error) {
+        importError.value = error instanceof Error ? error.message : 'Failed to analyze the file.'
+    } finally {
+        importProcessing.value = false
+    }
+}
 </script>
 
 <template>
-<Head :title="`Edit Tournament: ${props.tournament.name}`" />
-<AppLayout :breadcrumbs="breadcrumbs">
-<div class="p-6 space-y-8">
-
-    <div class="border rounded-xl bg-white p-5 space-y-4">
-        <div class="flex items-center justify-between">
-            <h1 class="text-2xl font-bold">Edit Tournament</h1>
-            <Button @click="submit" :disabled="form.processing">Update Tournament</Button>
-        </div>
-        <div class="grid gap-4 md:grid-cols-3">
-            <div class="space-y-1">
-                <label class="text-sm font-medium">Tournament Name</label>
-                <input v-model="form.name" placeholder="Tournament Name" class="w-full border rounded-lg p-2" />
-                <p v-if="form.errors.name" class="text-xs text-red-600">{{ form.errors.name }}</p>
-            </div>
-            <div class="space-y-1">
-                <label class="text-sm font-medium">Tournament Date</label>
-                <input type="date" v-model="form.tournament_date" class="w-full border rounded-lg p-2" />
-                <p v-if="form.errors.tournament_date" class="text-xs text-red-600">{{ form.errors.tournament_date }}</p>
-            </div>
-            <div class="space-y-1">
-                <label class="text-sm font-medium">Status</label>
-                <select v-model="form.status" class="w-full border rounded-lg p-2">
-                    <option value="draft">Draft</option>
-                    <option value="open">Open</option>
-                    <option value="ongoing">Ongoing</option>
-                    <option value="completed">Completed</option>
-                </select>
-                <p v-if="form.errors.status" class="text-xs text-red-600">{{ form.errors.status }}</p>
-            </div>
-        </div>
-    </div>
-
-    <div class="space-y-4">
-        <div class="border rounded-xl bg-white p-4 space-y-3 shadow-sm">
-            <div class="flex flex-wrap items-center justify-between gap-3">
-                <div>
-                    <h2 class="text-sm font-semibold text-slate-900">Import Player List (Excel / Word)</h2>
-                    <p class="text-xs text-muted-foreground">
-                        Upload <code>.xlsx</code>, <code>.csv</code>, or <code>.docx</code>. System auto-maps by gender + age category + Uweight.
-                    </p>
-                </div>
-                <Button size="sm" :disabled="importProcessing || !importFile" @click="analyzeAndImportFile">
-                    {{ importProcessing ? 'Analyzing...' : 'Analyze & Add' }}
-                </Button>
-            </div>
-
-            <div class="flex flex-wrap items-center gap-3">
-                <input
-                    type="file"
-                    accept=".xlsx,.csv,.docx"
-                    class="border rounded-md text-sm p-2"
-                    @change="onImportFileChange"
-                />
-                <span v-if="selectedCategoryId" class="text-xs text-muted-foreground">
-                    Fallback category: {{ getCategoryById(selectedCategoryId)?.name ?? '-' }}
-                </span>
-            </div>
-
-            <p v-if="importError" class="text-xs text-red-600 font-medium">{{ importError }}</p>
-
-            <div v-if="importAnalysis" class="grid grid-cols-2 md:grid-cols-5 gap-2 text-xs">
-                <div class="border rounded-md p-2 bg-slate-50">
-                    <p class="text-muted-foreground">Rows</p>
-                    <p class="font-semibold">{{ importAnalysis.total_rows }}</p>
-                </div>
-                <div class="border rounded-md p-2 bg-emerald-50">
-                    <p class="text-muted-foreground">Matched</p>
-                    <p class="font-semibold">{{ importAnalysis.matched_count }}</p>
-                </div>
-                <div class="border rounded-md p-2 bg-amber-50">
-                    <p class="text-muted-foreground">Unmatched Players</p>
-                    <p class="font-semibold">{{ importAnalysis.unmatched_player_count }}</p>
-                </div>
-                <div class="border rounded-md p-2 bg-orange-50">
-                    <p class="text-muted-foreground">Unresolved Categories</p>
-                    <p class="font-semibold">{{ importAnalysis.unresolved_category_count }}</p>
-                </div>
-                <div class="border rounded-md p-2 bg-slate-100">
-                    <p class="text-muted-foreground">Duplicates</p>
-                    <p class="font-semibold">{{ importAnalysis.duplicate_count }}</p>
-                </div>
-            </div>
-
-            <div v-if="importAnalysis && importAnalysis.rows.some((row) => row.status !== 'matched')" class="border rounded-lg overflow-hidden">
-                <table class="w-full text-xs">
-                    <thead class="bg-slate-50">
-                        <tr>
-                            <th class="p-2 text-left">Row</th>
-                            <th class="p-2 text-left">Player</th>
-                            <th class="p-2 text-left">Issue</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr
-                            v-for="row in importAnalysis.rows.filter((item) => item.status !== 'matched').slice(0, 20)"
-                            :key="`${row.row}-${row.status}-${row.player}`"
-                            class="border-t"
-                        >
-                            <td class="p-2">{{ row.row }}</td>
-                            <td class="p-2">{{ row.player }}</td>
-                            <td class="p-2">{{ row.reason }}</td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-        </div>
-
-        <div class="flex flex-wrap justify-between items-center gap-3">
-            <h2 class="text-xl font-semibold">Category First Registration</h2>
-            <span class="text-sm text-muted-foreground">Total Registered: {{ totalRegistered }}</span>
-        </div>
-
-        <div class="grid gap-3 md:grid-cols-4">
-            <div class="border rounded-lg p-3 bg-white">
-                <p class="text-xs text-muted-foreground">Total Entries</p>
-                <p class="text-2xl font-semibold">{{ totalRegistered }}</p>
-            </div>
-            <div class="border rounded-lg p-3 bg-white">
-                <p class="text-xs text-muted-foreground">Unique Players</p>
-                <p class="text-2xl font-semibold">{{ uniqueRegisteredPlayers }}</p>
-            </div>
-            <div class="border rounded-lg p-3 bg-white">
-                <p class="text-xs text-muted-foreground">Categories Used</p>
-                <p class="text-2xl font-semibold">{{ usedCategoryCount }}</p>
-            </div>
-            <div class="border rounded-lg p-3 bg-white">
-                <p class="text-xs text-muted-foreground">Selected Category Entries</p>
-                <p class="text-2xl font-semibold">{{ selectedCategoryRegisteredCount }}</p>
-            </div>
-        </div>
-
-        <div class="border rounded-lg overflow-hidden bg-white">
-            <table class="w-full text-sm">
-                <thead class="bg-muted/70">
-                    <tr>
-                        <th class="p-3 text-left">Gender</th>
-                        <th class="p-3 text-left">Age Category</th>
-                        <th class="p-3 text-left">Weight Category</th>
-                        <th class="p-3 text-center">Players</th>
-                        <th class="p-3 text-left">Who Registered</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr v-for="item in registeredCategorySummary" :key="item.category_id" class="border-t">
-                        <td class="p-3 capitalize">{{ item.gender }}</td>
-                        <td class="p-3">{{ item.age_category }}</td>
-                        <td class="p-3 font-medium">{{ item.category_name }}</td>
-                        <td class="p-3 text-center">{{ item.player_count }}</td>
-                        <td class="p-3">
-                            <button type="button" class="text-blue-600 hover:underline" @click="openSummary(item.category_id)">
-                                View {{ item.player_count }} player{{ item.player_count > 1 ? 's' : '' }}
-                            </button>
-                        </td>
-                    </tr>
-                    <tr v-if="registeredCategorySummary.length === 0">
-                        <td colspan="5" class="p-4 text-center text-muted-foreground">No category registrations yet.</td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
-
-        <div class="border rounded-xl bg-white p-4 grid gap-4 md:grid-cols-3">
-            <div class="space-y-1">
-                <label class="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Gender</label>
-                <select v-model="selectedGender" class="border rounded-lg p-2 w-full">
-                    <option v-for="gender in genderOptions" :key="gender" :value="gender">{{ gender }}</option>
-                </select>
-            </div>
-            <div class="space-y-1">
-                <label class="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Age Category</label>
-                <select v-model="selectedAgeCategoryId" class="border rounded-lg p-2 w-full">
-                    <option v-for="ageCategory in ageCategoryOptions" :key="ageCategory.id" :value="ageCategory.id">{{ ageCategory.name }}</option>
-                </select>
-            </div>
-            <div class="space-y-1">
-                <label class="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Weight Category</label>
-                <select v-model="selectedCategoryId" class="border rounded-lg p-2 w-full">
-                    <option v-for="category in weightCategoryOptions" :key="category.id" :value="category.id">{{ category.name }}</option>
-                </select>
-            </div>
-        </div>
-
-        <div v-if="selectedCategory" class="text-sm border rounded-lg bg-blue-50 border-blue-200 px-3 py-2">
-            Assigning players to
-            <strong>{{ selectedCategory.name }}</strong>
-            <span class="text-muted-foreground">({{ selectedCategory.age_category_name }} / {{ selectedCategory.gender }})</span>
-        </div>
-
-        <div class="flex gap-3 max-w-xl">
-            <input v-model="search" placeholder="Search player by name or club..." class="border rounded-lg p-2 w-full" />
-            <select v-model="playerGenderFilter" class="border rounded-lg p-2 w-36">
-                <option value="all">All</option>
-                <option value="male">Male</option>
-                <option value="female">Female</option>
-            </select>
-        </div>
-
-        <div class="border rounded-lg overflow-hidden bg-white">
-            <table class="w-full text-sm">
-                <thead class="bg-muted/70">
-                    <tr>
-                        <th class="p-3">Select</th>
-                        <th class="p-3 text-left">Player</th>
-                        <th class="p-3">Club</th>
-                        <th class="p-3">Age Category</th>
-                        <th class="p-3">Assigned Category</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr v-for="player in filteredPlayers" :key="player.id" class="border-t" :class="isSelectedInCurrentCategory(player.id) ? 'bg-emerald-50' : ''">
-                        <td class="p-3 text-center">
-                            <input type="checkbox" :checked="isSelectedInCurrentCategory(player.id)" :disabled="!selectedCategoryId" @change="togglePlayerForSelectedCategory(player)" />
-                        </td>
-                        <td class="p-3 font-medium">
-                            <div>{{ player.full_name }}</div>
-                            <div v-if="isPlayerRegisteredAnywhere(player.id) && !isSelectedInCurrentCategory(player.id)" class="text-xs text-amber-700">
-                                Already in another category
-                            </div>
-                        </td>
-                        <td class="p-3 text-center">{{ player.club }}</td>
-                        <td class="p-3 text-center">{{ getAssignedAgeCategoryName(player.id) }}</td>
-                        <td class="p-3 text-center">{{ getAssignedCategoryName(player.id) }}</td>
-                    </tr>
-                    <tr v-if="filteredPlayers.length === 0">
-                        <td colspan="5" class="p-4 text-center text-muted-foreground">No players found.</td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
-    </div>
-
-    <div v-if="openedSummary" class="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4">
-        <div class="bg-white rounded-xl w-full max-w-2xl p-5 space-y-4">
+    <Head :title="`Edit Tournament: ${props.tournament.name}`" />
+    <AppLayout :breadcrumbs="breadcrumbs">
+        <div class="flex-1 space-y-6 p-6">
+            <!-- Header Section -->
             <div class="flex items-center justify-between">
                 <div>
-                    <h3 class="text-lg font-semibold">{{ openedSummary.category_name }} ({{ openedSummary.gender }} / {{ openedSummary.age_category }})</h3>
-                    <p class="text-sm text-muted-foreground">{{ openedSummary.player_count }} registered</p>
+                    <h1 class="text-2xl font-bold tracking-tight dark:text-slate-100">Edit Tournament</h1>
+                    <p class="text-muted-foreground">Modify tournament details and registrations.</p>
                 </div>
-                <button type="button" class="px-3 py-1 rounded border" @click="closeSummary">Close</button>
+                <div class="flex items-center gap-2">
+                    <Button variant="outline" @click="$inertia.visit(route('admin.tournaments.index'))">Cancel</Button>
+                    <Button @click="isConfirmModalOpen = true" :disabled="form.processing">
+                        <Save class="mr-2 h-4 w-4" />
+                        Update Tournament
+                    </Button>
+                </div>
             </div>
 
-            <div class="border rounded-lg overflow-hidden max-h-80 overflow-y-auto">
-                <table class="w-full text-sm">
-                    <thead class="bg-muted sticky top-0">
-                        <tr>
-                            <th class="p-3 text-left">Player</th>
-                            <th class="p-3 text-right">Action</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr v-for="player in openedSummary.players" :key="`${openedSummary.category_id}-${player.player_id}`" class="border-t">
-                            <td class="p-3">{{ player.full_name }}</td>
-                            <td class="p-3 text-right">
-                                <button type="button" class="px-2 py-1 rounded border text-red-600 border-red-200 hover:bg-red-50" @click="removeFromSummary(openedSummary.category_id, player.player_id)">
-                                    Remove
-                                </button>
-                            </td>
-                        </tr>
-                        <tr v-if="openedSummary.players.length === 0">
-                            <td colspan="2" class="p-4 text-center text-muted-foreground">No players in this category.</td>
-                        </tr>
-                    </tbody>
-                </table>
+            <div class="grid gap-6 md:grid-cols-2">
+                <!-- Tournament Details Card -->
+                <Card class="dark:bg-slate-950 dark:border-slate-800">
+                    <CardHeader>
+                        <CardTitle class="dark:text-slate-100">Tournament Details</CardTitle>
+                        <CardDescription>Basic information about the tournament.</CardDescription>
+                    </CardHeader>
+                    <CardContent class="space-y-4">
+                        <div class="space-y-2">
+                            <Label for="name" class="dark:text-slate-300">Tournament Name</Label>
+                            <Input id="name" v-model="form.name" placeholder="e.g. National Championship 2024" class="dark:bg-slate-950 dark:border-slate-800" />
+                            <p v-if="form.errors.name" class="text-sm text-destructive">{{ form.errors.name }}</p>
+                        </div>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div class="space-y-2">
+                                <Label for="date" class="dark:text-slate-300">Date</Label>
+                                <Input id="date" type="date" v-model="form.tournament_date" class="dark:bg-slate-950 dark:border-slate-800" />
+                                <p v-if="form.errors.tournament_date" class="text-sm text-destructive">{{ form.errors.tournament_date }}</p>
+                            </div>
+                            <div class="space-y-2">
+                                <Label for="status" class="dark:text-slate-300">Status</Label>
+                                <div class="relative">
+                                    <select
+                                        id="status"
+                                        v-model="form.status"
+                                        class="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 appearance-none dark:bg-slate-950 dark:border-slate-800 dark:text-slate-100"
+                                    >
+                                        <option value="draft">Draft</option>
+                                        <option value="open">Open</option>
+                                        <option value="ongoing">Ongoing</option>
+                                        <option value="completed">Completed</option>
+                                    </select>
+                                    <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700 dark:text-gray-400">
+                                        <svg class="h-4 w-4 fill-current" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/></svg>
+                                    </div>
+                                </div>
+                                <p v-if="form.errors.status" class="text-sm text-destructive">{{ form.errors.status }}</p>
+                            </div>
+                        </div>
+                    </CardContent>
+                </Card>
+
+                <!-- Import Section Card -->
+                <Card class="dark:bg-slate-950 dark:border-slate-800">
+                    <CardHeader>
+                        <CardTitle class="dark:text-slate-100">Import Registrations</CardTitle>
+                        <CardDescription>Upload a player list (.xlsx, .csv, .docx) to auto-map entries.</CardDescription>
+                    </CardHeader>
+                    <CardContent class="space-y-4">
+                        <div class="flex items-center gap-2">
+                            <Input
+                                type="file"
+                                accept=".xlsx,.csv,.docx"
+                                class="cursor-pointer dark:bg-slate-950 dark:border-slate-800 dark:file:text-slate-100"
+                                @change="onImportFileChange"
+                            />
+                            <Button 
+                                variant="secondary" 
+                                :disabled="importProcessing || !importFile" 
+                                @click="analyzeAndImportFile"
+                            >
+                                <Upload class="mr-2 h-4 w-4" />
+                                {{ importProcessing ? 'Analyzing...' : 'Import' }}
+                            </Button>
+                        </div>
+                        
+                        <div v-if="selectedCategoryId" class="text-xs text-muted-foreground flex items-center gap-1">
+                            <AlertCircle class="h-3 w-3" />
+                            Fallback category: <span class="font-medium">{{ getCategoryById(selectedCategoryId)?.name ?? '-' }}</span>
+                        </div>
+
+                        <p v-if="importError" class="text-sm font-medium text-destructive">{{ importError }}</p>
+
+                        <!-- Import Analysis Stats -->
+                        <div v-if="importAnalysis" class="grid grid-cols-2 gap-2 text-xs sm:grid-cols-3">
+                            <div class="rounded-md border bg-muted/50 p-2">
+                                <p class="text-muted-foreground">Total Rows</p>
+                                <p class="text-lg font-bold">{{ importAnalysis.total_rows }}</p>
+                            </div>
+                            <div class="rounded-md border bg-green-50 p-2 text-green-700 border-green-200">
+                                <p class="text-xs font-medium opacity-80">Matched</p>
+                                <p class="text-lg font-bold">{{ importAnalysis.matched_count }}</p>
+                            </div>
+                            <div class="rounded-md border bg-amber-50 p-2 text-amber-700 border-amber-200">
+                                <p class="text-xs font-medium opacity-80">Unmatched</p>
+                                <p class="text-lg font-bold">{{ importAnalysis.unmatched_player_count }}</p>
+                            </div>
+                        </div>
+                    </CardContent>
+                </Card>
             </div>
+
+            <!-- Import Issues Table (Conditional) -->
+            <Card v-if="importAnalysis && importAnalysis.rows.some((row) => row.status !== 'matched')" class="border-amber-200 bg-amber-50/30 dark:bg-amber-900/10 dark:border-amber-800">
+                <CardHeader class="pb-3">
+                    <CardTitle class="text-base text-amber-800 dark:text-amber-200">Import Issues</CardTitle>
+                </CardHeader>
+                <CardContent>
+                    <div class="rounded-md border bg-white dark:bg-slate-950 dark:border-slate-800">
+                        <Table class="text-xs">
+                            <TableHeader class="bg-muted/50 dark:bg-slate-900/50">
+                                <TableRow>
+                                    <TableHead class="p-2 text-left font-medium">Row</TableHead>
+                                    <TableHead class="p-2 text-left font-medium">Player</TableHead>
+                                    <TableHead class="p-2 text-left font-medium">Issue</TableHead>
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                                <TableRow
+                                    v-for="row in importAnalysis.rows.filter((item) => item.status !== 'matched').slice(0, 20)"
+                                    :key="`${row.row}-${row.status}-${row.player}`"
+                                    class="border-t last:border-0 dark:border-slate-800"
+                                >
+                                    <TableCell class="p-2">{{ row.row }}</TableCell>
+                                    <TableCell class="p-2 font-medium dark:text-slate-200">{{ row.player }}</TableCell>
+                                    <TableCell class="p-2 text-muted-foreground">{{ row.reason }}</TableCell>
+                                </TableRow>
+                            </TableBody>
+                        </Table>
+                    </div>
+                </CardContent>
+            </Card>
+
+            <Separator />
+
+            <!-- Registration Manager Section -->
+            <div class="space-y-6">
+                <div class="flex flex-col gap-1">
+                    <h2 class="text-xl font-bold tracking-tight dark:text-slate-100">Registration Manager</h2>
+                    <p class="text-muted-foreground">Manually assign players to categories.</p>
+                </div>
+
+                <!-- Registration Stats Cards -->
+                <div class="grid gap-4 md:grid-cols-4">
+                    <Card class="dark:bg-slate-950 dark:border-slate-800">
+                        <CardHeader class="flex flex-row items-center justify-between space-y-0 pb-2">
+                            <CardTitle class="text-sm font-medium dark:text-slate-200">Total Entries</CardTitle>
+                            <Users class="h-4 w-4 text-muted-foreground" />
+                        </CardHeader>
+                        <CardContent>
+                            <div class="text-2xl font-bold dark:text-slate-100">{{ totalRegistered }}</div>
+                        </CardContent>
+                    </Card>
+                    <Card class="dark:bg-slate-950 dark:border-slate-800">
+                        <CardHeader class="flex flex-row items-center justify-between space-y-0 pb-2">
+                            <CardTitle class="text-sm font-medium dark:text-slate-200">Unique Players</CardTitle>
+                            <UserPlus class="h-4 w-4 text-muted-foreground" />
+                        </CardHeader>
+                        <CardContent>
+                            <div class="text-2xl font-bold dark:text-slate-100">{{ uniqueRegisteredPlayers }}</div>
+                        </CardContent>
+                    </Card>
+                    <Card class="dark:bg-slate-950 dark:border-slate-800">
+                        <CardHeader class="flex flex-row items-center justify-between space-y-0 pb-2">
+                            <CardTitle class="text-sm font-medium dark:text-slate-200">Categories Used</CardTitle>
+                            <FileSpreadsheet class="h-4 w-4 text-muted-foreground" />
+                        </CardHeader>
+                        <CardContent>
+                            <div class="text-2xl font-bold dark:text-slate-100">{{ usedCategoryCount }}</div>
+                        </CardContent>
+                    </Card>
+                    <Card :class="selectedCategoryId ? 'bg-primary/5 border-primary/20 dark:bg-primary/10 dark:border-primary/30' : 'dark:bg-slate-950 dark:border-slate-800'">
+                        <CardHeader class="flex flex-row items-center justify-between space-y-0 pb-2">
+                            <CardTitle class="text-sm font-medium dark:text-slate-200">Selected Category</CardTitle>
+                            <Check class="h-4 w-4 text-primary" />
+                        </CardHeader>
+                        <CardContent>
+                            <div class="text-2xl font-bold text-primary">{{ selectedCategoryRegisteredCount }}</div>
+                            <p class="text-xs text-muted-foreground mt-1 truncate" v-if="selectedCategory">
+                                {{ selectedCategory.name }}
+                            </p>
+                        </CardContent>
+                    </Card>
+                </div>
+
+                <div class="grid gap-6 lg:grid-cols-3">
+                    <!-- Left Column: Category Selection & Player List -->
+                    <div class="lg:col-span-2 space-y-6">
+                        <!-- Filters -->
+                        <Card class="dark:bg-slate-950 dark:border-slate-800">
+                            <CardHeader class="pb-3">
+                                <CardTitle class="text-base dark:text-slate-100">1. Select Category</CardTitle>
+                            </CardHeader>
+                            <CardContent class="grid gap-4 sm:grid-cols-3">
+                                <div class="space-y-2">
+                                    <Label class="dark:text-slate-300">Gender</Label>
+                                    <div class="relative">
+                                        <select
+                                            v-model="selectedGender"
+                                            class="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 appearance-none capitalize dark:bg-slate-950 dark:border-slate-800 dark:text-slate-100"
+                                        >
+                                            <option v-for="gender in genderOptions" :key="gender" :value="gender">
+                                                {{ gender }}
+                                            </option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="space-y-2">
+                                    <Label class="dark:text-slate-300">Age Category</Label>
+                                    <div class="relative">
+                                        <select
+                                            v-model="selectedAgeCategoryId"
+                                            class="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 appearance-none dark:bg-slate-950 dark:border-slate-800 dark:text-slate-100"
+                                        >
+                                            <option v-for="age in ageCategoryOptions" :key="age.id" :value="age.id">
+                                                {{ age.name }}
+                                            </option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="space-y-2">
+                                    <Label class="dark:text-slate-300">Weight Category</Label>
+                                    <div class="relative">
+                                        <select
+                                            v-model="selectedCategoryId"
+                                            class="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 appearance-none dark:bg-slate-950 dark:border-slate-800 dark:text-slate-100"
+                                        >
+                                            <option v-for="cat in weightCategoryOptions" :key="cat.id" :value="cat.id">
+                                                {{ cat.name }}
+                                            </option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </CardContent>
+                        </Card>
+
+                        <!-- Player Selection -->
+                        <Card class="dark:bg-slate-950 dark:border-slate-800">
+                            <CardHeader class="pb-3">
+                                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                                    <CardTitle class="text-base dark:text-slate-100">2. Assign Players</CardTitle>
+                                    <div class="relative w-full sm:w-64">
+                                        <Search class="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+                                        <Input
+                                            v-model="search"
+                                            placeholder="Search players..."
+                                            class="pl-8 dark:bg-slate-950 dark:border-slate-800"
+                                        />
+                                    </div>
+                                </div>
+                            </CardHeader>
+                            <CardContent>
+                                <div class="rounded-md border dark:border-slate-800">
+                                    <div class="max-h-125 overflow-y-auto">
+                                        <Table class="text-sm">
+                                            <TableHeader class="bg-muted/50 sticky top-0 z-10 dark:bg-slate-900/50">
+                                                <TableRow>
+                                                    <TableHead class="h-10 px-4 text-left font-medium">Player</TableHead>
+                                                    <TableHead class="h-10 px-4 text-left font-medium">Current Assignments</TableHead>
+                                                    <TableHead class="h-10 px-4 text-right font-medium">Action</TableHead>
+                                                </TableRow>
+                                            </TableHeader>
+                                            <TableBody>
+                                                <TableRow
+                                                    v-for="player in filteredPlayers"
+                                                    :key="player.id"
+                                                    class="border-b last:border-0 hover:bg-muted/50 transition-colors dark:border-slate-800 dark:hover:bg-slate-900/50"
+                                                    :class="{'bg-primary/5 dark:bg-primary/10': isSelectedInCurrentCategory(player.id)}"
+                                                >
+                                                    <TableCell class="p-3">
+                                                        <div class="flex items-center gap-3">
+                                                            <Avatar class="h-8 w-8">
+                                                                <AvatarImage :src="`https://ui-avatars.com/api/?name=${player.full_name}&background=random`" />
+                                                                <AvatarFallback>{{ getInitials(player.full_name) }}</AvatarFallback>
+                                                            </Avatar>
+                                                            <div>
+                                                                <div class="font-medium dark:text-slate-200">{{ player.full_name }}</div>
+                                                                <div class="text-xs text-muted-foreground">{{ player.club }}</div>
+                                                            </div>
+                                                        </div>
+                                                    </TableCell>
+                                                    <TableCell class="p-3">
+                                                        <div class="text-xs space-y-1">
+                                                            <div v-if="getAssignedCategoryName(player.id) !== '-'" class="flex flex-wrap gap-1">
+                                                                <Badge variant="outline" class="text-[10px] font-normal dark:border-slate-700 dark:text-slate-300">
+                                                                    {{ getAssignedCategoryName(player.id) }}
+                                                                </Badge>
+                                                            </div>
+                                                            <span v-else class="text-muted-foreground">-</span>
+                                                        </div>
+                                                    </TableCell>
+                                                    <TableCell class="p-3 text-right">
+                                                        <Button
+                                                            size="sm"
+                                                            :variant="isSelectedInCurrentCategory(player.id) ? 'default' : 'outline'"
+                                                            class="h-8"
+                                                            @click="togglePlayerForSelectedCategory(player)"
+                                                            :disabled="!selectedCategoryId"
+                                                        >
+                                                            <span v-if="isSelectedInCurrentCategory(player.id)" class="flex items-center">
+                                                                <Check class="mr-1 h-3 w-3" /> Added
+                                                            </span>
+                                                            <span v-else>Add</span>
+                                                        </Button>
+                                                    </TableCell>
+                                                </TableRow>
+                                                <TableRow v-if="filteredPlayers.length === 0">
+                                                    <TableCell colspan="3" class="p-8 text-center text-muted-foreground">
+                                                        No players found matching your criteria.
+                                                    </TableCell>
+                                                </TableRow>
+                                            </TableBody>
+                                        </Table>
+                                    </div>
+                                </div>
+                            </CardContent>
+                        </Card>
+                    </div>
+
+                    <!-- Right Column: Summary -->
+                    <div class="space-y-6">
+                        <Card class="h-full flex flex-col dark:bg-slate-950 dark:border-slate-800">
+                            <CardHeader>
+                                <CardTitle class="text-base dark:text-slate-100">Registration Summary</CardTitle>
+                                <CardDescription>Overview of all assignments.</CardDescription>
+                            </CardHeader>
+                            <CardContent class="flex-1 overflow-hidden">
+                                <div class="rounded-md border h-full max-h-150 overflow-y-auto dark:border-slate-800">
+                                    <Table class="text-xs">
+                                        <TableHeader class="bg-muted/50 sticky top-0 dark:bg-slate-900/50">
+                                            <TableRow>
+                                                <TableHead class="p-2 text-left font-medium">Category</TableHead>
+                                                <TableHead class="p-2 text-center font-medium">Count</TableHead>
+                                                <TableHead class="p-2 text-right font-medium"></TableHead>
+                                            </TableRow>
+                                        </TableHeader>
+                                        <TableBody>
+                                            <template v-for="item in registeredCategorySummary" :key="item.category_id">
+                                                <TableRow class="border-b last:border-0 hover:bg-muted/50 dark:border-slate-800 dark:hover:bg-slate-900/50">
+                                                    <TableCell class="p-2">
+                                                        <div class="font-medium dark:text-slate-200">{{ item.category_name }}</div>
+                                                        <div class="text-[10px] text-muted-foreground capitalize">
+                                                            {{ item.gender }} • {{ item.age_category }}
+                                                        </div>
+                                                    </TableCell>
+                                                    <TableCell class="p-2 text-center font-bold dark:text-slate-200">{{ item.player_count }}</TableCell>
+                                                    <TableCell class="p-2 text-right">
+                                                        <Button
+                                                            variant="ghost"
+                                                            size="icon"
+                                                            class="h-6 w-6"
+                                                            @click="openedSummaryCategoryId === item.category_id ? closeSummary() : openSummary(item.category_id)"
+                                                        >
+                                                            <Users class="h-3 w-3" />
+                                                        </Button>
+                                                    </TableCell>
+                                                </TableRow>
+                                                <!-- Expanded Details -->
+                                                <TableRow v-if="openedSummaryCategoryId === item.category_id" class="bg-muted/30 dark:bg-slate-900/30">
+                                                    <TableCell colspan="3" class="p-2">
+                                                        <div class="space-y-1">
+                                                            <div v-for="p in item.players" :key="p.player_id" class="flex items-center justify-between rounded bg-white p-1.5 border shadow-sm dark:bg-slate-950 dark:border-slate-800">
+                                                                <span class="truncate pr-2 dark:text-slate-300">{{ p.full_name }}</span>
+                                                                <Button
+                                                                    variant="ghost"
+                                                                    size="icon"
+                                                                    class="h-5 w-5 text-destructive hover:text-destructive/90"
+                                                                    @click="removeFromSummary(item.category_id, p.player_id)"
+                                                                >
+                                                                    <X class="h-3 w-3" />
+                                                                </Button>
+                                                            </div>
+                                                        </div>
+                                                    </TableCell>
+                                                </TableRow>
+                                            </template>
+                                            <TableRow v-if="registeredCategorySummary.length === 0">
+                                                <TableCell colspan="3" class="p-6 text-center text-muted-foreground">
+                                                    No registrations yet.
+                                                </TableCell>
+                                            </TableRow>
+                                        </TableBody>
+                                    </Table>
+                                </div>
+                            </CardContent>
+                        </Card>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Confirmation Modal -->
+            <Dialog v-model:open="isConfirmModalOpen">
+                <DialogContent class="sm:max-w-150 dark:bg-slate-950 dark:border-slate-800">
+                    <DialogHeader>
+                        <DialogTitle class="dark:text-slate-100">Confirm Updates</DialogTitle>
+                    </DialogHeader>
+                    <div class="space-y-4 py-4">
+                        <div class="grid grid-cols-2 gap-4 text-sm rounded-lg border p-4 bg-muted/20 dark:bg-slate-900/50 dark:border-slate-800">
+                            <div class="space-y-1">
+                                <p class="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Tournament Name</p>
+                                <p class="font-medium dark:text-slate-200">{{ form.name || 'Untitled Tournament' }}</p>
+                            </div>
+                            <div class="space-y-1">
+                                <p class="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Date</p>
+                                <p class="font-medium dark:text-slate-200">{{ form.tournament_date || 'Not set' }}</p>
+                            </div>
+                            <div class="space-y-1">
+                                <p class="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Status</p>
+                                <Badge variant="outline" class="capitalize dark:border-slate-700 dark:text-slate-300">{{ form.status }}</Badge>
+                            </div>
+                            <div class="space-y-1">
+                                <p class="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Total Players</p>
+                                <p class="font-medium dark:text-slate-200">{{ uniqueRegisteredPlayers }}</p>
+                            </div>
+                        </div>
+
+                        <div class="rounded-lg border p-4 dark:border-slate-800">
+                            <h4 class="text-sm font-medium mb-2 dark:text-slate-200">Category Summary</h4>
+                            <div class="max-h-50 overflow-y-auto text-sm space-y-1">
+                                <div v-for="item in registeredCategorySummary" :key="item.category_id" class="flex justify-between py-1 border-b last:border-0 dark:border-slate-800">
+                                    <span class="text-muted-foreground">{{ item.category_name }}</span>
+                                    <span class="font-medium dark:text-slate-200">{{ item.player_count }} players</span>
+                                </div>
+                                <div v-if="registeredCategorySummary.length === 0" class="text-muted-foreground italic text-center py-2">
+                                    No players assigned to categories.
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="flex items-center p-3 rounded-md bg-amber-50 text-amber-800 text-sm border border-amber-200 dark:bg-amber-900/10 dark:text-amber-200 dark:border-amber-800">
+                            <AlertCircle class="h-4 w-4 mr-2" />
+                            This will update the tournament details and registration list.
+                        </div>
+                    </div>
+                    <DialogFooter>
+                        <Button variant="outline" @click="isConfirmModalOpen = false">Cancel</Button>
+                        <Button @click="submit" :disabled="form.processing">
+                            <Save class="mr-2 h-4 w-4" />
+                            Update Tournament
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
         </div>
-    </div>
-
-</div>
-</AppLayout>
+    </AppLayout>
 </template>

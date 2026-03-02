@@ -3,8 +3,18 @@ import { Head, useForm } from '@inertiajs/vue3'
 import AppLayout from '@/layouts/AppLayout.vue'
 import { route } from 'ziggy-js'
 import { Button } from '@/components/ui/button'
-import { ref, computed, watch, onMounted } from 'vue'
-import { type BreadcrumbItem } from '@/types'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Badge } from '@/components/ui/badge'
+import { Separator } from '@/components/ui/separator'
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import {
+    Card,
+    CardContent,
+    CardDescription,
+    CardHeader,
+    CardTitle,
+} from '@/components/ui/card'
 import {
     Dialog,
     DialogContent,
@@ -12,6 +22,27 @@ import {
     DialogTitle,
     DialogFooter,
 } from '@/components/ui/dialog'
+import {
+    Table,
+    TableBody,
+    TableCell,
+    TableHead,
+    TableHeader,
+    TableRow,
+} from '@/components/ui/table'
+import { 
+    Trophy, 
+    Upload, 
+    Users, 
+    Search, 
+    Check, 
+    X,
+    UserPlus,
+    FileSpreadsheet,
+    AlertCircle
+} from 'lucide-vue-next'
+import { ref, computed, watch, onMounted } from 'vue'
+import { type BreadcrumbItem } from '@/types'
 
 interface Player {
     id: number
@@ -65,7 +96,7 @@ const props = defineProps<{
 
 const breadcrumbs: BreadcrumbItem[] = [
     { title: 'Tournaments', href: route('admin.tournaments.index') },
-    { title: 'Create a Tournament', href: '' },
+    { title: 'Create Tournament', href: '' },
 ]
 
 const form = useForm({
@@ -82,6 +113,15 @@ const importFile = ref<File | null>(null)
 const importProcessing = ref(false)
 const importError = ref('')
 const importAnalysis = ref<ImportAnalysis | null>(null)
+
+const getInitials = (name: string) => {
+    return name
+        .split(' ')
+        .map((n) => n[0])
+        .join('')
+        .toUpperCase()
+        .substring(0, 2)
+}
 
 const normalizeGender = (value: string | null | undefined): 'male' | 'female' | '' => {
     const normalized = String(value ?? '').trim().toLowerCase()
@@ -203,21 +243,6 @@ const getAssignedCategoryName = (playerId: number) => {
         .join(', ')
 }
 
-const getAssignedAgeCategoryName = (playerId: number) => {
-    const registrations = getPlayerRegistrations(playerId)
-    if (registrations.length === 0) {
-        return '-'
-    }
-
-    return Array.from(
-        new Set(
-            registrations.map((registration) =>
-                getCategoryById(registration.tournament_weight_category_id)?.age_category_name ?? '-',
-            ),
-        ),
-    ).join(', ')
-}
-
 const registeredCategorySummary = computed(() => {
     const grouped = new Map<number, number[]>()
 
@@ -246,10 +271,6 @@ const registeredCategorySummary = computed(() => {
         .sort((a, b) => b.player_count - a.player_count || a.category_name.localeCompare(b.category_name))
 })
 
-const openedSummary = computed(() =>
-    registeredCategorySummary.value.find((item) => item.category_id === openedSummaryCategoryId.value) ?? null,
-)
-
 const openSummary = (categoryId: number) => {
     openedSummaryCategoryId.value = categoryId
 }
@@ -272,8 +293,6 @@ const selectedCategoryRegisteredCount = computed(() => {
 
     return form.registrations.filter((registration) => registration.tournament_weight_category_id === selectedCategoryId.value).length
 })
-const isPlayerRegisteredAnywhere = (playerId: number) =>
-    form.registrations.some((registration) => registration.player_id === playerId)
 
 onMounted(() => {
     const params = new URLSearchParams(window.location.search);
@@ -360,386 +379,459 @@ const analyzeAndImportFile = async () => {
 </script>
 
 <template>
-<Head title="Create Tournament" />
-<AppLayout :breadcrumbs="breadcrumbs">
-<div class="p-6 space-y-8">
-
-    <div class="border rounded-xl bg-white p-4">
-        <div class="flex items-start justify-between">
-            <div class="space-y-1">
-                <h1 class="text-xl font-bold">Create Tournament</h1>
-                <div class="flex flex-wrap items-center gap-x-3 gap-y-1 text-muted-foreground">
-                    <span class="text-sm font-semibold text-slate-900">{{ form.name }}</span>
-                    <span class="hidden sm:block h-3 w-px bg-slate-200"></span>
-                    <span class="text-xs">Date: {{ form.tournament_date }}</span>
-                    <span class="hidden sm:block h-3 w-px bg-slate-200"></span>
-                    <span class="text-xs flex items-center gap-1.5">
-                        Status: 
-                        <span class="capitalize px-1.5 py-0.5 rounded-full bg-slate-100 text-slate-700 text-[10px] font-medium border border-slate-200">{{ form.status }}</span>
-                    </span>
-                </div>
-            </div>
-            <Button @click="isConfirmModalOpen = true" :disabled="form.processing" size="sm" class="h-9">Save Tournament</Button>
-        </div>
-    </div>
-
-    <!-- Confirmation Modal -->
-    <Dialog v-model:open="isConfirmModalOpen">
-        <DialogContent class="sm:max-w-[500px]">
-            <DialogHeader>
-                <DialogTitle>Confirm Tournament Details</DialogTitle>
-            </DialogHeader>
-            <div class="space-y-4 py-4">
-                <div class="grid grid-cols-2 gap-4 text-sm">
-                    <div class="space-y-1">
-                        <p class="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Tournament Name</p>
-                        <p class="font-medium text-slate-900">{{ form.name }}</p>
-                    </div>
-                    <div class="space-y-1">
-                        <p class="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Date</p>
-                        <p class="font-medium text-slate-900">{{ form.tournament_date }}</p>
-                    </div>
-                    <div class="space-y-1">
-                        <p class="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Status</p>
-                        <p class="font-medium capitalize text-slate-900">{{ form.status }}</p>
-                    </div>
-                    <div class="space-y-1">
-                        <p class="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Total Registrations</p>
-                        <p class="font-medium text-slate-900">{{ totalRegistered }}</p>
-                    </div>
-                </div>
-
-                <div v-if="registeredCategorySummary.length > 0" class="space-y-2">
-                    <p class="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Category Summary</p>
-                    <div class="max-h-[200px] overflow-y-auto border rounded-lg">
-                        <table class="w-full text-xs">
-                            <thead class="bg-muted sticky top-0">
-                                <tr>
-                                    <th class="p-2 text-left">Category</th>
-                                    <th class="p-2 text-center">Players</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr v-for="item in registeredCategorySummary" :key="item.category_id" class="border-t">
-                                    <td class="p-2">{{ item.category_name }} ({{ item.age_category }} / {{ item.gender }})</td>
-                                    <td class="p-2 text-center">{{ item.player_count }}</td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-            <DialogFooter>
-                <Button variant="outline" @click="isConfirmModalOpen = false">Cancel</Button>
-                <Button @click="submit" :disabled="form.processing">Confirm & Save</Button>
-            </DialogFooter>
-        </DialogContent>
-    </Dialog>
-
-    <div class="space-y-4">
-        <div class="border rounded-xl bg-white p-4 space-y-3 shadow-sm">
-            <div class="flex flex-wrap items-center justify-between gap-3">
+    <Head title="Create Tournament" />
+    <AppLayout :breadcrumbs="breadcrumbs">
+        <div class="flex-1 space-y-6 p-6">
+            <!-- Header Section -->
+            <div class="flex items-center justify-between">
                 <div>
-                    <h2 class="text-sm font-semibold text-slate-900">Import Player List (Excel / Word)</h2>
-                    <p class="text-xs text-muted-foreground">
-                        Upload <code>.xlsx</code>, <code>.csv</code>, or <code>.docx</code>. System auto-maps by gender + age category + Uweight.
-                    </p>
+                    <h1 class="text-2xl font-bold tracking-tight dark:text-slate-100">Create Tournament</h1>
+                    <p class="text-muted-foreground">Fill in the details to create a new tournament.</p>
                 </div>
-                <Button size="sm" :disabled="importProcessing || !importFile" @click="analyzeAndImportFile">
-                    {{ importProcessing ? 'Analyzing...' : 'Analyze & Add' }}
-                </Button>
-            </div>
-
-            <div class="flex flex-wrap items-center gap-3">
-                <input
-                    type="file"
-                    accept=".xlsx,.csv,.docx"
-                    class="border rounded-md text-sm p-2"
-                    @change="onImportFileChange"
-                />
-                <span v-if="selectedCategoryId" class="text-xs text-muted-foreground">
-                    Fallback category: {{ getCategoryById(selectedCategoryId)?.name ?? '-' }}
-                </span>
-            </div>
-
-            <p v-if="importError" class="text-xs text-red-600 font-medium">{{ importError }}</p>
-
-            <div v-if="importAnalysis" class="grid grid-cols-2 md:grid-cols-5 gap-2 text-xs">
-                <div class="border rounded-md p-2 bg-slate-50">
-                    <p class="text-muted-foreground">Rows</p>
-                    <p class="font-semibold">{{ importAnalysis.total_rows }}</p>
-                </div>
-                <div class="border rounded-md p-2 bg-emerald-50">
-                    <p class="text-muted-foreground">Matched</p>
-                    <p class="font-semibold">{{ importAnalysis.matched_count }}</p>
-                </div>
-                <div class="border rounded-md p-2 bg-amber-50">
-                    <p class="text-muted-foreground">Unmatched Players</p>
-                    <p class="font-semibold">{{ importAnalysis.unmatched_player_count }}</p>
-                </div>
-                <div class="border rounded-md p-2 bg-orange-50">
-                    <p class="text-muted-foreground">Unresolved Categories</p>
-                    <p class="font-semibold">{{ importAnalysis.unresolved_category_count }}</p>
-                </div>
-                <div class="border rounded-md p-2 bg-slate-100">
-                    <p class="text-muted-foreground">Duplicates</p>
-                    <p class="font-semibold">{{ importAnalysis.duplicate_count }}</p>
+                <div class="flex items-center gap-2">
+                    <Button variant="outline" @click="$inertia.visit(route('admin.tournaments.index'))">Cancel</Button>
+                    <Button @click="isConfirmModalOpen = true" :disabled="form.processing">
+                        <Trophy class="mr-2 h-4 w-4" />
+                        Create Tournament
+                    </Button>
                 </div>
             </div>
 
-            <div v-if="importAnalysis && importAnalysis.rows.some((row) => row.status !== 'matched')" class="border rounded-lg overflow-hidden">
-                <table class="w-full text-xs">
-                    <thead class="bg-slate-50">
-                        <tr>
-                            <th class="p-2 text-left">Row</th>
-                            <th class="p-2 text-left">Player</th>
-                            <th class="p-2 text-left">Issue</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr
-                            v-for="row in importAnalysis.rows.filter((item) => item.status !== 'matched').slice(0, 20)"
-                            :key="`${row.row}-${row.status}-${row.player}`"
-                            class="border-t"
-                        >
-                            <td class="p-2">{{ row.row }}</td>
-                            <td class="p-2">{{ row.player }}</td>
-                            <td class="p-2">{{ row.reason }}</td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-        </div>
-
-        <div class="grid grid-cols-1 lg:grid-cols-4 gap-6 items-start">
-            <!-- Left Side: Summary Stats -->
-            <div class="space-y-4">
-                <div class="flex items-center justify-between">
-                    <h2 class="text-lg font-semibold">Registration Stats</h2>
-                </div>
-                <div class="grid grid-cols-2 lg:grid-cols-1 gap-3">
-                    <div class="border rounded-lg p-3 bg-white shadow-sm">
-                        <p class="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground">Total Entries</p>
-                        <p class="text-xl font-bold">{{ totalRegistered }}</p>
-                    </div>
-                    <div class="border rounded-lg p-3 bg-white shadow-sm">
-                        <p class="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground">Unique Players</p>
-                        <p class="text-xl font-bold">{{ uniqueRegisteredPlayers }}</p>
-                    </div>
-                    <div class="border rounded-lg p-3 bg-white shadow-sm">
-                        <p class="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground">Categories Used</p>
-                        <p class="text-xl font-bold">{{ usedCategoryCount }}</p>
-                    </div>
-                    <div class="border rounded-lg p-3 bg-white shadow-sm">
-                        <p class="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground">Selected Entries</p>
-                        <p class="text-xl font-bold">{{ selectedCategoryRegisteredCount }}</p>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Right Side: Registered Categories Table -->
-            <div class="lg:col-span-3 space-y-4">
-                <div class="flex flex-wrap justify-between items-center gap-3">
-                    <h2 class="text-lg font-semibold">Category First Registration</h2>
-                    <span class="text-xs font-medium text-muted-foreground px-2 py-1 bg-slate-100 rounded-md">Total Registered: {{ totalRegistered }}</span>
-                </div>
-
-                <div class="border rounded-lg overflow-hidden bg-white shadow-sm">
-                    <table class="w-full text-sm">
-                        <thead class="bg-slate-50 border-b border-slate-200">
-                            <tr>
-                                <th class="p-3 text-left font-semibold text-slate-700">Gender</th>
-                                <th class="p-3 text-left font-semibold text-slate-700">Age Category</th>
-                                <th class="p-3 text-left font-semibold text-slate-700">Weight Category</th>
-                                <th class="p-3 text-center font-semibold text-slate-700">Players</th>
-                                <th class="p-3 text-left font-semibold text-slate-700">Who Registered</th>
-                            </tr>
-                        </thead>
-                        <tbody class="divide-y divide-slate-100">
-                            <tr v-for="item in registeredCategorySummary" :key="item.category_id" class="hover:bg-slate-50 transition-colors">
-                                <td class="p-3 capitalize">{{ item.gender }}</td>
-                                <td class="p-3">{{ item.age_category }}</td>
-                                <td class="p-3 font-medium">{{ item.category_name }}</td>
-                                <td class="p-3 text-center">
-                                    <span class="inline-flex items-center justify-center w-8 h-8 rounded-full bg-blue-50 text-blue-700 font-bold text-xs">
-                                        {{ item.player_count }}
-                                    </span>
-                                </td>
-                                <td class="p-3">
-                                    <button type="button" class="text-xs font-semibold text-blue-600 hover:text-blue-800 flex items-center gap-1 group" @click="openSummary(item.category_id)">
-                                        <span>View Players</span>
-                                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="group-hover:translate-x-0.5 transition-transform"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
-                                    </button>
-                                </td>
-                            </tr>
-                            <tr v-if="registeredCategorySummary.length === 0">
-                                <td colspan="5" class="p-8 text-center text-muted-foreground italic bg-slate-50/50">
-                                    No category registrations yet. Select a category below to start adding players.
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-
-                <!-- Category Selectors Moved Here -->
-                <div class="border rounded-xl bg-white p-4 grid gap-4 md:grid-cols-3 shadow-sm">
-                    <div class="space-y-1">
-                        <label class="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground">Gender</label>
-                        <select v-model="selectedGender" class="border rounded-lg p-2 w-full text-sm">
-                            <option v-for="gender in genderOptions" :key="gender" :value="gender">{{ gender }}</option>
-                        </select>
-                    </div>
-                    <div class="space-y-1">
-                        <label class="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground">Age Category</label>
-                        <select v-model="selectedAgeCategoryId" class="border rounded-lg p-2 w-full text-sm">
-                            <option v-for="ageCategory in ageCategoryOptions" :key="ageCategory.id" :value="ageCategory.id">{{ ageCategory.name }}</option>
-                        </select>
-                    </div>
-                    <div class="space-y-1">
-                        <label class="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground">Weight Category</label>
-                        <select v-model="selectedCategoryId" class="border rounded-lg p-2 w-full text-sm">
-                            <option v-for="category in weightCategoryOptions" :key="category.id" :value="category.id">{{ category.name }}</option>
-                        </select>
-                    </div>
-                </div>
-
-                <!-- Assignment Banner, Search Bar, and Gender Filter Row -->
-                <div class="flex flex-wrap items-center gap-3">
-                    <div v-if="selectedCategory" class="flex-1 min-w-[200px] text-xs border rounded-lg bg-blue-50/50 border-blue-200 px-3 py-2 flex items-center gap-1.5 shadow-sm">
-                        <span class="text-blue-700 font-medium">Assigning:</span>
-                        <strong class="text-blue-900">{{ selectedCategory.name }}</strong>
-                        <span class="text-blue-400">|</span>
-                        <span class="text-blue-700 capitalize">{{ selectedCategory.gender }}</span>
-                        <span class="text-blue-400">|</span>
-                        <span class="text-blue-700">{{ selectedCategory.age_category_name }}</span>
-                    </div>
-
-                    <div class="flex items-center gap-2 bg-white border rounded-lg px-3 py-1 shadow-sm">
-                        <label class="text-[10px] uppercase font-bold text-slate-400">Filter:</label>
-                        <div class="flex items-center gap-1">
-                            <button 
-                                v-for="option in (['all', 'male', 'female'] as const)" 
-                                :key="option"
-                                @click="playerGenderFilter = option"
-                                class="px-2 py-0.5 rounded text-[10px] font-bold uppercase transition-colors"
-                                :class="playerGenderFilter === option ? 'bg-slate-900 text-white' : 'text-slate-500 hover:bg-slate-100'"
-                            >
-                                {{ option }}
-                            </button>
-                        </div>
-                    </div>
-
-                    <div class="relative flex-1 min-w-[200px]">
-                        <input 
-                            v-model="search" 
-                            type="text" 
-                            placeholder="Search players by name or club..." 
-                            class="w-full border rounded-lg pl-8 pr-3 py-1.5 text-sm shadow-sm focus:ring-2 focus:ring-blue-500/20 transition-all"
-                        />
-                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
-                    </div>
-                </div>
-
-                <!-- Players Grid -->
-                <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
-                    <div 
-                        v-for="player in filteredPlayers" 
-                        :key="player.id"
-                        class="group border rounded-xl p-3 bg-white hover:border-blue-300 hover:shadow-md transition-all cursor-pointer relative overflow-hidden"
-                        :class="[
-                            isSelectedInCurrentCategory(player.id) ? 'border-blue-500 bg-blue-50/30' : 'border-slate-200'
-                        ]"
-                        @click="togglePlayerForSelectedCategory(player)"
-                    >
-                        <div v-if="isSelectedInCurrentCategory(player.id)" class="absolute top-0 right-0 p-1.5">
-                            <div class="bg-blue-500 text-white rounded-full p-0.5">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
-                            </div>
-                        </div>
-
+            <div class="grid gap-6 md:grid-cols-2">
+                <!-- Tournament Details Card -->
+                <Card class="dark:bg-slate-950 dark:border-slate-800">
+                    <CardHeader>
+                        <CardTitle class="dark:text-slate-100">Tournament Details</CardTitle>
+                        <CardDescription>Basic information about the tournament.</CardDescription>
+                    </CardHeader>
+                    <CardContent class="space-y-4">
                         <div class="space-y-2">
-                            <div>
-                                <h3 class="font-bold text-slate-900 text-sm leading-tight group-hover:text-blue-700 transition-colors">
-                                    {{ player.full_name }}
-                                </h3>
-                                <p class="text-[10px] text-muted-foreground font-medium uppercase tracking-wider mt-0.5">{{ player.club || 'No Club' }}</p>
+                            <Label for="name" class="dark:text-slate-300">Tournament Name</Label>
+                            <Input id="name" v-model="form.name" placeholder="e.g. National Championship 2024" class="dark:bg-slate-950 dark:border-slate-800" />
+                            <p v-if="form.errors.name" class="text-sm text-destructive">{{ form.errors.name }}</p>
+                        </div>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div class="space-y-2">
+                                <Label for="date" class="dark:text-slate-300">Date</Label>
+                                <Input id="date" type="date" v-model="form.tournament_date" class="dark:bg-slate-950 dark:border-slate-800" />
+                                <p v-if="form.errors.tournament_date" class="text-sm text-destructive">{{ form.errors.tournament_date }}</p>
                             </div>
-
-                            <div class="flex items-center gap-2">
-                                <span 
-                                    class="text-[9px] font-bold uppercase px-1.5 py-0.5 rounded border"
-                                    :class="normalizeGender(player.gender) === 'male' ? 'bg-blue-50 text-blue-700 border-blue-100' : 'bg-pink-50 text-pink-700 border-pink-100'"
-                                >
-                                    {{ player.gender }}
-                                </span>
-                                
-                                <div v-if="isPlayerRegisteredAnywhere(player.id)" class="flex flex-wrap gap-1">
-                                    <span class="text-[9px] font-bold bg-slate-100 text-slate-600 px-1.5 py-0.5 rounded border border-slate-200">
-                                        Registered
-                                    </span>
+                            <div class="space-y-2">
+                                <Label for="status" class="dark:text-slate-300">Status</Label>
+                                <div class="relative">
+                                    <select
+                                        id="status"
+                                        v-model="form.status"
+                                        class="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 appearance-none dark:bg-slate-950 dark:border-slate-800 dark:text-slate-100"
+                                    >
+                                        <option value="draft">Draft</option>
+                                        <option value="open">Open</option>
+                                        <option value="ongoing">Ongoing</option>
+                                        <option value="completed">Completed</option>
+                                    </select>
+                                    <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700 dark:text-gray-400">
+                                        <svg class="h-4 w-4 fill-current" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/></svg>
+                                    </div>
                                 </div>
+                                <p v-if="form.errors.status" class="text-sm text-destructive">{{ form.errors.status }}</p>
+                            </div>
+                        </div>
+                    </CardContent>
+                </Card>
+
+                <!-- Import Section Card -->
+                <Card class="dark:bg-slate-950 dark:border-slate-800">
+                    <CardHeader>
+                        <CardTitle class="dark:text-slate-100">Import Registrations</CardTitle>
+                        <CardDescription>Upload a player list (.xlsx, .csv, .docx) to auto-map entries.</CardDescription>
+                    </CardHeader>
+                    <CardContent class="space-y-4">
+                        <div class="flex items-center gap-2">
+                            <Input
+                                type="file"
+                                accept=".xlsx,.csv,.docx"
+                                class="cursor-pointer dark:bg-slate-950 dark:border-slate-800 dark:file:text-slate-100"
+                                @change="onImportFileChange"
+                            />
+                            <Button 
+                                variant="secondary" 
+                                :disabled="importProcessing || !importFile" 
+                                @click="analyzeAndImportFile"
+                            >
+                                <Upload class="mr-2 h-4 w-4" />
+                                {{ importProcessing ? 'Analyzing...' : 'Import' }}
+                            </Button>
+                        </div>
+                        
+                        <div v-if="selectedCategoryId" class="text-xs text-muted-foreground flex items-center gap-1">
+                            <AlertCircle class="h-3 w-3" />
+                            Fallback category: <span class="font-medium">{{ getCategoryById(selectedCategoryId)?.name ?? '-' }}</span>
+                        </div>
+
+                        <p v-if="importError" class="text-sm font-medium text-destructive">{{ importError }}</p>
+
+                        <!-- Import Analysis Stats -->
+                        <div v-if="importAnalysis" class="grid grid-cols-2 gap-2 text-xs sm:grid-cols-3">
+                            <div class="rounded-md border bg-muted/50 p-2">
+                                <p class="text-muted-foreground">Total Rows</p>
+                                <p class="text-lg font-bold">{{ importAnalysis.total_rows }}</p>
+                            </div>
+                            <div class="rounded-md border bg-green-50 p-2 text-green-700 border-green-200">
+                                <p class="text-xs font-medium opacity-80">Matched</p>
+                                <p class="text-lg font-bold">{{ importAnalysis.matched_count }}</p>
+                            </div>
+                            <div class="rounded-md border bg-amber-50 p-2 text-amber-700 border-amber-200">
+                                <p class="text-xs font-medium opacity-80">Unmatched</p>
+                                <p class="text-lg font-bold">{{ importAnalysis.unmatched_player_count }}</p>
+                            </div>
+                        </div>
+                    </CardContent>
+                </Card>
+            </div>
+
+            <!-- Import Issues Table (Conditional) -->
+            <Card v-if="importAnalysis && importAnalysis.rows.some((row) => row.status !== 'matched')" class="border-amber-200 bg-amber-50/30 dark:bg-amber-900/10 dark:border-amber-800">
+                <CardHeader class="pb-3">
+                    <CardTitle class="text-base text-amber-800 dark:text-amber-200">Import Issues</CardTitle>
+                </CardHeader>
+                <CardContent>
+                    <div class="rounded-md border bg-white dark:bg-slate-950 dark:border-slate-800">
+                        <Table class="text-xs">
+                            <TableHeader class="bg-muted/50 dark:bg-slate-900/50">
+                                <TableRow>
+                                    <TableHead class="p-2 text-left font-medium">Row</TableHead>
+                                    <TableHead class="p-2 text-left font-medium">Player</TableHead>
+                                    <TableHead class="p-2 text-left font-medium">Issue</TableHead>
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                                <TableRow
+                                    v-for="row in importAnalysis.rows.filter((item) => item.status !== 'matched').slice(0, 20)"
+                                    :key="`${row.row}-${row.status}-${row.player}`"
+                                    class="border-t last:border-0 dark:border-slate-800"
+                                >
+                                    <TableCell class="p-2">{{ row.row }}</TableCell>
+                                    <TableCell class="p-2 font-medium dark:text-slate-200">{{ row.player }}</TableCell>
+                                    <TableCell class="p-2 text-muted-foreground">{{ row.reason }}</TableCell>
+                                </TableRow>
+                            </TableBody>
+                        </Table>
+                    </div>
+                </CardContent>
+            </Card>
+
+            <Separator />
+
+            <!-- Registration Manager Section -->
+            <div class="space-y-6">
+                <div class="flex flex-col gap-1">
+                    <h2 class="text-xl font-bold tracking-tight">Registration Manager</h2>
+                    <p class="text-muted-foreground">Manually assign players to categories.</p>
+                </div>
+
+                <!-- Registration Stats Cards -->
+                <div class="grid gap-4 md:grid-cols-4">
+                    <Card class="dark:bg-slate-950 dark:border-slate-800">
+                        <CardHeader class="flex flex-row items-center justify-between space-y-0 pb-2">
+                            <CardTitle class="text-sm font-medium dark:text-slate-100">Total Entries</CardTitle>
+                            <Users class="h-4 w-4 text-muted-foreground" />
+                        </CardHeader>
+                        <CardContent>
+                            <div class="text-2xl font-bold dark:text-slate-100">{{ totalRegistered }}</div>
+                        </CardContent>
+                    </Card>
+                    <Card class="dark:bg-slate-950 dark:border-slate-800">
+                        <CardHeader class="flex flex-row items-center justify-between space-y-0 pb-2">
+                            <CardTitle class="text-sm font-medium dark:text-slate-100">Unique Players</CardTitle>
+                            <UserPlus class="h-4 w-4 text-muted-foreground" />
+                        </CardHeader>
+                        <CardContent>
+                            <div class="text-2xl font-bold dark:text-slate-100">{{ uniqueRegisteredPlayers }}</div>
+                        </CardContent>
+                    </Card>
+                    <Card class="dark:bg-slate-950 dark:border-slate-800">
+                        <CardHeader class="flex flex-row items-center justify-between space-y-0 pb-2">
+                            <CardTitle class="text-sm font-medium dark:text-slate-100">Categories Used</CardTitle>
+                            <FileSpreadsheet class="h-4 w-4 text-muted-foreground" />
+                        </CardHeader>
+                        <CardContent>
+                            <div class="text-2xl font-bold dark:text-slate-100">{{ usedCategoryCount }}</div>
+                        </CardContent>
+                    </Card>
+                    <Card :class="selectedCategoryId ? 'bg-primary/5 border-primary/20 dark:bg-primary/10 dark:border-primary/30' : 'dark:bg-slate-950 dark:border-slate-800'">
+                        <CardHeader class="flex flex-row items-center justify-between space-y-0 pb-2">
+                            <CardTitle class="text-sm font-medium dark:text-slate-100">Selected Category</CardTitle>
+                            <Check class="h-4 w-4 text-primary" />
+                        </CardHeader>
+                        <CardContent>
+                            <div class="text-2xl font-bold text-primary">{{ selectedCategoryRegisteredCount }}</div>
+                            <p class="text-xs text-muted-foreground mt-1 truncate" v-if="selectedCategory">
+                                {{ selectedCategory.name }}
+                            </p>
+                        </CardContent>
+                    </Card>
+                </div>
+
+                <div class="grid gap-6 lg:grid-cols-3">
+                    <!-- Left Column: Category Selection & Player List -->
+                    <div class="lg:col-span-2 space-y-6">
+                        <!-- Filters -->
+                        <Card class="dark:bg-slate-950 dark:border-slate-800">
+                            <CardHeader class="pb-3">
+                                <CardTitle class="text-base dark:text-slate-100">1. Select Category</CardTitle>
+                            </CardHeader>
+                            <CardContent class="grid gap-4 sm:grid-cols-3">
+                                <div class="space-y-2">
+                                    <Label class="dark:text-slate-300">Gender</Label>
+                                    <div class="relative">
+                                        <select
+                                            v-model="selectedGender"
+                                            class="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 appearance-none capitalize dark:bg-slate-950 dark:border-slate-800 dark:text-slate-100"
+                                        >
+                                            <option v-for="gender in genderOptions" :key="gender" :value="gender">
+                                                {{ gender }}
+                                            </option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="space-y-2">
+                                    <Label>Age Category</Label>
+                                    <div class="relative">
+                                        <select
+                                            v-model="selectedAgeCategoryId"
+                                            class="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 appearance-none dark:bg-slate-950 dark:border-slate-800 dark:text-slate-100"
+                                        >
+                                            <option v-for="age in ageCategoryOptions" :key="age.id" :value="age.id">
+                                                {{ age.name }}
+                                            </option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="space-y-2">
+                                    <Label>Weight Category</Label>
+                                    <div class="relative">
+                                        <select
+                                            v-model="selectedCategoryId"
+                                            class="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 appearance-none dark:bg-slate-950 dark:border-slate-800 dark:text-slate-100"
+                                        >
+                                            <option v-for="cat in weightCategoryOptions" :key="cat.id" :value="cat.id">
+                                                {{ cat.name }}
+                                            </option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </CardContent>
+                        </Card>
+
+                        <!-- Player Selection -->
+                        <Card class="dark:bg-slate-950 dark:border-slate-800">
+                            <CardHeader class="pb-3">
+                                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                                    <CardTitle class="text-base dark:text-slate-100">2. Assign Players</CardTitle>
+                                    <div class="relative w-full sm:w-64">
+                                        <Search class="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+                                        <Input
+                                            v-model="search"
+                                            placeholder="Search players..."
+                                            class="pl-8 dark:bg-slate-950 dark:border-slate-800"
+                                        />
+                                    </div>
+                                </div>
+                            </CardHeader>
+                            <CardContent>
+                                <div class="rounded-md border dark:border-slate-800">
+                                    <div class="max-h-125 overflow-y-auto">
+                                        <Table class="text-sm">
+                                            <TableHeader class="bg-muted/50 sticky top-0 z-10 dark:bg-slate-900/50">
+                                                <TableRow>
+                                                    <TableHead class="h-10 px-4 text-left font-medium">Player</TableHead>
+                                                    <TableHead class="h-10 px-4 text-left font-medium">Current Assignments</TableHead>
+                                                    <TableHead class="h-10 px-4 text-right font-medium">Action</TableHead>
+                                                </TableRow>
+                                            </TableHeader>
+                                            <TableBody>
+                                                <TableRow
+                                                    v-for="player in filteredPlayers"
+                                                    :key="player.id"
+                                                    class="border-b last:border-0 hover:bg-muted/50 transition-colors dark:border-slate-800"
+                                                    :class="{'bg-primary/5': isSelectedInCurrentCategory(player.id)}"
+                                                >
+                                                    <TableCell class="p-3">
+                                                        <div class="flex items-center gap-3">
+                                                            <Avatar class="h-8 w-8">
+                                                                <AvatarImage :src="`https://ui-avatars.com/api/?name=${player.full_name}&background=random`" />
+                                                                <AvatarFallback class="dark:bg-slate-800 dark:text-slate-300">{{ getInitials(player.full_name) }}</AvatarFallback>
+                                                            </Avatar>
+                                                            <div>
+                                                                <div class="font-medium dark:text-slate-100">{{ player.full_name }}</div>
+                                                                <div class="text-xs text-muted-foreground">{{ player.club }}</div>
+                                                            </div>
+                                                        </div>
+                                                    </TableCell>
+                                                    <TableCell class="p-3">
+                                                        <div class="text-xs space-y-1">
+                                                            <div v-if="getAssignedCategoryName(player.id) !== '-'" class="flex flex-wrap gap-1">
+                                                                <Badge variant="outline" class="text-[10px] font-normal dark:border-slate-700 dark:text-slate-300">
+                                                                    {{ getAssignedCategoryName(player.id) }}
+                                                                </Badge>
+                                                            </div>
+                                                            <span v-else class="text-muted-foreground">-</span>
+                                                        </div>
+                                                    </TableCell>
+                                                    <TableCell class="p-3 text-right">
+                                                        <Button
+                                                            size="sm"
+                                                            :variant="isSelectedInCurrentCategory(player.id) ? 'default' : 'outline'"
+                                                            class="h-8"
+                                                            @click="togglePlayerForSelectedCategory(player)"
+                                                            :disabled="!selectedCategoryId"
+                                                        >
+                                                            <span v-if="isSelectedInCurrentCategory(player.id)" class="flex items-center">
+                                                                <Check class="mr-1 h-3 w-3" /> Added
+                                                            </span>
+                                                            <span v-else>Add</span>
+                                                        </Button>
+                                                    </TableCell>
+                                                </TableRow>
+                                                <TableRow v-if="filteredPlayers.length === 0">
+                                                    <TableCell colspan="3" class="p-8 text-center text-muted-foreground">
+                                                        No players found matching your criteria.
+                                                    </TableCell>
+                                                </TableRow>
+                                            </TableBody>
+                                        </Table>
+                                    </div>
+                                </div>
+                            </CardContent>
+                        </Card>
+                    </div>
+
+                    <!-- Right Column: Summary -->
+                    <div class="space-y-6">
+                        <Card class="h-full flex flex-col dark:bg-slate-950 dark:border-slate-800">
+                            <CardHeader>
+                                <CardTitle class="text-base dark:text-slate-100">Registration Summary</CardTitle>
+                                <CardDescription>Overview of all assignments.</CardDescription>
+                            </CardHeader>
+                            <CardContent class="flex-1 overflow-hidden">
+                                <div class="rounded-md border h-full max-h-150 overflow-y-auto dark:border-slate-800">
+                                    <Table class="text-xs">
+                                        <TableHeader class="bg-muted/50 sticky top-0 dark:bg-slate-900/50">
+                                            <TableRow>
+                                                <TableHead class="p-2 text-left font-medium">Category</TableHead>
+                                                <TableHead class="p-2 text-center font-medium">Count</TableHead>
+                                                <TableHead class="p-2 text-right font-medium"></TableHead>
+                                            </TableRow>
+                                        </TableHeader>
+                                        <TableBody>
+                                            <template v-for="item in registeredCategorySummary" :key="item.category_id">
+                                                <TableRow class="border-b last:border-0 hover:bg-muted/50 dark:border-slate-800">
+                                                    <TableCell class="p-2">
+                                                        <div class="font-medium dark:text-slate-100">{{ item.category_name }}</div>
+                                                        <div class="text-[10px] text-muted-foreground capitalize">
+                                                            {{ item.gender }} • {{ item.age_category }}
+                                                        </div>
+                                                    </TableCell>
+                                                    <TableCell class="p-2 text-center font-bold dark:text-slate-100">{{ item.player_count }}</TableCell>
+                                                    <TableCell class="p-2 text-right">
+                                                        <Button
+                                                            variant="ghost"
+                                                            size="icon"
+                                                            class="h-6 w-6"
+                                                            @click="openedSummaryCategoryId === item.category_id ? closeSummary() : openSummary(item.category_id)"
+                                                        >
+                                                            <Users class="h-3 w-3" />
+                                                        </Button>
+                                                    </TableCell>
+                                                </TableRow>
+                                                <!-- Expanded Details -->
+                                                <TableRow v-if="openedSummaryCategoryId === item.category_id" class="bg-muted/30 dark:bg-slate-900/30">
+                                                    <TableCell colspan="3" class="p-2">
+                                                        <div class="space-y-1">
+                                                            <div v-for="p in item.players" :key="p.player_id" class="flex items-center justify-between rounded bg-white p-1.5 border shadow-sm dark:bg-slate-950 dark:border-slate-800">
+                                                                <span class="truncate pr-2 dark:text-slate-300">{{ p.full_name }}</span>
+                                                                <Button
+                                                                    variant="ghost"
+                                                                    size="icon"
+                                                                    class="h-5 w-5 text-destructive hover:text-destructive/90"
+                                                                    @click="removeFromSummary(item.category_id, p.player_id)"
+                                                                >
+                                                                    <X class="h-3 w-3" />
+                                                                </Button>
+                                                            </div>
+                                                        </div>
+                                                    </TableCell>
+                                                </TableRow>
+                                            </template>
+                                            <TableRow v-if="registeredCategorySummary.length === 0">
+                                                <TableCell colspan="3" class="p-6 text-center text-muted-foreground">
+                                                    No registrations yet.
+                                                </TableCell>
+                                            </TableRow>
+                                        </TableBody>
+                                    </Table>
+                                </div>
+                            </CardContent>
+                        </Card>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Confirmation Modal -->
+            <Dialog v-model:open="isConfirmModalOpen">
+                <DialogContent class="sm:max-w-xl dark:bg-slate-950 dark:border-slate-800">
+                    <DialogHeader>
+                        <DialogTitle class="dark:text-slate-100">Confirm Tournament Creation</DialogTitle>
+                    </DialogHeader>
+                    <div class="space-y-4 py-4">
+                        <div class="grid grid-cols-2 gap-4 text-sm rounded-lg border p-4 bg-muted/20 dark:bg-slate-900/50 dark:border-slate-800">
+                            <div class="space-y-1">
+                                <p class="text-xs font-semibold uppercase tracking-wider text-muted-foreground dark:text-slate-400">Tournament Name</p>
+                                <p class="font-medium dark:text-slate-200">{{ form.name || 'Untitled Tournament' }}</p>
+                            </div>
+                            <div class="space-y-1">
+                                <p class="text-xs font-semibold uppercase tracking-wider text-muted-foreground dark:text-slate-400">Date</p>
+                                <p class="font-medium dark:text-slate-200">{{ form.tournament_date || 'Not set' }}</p>
+                            </div>
+                            <div class="space-y-1">
+                                <p class="text-xs font-semibold uppercase tracking-wider text-muted-foreground dark:text-slate-400">Status</p>
+                                <Badge variant="outline" class="capitalize dark:border-slate-700 dark:text-slate-300">{{ form.status }}</Badge>
+                            </div>
+                            <div class="space-y-1">
+                                <p class="text-xs font-semibold uppercase tracking-wider text-muted-foreground dark:text-slate-400">Total Registrations</p>
+                                <p class="font-medium dark:text-slate-200">{{ totalRegistered }}</p>
+                            </div>
+                        </div>
+
+                        <div v-if="registeredCategorySummary.length > 0" class="space-y-2">
+                            <p class="text-xs font-semibold uppercase tracking-wider text-muted-foreground dark:text-slate-400">Category Breakdown</p>
+                            <div class="max-h-50 overflow-y-auto border rounded-lg dark:border-slate-800">
+                                <Table class="text-xs">
+                                    <TableHeader class="bg-muted/50 sticky top-0 dark:bg-slate-900/50">
+                                        <TableRow>
+                                            <TableHead class="p-2 text-left font-medium">Category</TableHead>
+                                            <TableHead class="p-2 text-center font-medium">Players</TableHead>
+                                        </TableRow>
+                                    </TableHeader>
+                                    <TableBody>
+                                        <TableRow v-for="item in registeredCategorySummary" :key="item.category_id" class="border-t dark:border-slate-800">
+                                            <TableCell class="p-2">
+                                                <span class="font-medium dark:text-slate-200">{{ item.category_name }}</span>
+                                                <span class="text-muted-foreground ml-1 dark:text-slate-400">({{ item.age_category }} / {{ item.gender }})</span>
+                                            </TableCell>
+                                            <TableCell class="p-2 text-center dark:text-slate-200">{{ item.player_count }}</TableCell>
+                                        </TableRow>
+                                    </TableBody>
+                                </Table>
                             </div>
                         </div>
                     </div>
-                </div>
-
-                <div v-if="filteredPlayers.length === 0" class="p-12 text-center border-2 border-dashed rounded-xl bg-slate-50/50">
-                    <p class="text-slate-400 font-medium italic">No players found matching your search or filters.</p>
-                </div>
-            </div>
+                    <DialogFooter>
+                        <Button variant="outline" @click="isConfirmModalOpen = false">Cancel</Button>
+                        <Button @click="submit" :disabled="form.processing">Confirm & Create</Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
         </div>
-    </div>
-</div>
-
-<!-- Player Registration Detail Modal -->
-<Dialog :open="!!openedSummary" @update:open="closeSummary">
-    <DialogContent class="sm:max-w-[600px] max-h-[80vh] flex flex-col p-0">
-        <DialogHeader class="p-6 pb-0">
-            <DialogTitle class="flex items-center gap-3">
-                <span class="text-2xl">📋</span>
-                <div>
-                    <span class="block text-xl font-bold">{{ openedSummary?.category_name }}</span>
-                    <span class="text-sm font-medium text-muted-foreground uppercase tracking-wider">
-                        {{ openedSummary?.age_category }} / {{ openedSummary?.gender }}
-                    </span>
-                </div>
-            </DialogTitle>
-        </DialogHeader>
-
-        <div class="flex-1 overflow-y-auto p-6">
-            <div class="space-y-4">
-                <div class="flex items-center justify-between">
-                    <h3 class="text-sm font-bold text-slate-900">Registered Players ({{ openedSummary?.player_count }})</h3>
-                </div>
-
-                <div class="grid gap-2">
-                    <div 
-                        v-for="player in openedSummary?.players" 
-                        :key="player.player_id"
-                        class="flex items-center justify-between p-3 rounded-lg border border-slate-100 bg-slate-50/50 hover:bg-slate-50 transition-colors group"
-                    >
-                        <div class="flex items-center gap-3">
-                            <div class="w-8 h-8 rounded-full bg-white border border-slate-200 flex items-center justify-center text-xs font-bold text-slate-400">
-                                {{ player.full_name.charAt(0) }}
-                            </div>
-                            <span class="font-semibold text-slate-900">{{ player.full_name }}</span>
-                        </div>
-                        <button 
-                            @click="removeFromSummary(openedSummary!.category_id, player.player_id)"
-                            class="text-xs font-bold text-red-500 hover:text-red-700 opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1"
-                        >
-                            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
-                            Remove
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <DialogFooter class="p-6 bg-slate-50 border-t">
-            <Button variant="outline" @click="closeSummary">Close</Button>
-        </DialogFooter>
-    </DialogContent>
-</Dialog>
-</AppLayout>
+    </AppLayout>
 </template>

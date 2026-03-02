@@ -8,6 +8,7 @@ import { ref, watch } from 'vue';
 import { watchDebounced } from '@vueuse/core';
 import PlayerFilters from './components/PlayerFilters.vue';
 import PlayerTable from './components/PlayerTable.vue';
+import { UserPlus, Users } from 'lucide-vue-next';
 
 const breadcrumbs: BreadcrumbItem[] = [
     { title: 'Players', href: route('admin.players.index') },
@@ -64,46 +65,56 @@ watch([gender, status], ([newGender, newStatus]) => {
 <template>
     <Head title="Players" />
     <AppLayout :breadcrumbs="breadcrumbs">
-        <div class="flex flex-col gap-4 p-4">
+        <div class="flex flex-col gap-6 p-6">
             <!-- Header Section -->
-            <div class="flex justify-between items-center">
-                <div>
-                    <h1 class="text-2xl font-bold">Player Dashboard</h1>
-                    <p class="text-muted-foreground">Manage and track your Kurash players.</p>
+            <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                <div class="flex items-center gap-3">
+                    <div class="h-10 w-10 rounded-lg bg-blue-500/10 flex items-center justify-center dark:bg-blue-500/20">
+                        <Users class="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                    </div>
+                    <div>
+                        <h1 class="text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100">Player Management</h1>
+                        <p class="text-sm text-muted-foreground">Monitor athlete registrations and membership status.</p>
+                    </div>
                 </div>
-                <div class="flex items-center gap-4">
+                <div class="flex items-center gap-3 w-full md:w-auto">
                     <PlayerFilters 
                         v-model:search="search"
                         v-model:gender="gender"
+                        class="flex-1 md:flex-none"
                     />
                     <Link :href="route('admin.players.create')">
-                        <Button>
-                            + Add Player
+                        <Button class="gap-2 shadow-sm">
+                            <UserPlus class="h-4 w-4" />
+                            Add Player
                         </Button>
                     </Link>
                 </div>
             </div>
 
-            <!-- Tabs Navigation -->
-            <div class="border-b">
+            <!-- Status Tabs -->
+            <div class="w-full border-b border-slate-200 dark:border-slate-800">
                 <div class="flex gap-6">
                     <button 
-                        class="pb-2 text-sm font-medium transition-colors"
-                        :class="status === 'all' ? 'border-b-2 border-primary text-primary' : 'text-muted-foreground hover:text-foreground'"
-                        @click="status = 'all'"
-                    >All Players</button>
-                    <button 
-                        class="pb-2 text-sm font-medium transition-colors"
-                        :class="status === 'active' ? 'border-b-2 border-primary text-primary' : 'text-muted-foreground hover:text-foreground'"
-                        @click="status = 'active'"
-                    >Active</button>
-                    <button 
-                        class="pb-2 text-sm font-medium transition-colors"
-                        :class="status === 'inactive' ? 'border-b-2 border-primary text-primary' : 'text-muted-foreground hover:text-foreground'"
-                        @click="status = 'inactive'"
-                    >Inactive / Renew</button>
+                        v-for="tab in [
+                            { id: 'all', label: 'All Players' },
+                            { id: 'active', label: 'Active Members' },
+                            { id: 'inactive', label: 'Inactive / Expired' }
+                        ]"
+                        :key="tab.id"
+                        class="relative pb-3 text-sm font-medium transition-all"
+                        :class="status === tab.id ? 'text-blue-600 dark:text-blue-400' : 'text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200'"
+                        @click="status = tab.id"
+                    >
+                        {{ tab.label }}
+                        <span 
+                            v-if="status === tab.id" 
+                            class="absolute bottom-0 left-0 h-0.5 w-full bg-blue-600 dark:bg-blue-400 rounded-t-full"
+                        ></span>
+                    </button>
                 </div>
             </div>
+
             <!-- Players Table -->
             <PlayerTable :players="players" />
         </div>

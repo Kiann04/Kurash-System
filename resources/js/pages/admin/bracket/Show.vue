@@ -2,8 +2,20 @@
 import { Head, Link, router } from '@inertiajs/vue3'
 import { route } from 'ziggy-js'
 import AppLayout from '@/layouts/AppLayout.vue'
-import { Maximize2, Minimize2 } from 'lucide-vue-next'
+import { Maximize2, Minimize2, Trophy, ArrowLeft, Download, Medal, AlertCircle, Info, User, Check } from 'lucide-vue-next'
 import { ref, onMounted, onUnmounted } from 'vue'
+import { Button } from '@/components/ui/button'
+import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/ui/card'
+import { Badge } from '@/components/ui/badge'
+import {
+    Table,
+    TableBody,
+    TableCell,
+    TableHead,
+    TableHeader,
+    TableRow,
+} from '@/components/ui/table'
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 
 interface MatchItem {
     id: number
@@ -242,93 +254,105 @@ onUnmounted(() => {
 
     <AppLayout>
         <div class="p-6 space-y-6 bracket-page">
-            <div class="bracket-header print:hidden">
+            <div class="bracket-header print:hidden flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
-                    <h1 class="text-2xl font-bold">{{ props.tournament.name }} Bracketing</h1>
-                    <p class="text-sm text-slate-500">
-                        {{ props.tournament.tournament_date }} | {{ props.tournament.status }}
-                    </p>
-                    <p class="text-sm text-slate-500">
-                        Total Registered: {{ props.tournament.registrations_count ?? 0 }}
-                    </p>
+                    <h1 class="text-2xl font-bold tracking-tight">{{ props.tournament.name }} Bracketing</h1>
+                    <div class="flex items-center gap-2 text-sm text-muted-foreground mt-1">
+                        <span class="flex items-center gap-1">
+                            <Calendar class="h-3.5 w-3.5" />
+                            {{ props.tournament.tournament_date }}
+                        </span>
+                        <span class="text-xs">•</span>
+                        <span class="capitalize">{{ props.tournament.status }}</span>
+                        <span class="text-xs">•</span>
+                        <span>Total Registered: {{ props.tournament.registrations_count ?? 0 }}</span>
+                    </div>
                 </div>
                 <div class="flex items-center gap-2">
-                    <button
+                    <Button
                         v-if="isCompleted"
-                        class="px-3 py-2 rounded bg-emerald-600 text-white"
+                        variant="outline"
                         @click="exportPdf"
                     >
+                        <Download class="h-4 w-4 mr-2" />
                         Export PDF
-                    </button>
-                    <Link :href="route('admin.brackets.index')" class="px-3 py-2 rounded border border-slate-300">
-                        Back
-                    </Link>
+                    </Button>
+                    <Button as-child variant="secondary">
+                        <Link :href="route('admin.brackets.index')">
+                            <ArrowLeft class="h-4 w-4 mr-2" />
+                            Back
+                        </Link>
+                    </Button>
                 </div>
             </div>
 
-            <div v-if="props.brackets.length === 0" class="border rounded-lg p-4 text-sm text-slate-500 bg-white">
-                No brackets generated yet for this tournament.
-            </div>
-
-            
+            <Alert v-if="props.brackets.length === 0" variant="default">
+                <AlertCircle class="h-4 w-4" />
+                <AlertTitle>No Brackets</AlertTitle>
+                <AlertDescription>
+                    No brackets have been generated for this tournament yet.
+                </AlertDescription>
+            </Alert>
 
             <!-- Brackets Summary Table -->
-            <div v-if="props.brackets.length > 0 && !activeBracketId" class="rounded-xl border border-slate-200 bg-white overflow-hidden shadow-sm">
-                <div class="p-4 border-b bg-slate-50/50 flex justify-between items-center">
-                    <h2 class="text-sm font-semibold text-slate-700 uppercase tracking-wider">Tournament Brackets</h2>
-                    <span class="text-xs text-slate-500">{{ props.brackets.length }} Categories</span>
-                </div>
-                <div class="overflow-x-auto">
-                    <table class="w-full text-sm">
-                        <thead class="bg-slate-50 text-slate-500 border-b">
-                            <tr>
-                                <th class="text-left p-4 font-medium">Category</th>
-                                <th class="text-center p-4 font-medium">Format</th>
-                                <th class="text-center p-4 font-medium">Entrants</th>
-                                <th class="text-left p-4 font-medium">Champion</th>
-                                <th class="text-right p-4 font-medium">Action</th>
-                            </tr>
-                        </thead>
-                        <tbody class="divide-y divide-slate-100">
-                            <tr 
+            <Card v-if="props.brackets.length > 0 && !activeBracketId">
+                <CardHeader class="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <div class="space-y-1">
+                        <CardTitle>Tournament Brackets</CardTitle>
+                        <CardDescription>Select a category to view its bracket.</CardDescription>
+                    </div>
+                    <Badge variant="outline">{{ props.brackets.length }} Categories</Badge>
+                </CardHeader>
+                <CardContent>
+                    <Table>
+                        <TableHeader>
+                            <TableRow>
+                                <TableHead>Category</TableHead>
+                                <TableHead class="text-center">Format</TableHead>
+                                <TableHead class="text-center">Entrants</TableHead>
+                                <TableHead>Champion</TableHead>
+                                <TableHead class="text-right">Action</TableHead>
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                            <TableRow 
                                 v-for="bracket in props.brackets" 
                                 :key="bracket.id" 
                                 @click="selectBracket(bracket.id)"
-                                class="hover:bg-blue-50/50 cursor-pointer transition-colors group"
+                                class="cursor-pointer hover:bg-muted/50"
                             >
-                                <td class="p-4">
+                                <TableCell>
                                     <div class="flex flex-col">
-                                        <span class="font-semibold text-slate-900 capitalize">{{ bracket.gender }} - {{ bracket.age_category }}</span>
-                                        <span class="text-xs text-slate-500">{{ bracket.weight_category }}</span>
+                                        <span class="font-semibold">{{ bracket.gender }} - {{ bracket.age_category }}</span>
+                                        <span class="text-xs text-muted-foreground">{{ bracket.weight_category }}</span>
                                     </div>
-                                </td>
-                                <td class="p-4 text-center">
-                                    <span class="px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider border" 
-                                        :class="bracket.format === 'single_elimination' ? 'bg-indigo-50 text-indigo-700 border-indigo-100' : 'bg-emerald-50 text-emerald-700 border-emerald-100'">
+                                </TableCell>
+                                <TableCell class="text-center">
+                                    <Badge :variant="bracket.format === 'single_elimination' ? 'secondary' : 'outline'">
                                         {{ formatLabel(bracket.format) }}
-                                    </span>
-                                </td>
-                                <td class="p-4 text-center font-medium text-slate-700">
+                                    </Badge>
+                                </TableCell>
+                                <TableCell class="text-center font-medium">
                                     {{ bracket.entrant_count ?? 0 }}
-                                </td>
-                                <td class="p-4">
-                                    <div v-if="bracket.champion" class="flex items-center gap-1.5 text-amber-600">
-                                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-amber-500"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></svg>
-                                        <span class="font-medium text-xs">{{ bracket.champion }}</span>
+                                </TableCell>
+                                <TableCell>
+                                    <div v-if="bracket.champion" class="flex items-center gap-2 text-amber-600">
+                                        <Trophy class="h-4 w-4 text-amber-500" />
+                                        <span class="font-medium text-sm">{{ bracket.champion }}</span>
                                     </div>
-                                    <span v-else class="text-slate-400 text-xs italic">TBD</span>
-                                </td>
-                                <td class="p-4 text-right">
-                                    <button class="text-blue-600 font-semibold text-xs hover:underline group-hover:translate-x-0.5 transition-transform inline-flex items-center gap-1">
-                                        View Bracket
-                                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
-                                    </button>
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
+                                    <span v-else class="text-muted-foreground text-xs italic">TBD</span>
+                                </TableCell>
+                                <TableCell class="text-right">
+                                    <Button variant="ghost" size="sm">
+                                        View
+                                        <ArrowLeft class="ml-2 h-4 w-4 rotate-180" />
+                                    </Button>
+                                </TableCell>
+                            </TableRow>
+                        </TableBody>
+                    </Table>
+                </CardContent>
+            </Card>
 
             <!-- Active Bracket View -->
             <template v-if="activeBracketId">
@@ -338,50 +362,74 @@ onUnmounted(() => {
                     :id="`bracket-section-${bracket.id}`"
                     class="space-y-4 bracket-section"
                 >
-                    <div class="rounded-xl border border-slate-200 p-4 bg-white shadow-sm">
-                        <div class="flex flex-wrap gap-2 text-sm items-center">
-                            <button 
-                                @click="clearSelection"
-                                class="mr-2 p-1.5 rounded-lg border border-slate-200 hover:bg-slate-50 text-slate-500 transition-colors flex items-center gap-1.5 px-3"
-                            >
-                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
-                                <span class="text-xs font-semibold">Back to List</span>
-                            </button>
-                            <span class="tag font-bold">{{ (bracket.gender || 'unknown').toUpperCase() }}</span>
-                            <span class="tag font-medium">{{ bracket.age_category || '-' }}</span>
-                            <span class="tag font-medium">{{ bracket.weight_category || '-' }}</span>
-                            <span class="tag font-medium">{{ formatLabel(bracket.format) }}</span>
-                            <span class="tag font-medium">{{ bracket.entrant_count ?? 0 }} Entrants</span>
-                            <span class="tag blue text-[10px] font-bold uppercase">Blue = upper</span>
-                            <span class="tag green text-[10px] font-bold uppercase">Green = lower</span>
-                            
-                            <button 
-                                @click="toggleFullScreen(bracket.id)" 
-                                class="ml-auto p-1.5 rounded-lg border border-slate-200 hover:bg-slate-50 text-slate-500 transition-colors print:hidden"
-                                :title="fullscreenBracketId === bracket.id ? 'Exit Full Screen' : 'Full Screen'"
-                            >
-                                <component :is="fullscreenBracketId === bracket.id ? Minimize2 : Maximize2" class="size-4" />
-                            </button>
-                        </div>
-                        <div class="mt-4 grid gap-3 md:grid-cols-3 text-sm">
-                            <div class="rounded-lg border border-amber-200 bg-amber-50/50 p-3 flex flex-col gap-1 shadow-sm">
-                                <span class="text-[10px] uppercase font-bold text-amber-600 tracking-wider">Gold Medalist</span>
-                                <span class="font-semibold text-slate-900">{{ safeAwards(bracket).gold || '-' }}</span>
+                    <Card class="shadow-sm">
+                        <CardContent class="p-4">
+                            <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                                <div class="flex items-center gap-2">
+                                    <Button variant="outline" size="sm" @click="clearSelection">
+                                        <ArrowLeft class="h-4 w-4 mr-2" />
+                                        Back to List
+                                    </Button>
+                                    <div class="flex flex-wrap gap-2 items-center">
+                                        <Badge variant="default">{{ (bracket.gender || 'unknown').toUpperCase() }}</Badge>
+                                        <Badge variant="secondary">{{ bracket.age_category || '-' }}</Badge>
+                                        <Badge variant="outline">{{ bracket.weight_category || '-' }}</Badge>
+                                        <Badge variant="outline">{{ formatLabel(bracket.format) }}</Badge>
+                                        <span class="text-sm text-muted-foreground ml-2">{{ bracket.entrant_count ?? 0 }} Entrants</span>
+                                    </div>
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <div class="flex gap-2 mr-4 text-xs">
+                                        <span class="flex items-center gap-1"><span class="w-3 h-3 rounded bg-blue-100 border border-blue-200 block"></span> Blue (Upper)</span>
+                                        <span class="flex items-center gap-1"><span class="w-3 h-3 rounded bg-green-100 border border-green-200 block"></span> Green (Lower)</span>
+                                    </div>
+                                    <Button variant="ghost" size="icon" @click="toggleFullScreen(bracket.id)" title="Full Screen">
+                                        <component :is="fullscreenBracketId === bracket.id ? Minimize2 : Maximize2" class="h-4 w-4" />
+                                    </Button>
+                                </div>
                             </div>
-                            <div class="rounded-lg border border-slate-200 bg-slate-50/50 p-3 flex flex-col gap-1 shadow-sm">
-                                <span class="text-[10px] uppercase font-bold text-slate-600 tracking-wider">Silver Medalist</span>
-                                <span class="font-semibold text-slate-900">{{ safeAwards(bracket).silver || '-' }}</span>
+
+                            <div class="mt-6 grid gap-4 md:grid-cols-3">
+                                <Card class="bg-amber-50/50 border-amber-200">
+                                    <CardContent class="p-3 flex items-center gap-3">
+                                        <div class="h-8 w-8 rounded-full bg-amber-100 flex items-center justify-center text-amber-600">
+                                            <Medal class="h-5 w-5" />
+                                        </div>
+                                        <div class="flex flex-col">
+                                            <span class="text-xs uppercase font-bold text-amber-600 tracking-wider">Gold</span>
+                                            <span class="font-semibold text-slate-900">{{ safeAwards(bracket).gold || '-' }}</span>
+                                        </div>
+                                    </CardContent>
+                                </Card>
+                                <Card class="bg-slate-50/50 border-slate-200">
+                                    <CardContent class="p-3 flex items-center gap-3">
+                                        <div class="h-8 w-8 rounded-full bg-slate-200 flex items-center justify-center text-slate-600">
+                                            <Medal class="h-5 w-5" />
+                                        </div>
+                                        <div class="flex flex-col">
+                                            <span class="text-xs uppercase font-bold text-slate-600 tracking-wider">Silver</span>
+                                            <span class="font-semibold text-slate-900">{{ safeAwards(bracket).silver || '-' }}</span>
+                                        </div>
+                                    </CardContent>
+                                </Card>
+                                <Card class="bg-orange-50/50 border-orange-200">
+                                    <CardContent class="p-3 flex items-center gap-3">
+                                        <div class="h-8 w-8 rounded-full bg-orange-100 flex items-center justify-center text-orange-600">
+                                            <Medal class="h-5 w-5" />
+                                        </div>
+                                        <div class="flex flex-col">
+                                            <span class="text-xs uppercase font-bold text-orange-600 tracking-wider">Bronze</span>
+                                            <span class="font-semibold text-slate-900" v-if="safeAwards(bracket).bronze.length">{{ safeAwards(bracket).bronze.join(', ') }}</span>
+                                            <span class="font-semibold text-slate-900" v-else>-</span>
+                                        </div>
+                                    </CardContent>
+                                </Card>
                             </div>
-                            <div class="rounded-lg border border-orange-200 bg-orange-50/50 p-3 flex flex-col gap-1 shadow-sm">
-                                <span class="text-[10px] uppercase font-bold text-orange-600 tracking-wider">Bronze Medalist</span>
-                                <span class="font-semibold text-slate-900" v-if="safeAwards(bracket).bronze.length">{{ safeAwards(bracket).bronze.join(', ') }}</span>
-                                <span class="font-semibold text-slate-900" v-else>-</span>
-                            </div>
-                        </div>
-                    </div>
+                        </CardContent>
+                    </Card>
 
                     <!-- Bracket Board Renderers -->
-                    <div v-if="bracket.format === 'single_elimination'" class="se-board">
+                    <div class="overflow-auto pb-6">
                         <div class="conference-board">
                             <div class="conference-side east">
                                 <div
@@ -399,7 +447,7 @@ onUnmounted(() => {
                                                     <span v-if="isBye(match) && match.status !== 'completed'" class="px-1.5 py-0.5 rounded bg-blue-100 text-blue-700 text-[10px] font-bold animate-pulse">
                                                         BYE
                                                     </span>
-                                                    <span>{{ match.status }}</span>
+                                                    <span class="capitalize text-[10px] font-semibold" :class="match.status === 'completed' ? 'text-green-600' : 'text-slate-400'">{{ match.status }}</span>
                                                 </div>
                                             </div>
 
@@ -409,7 +457,13 @@ onUnmounted(() => {
                                                  :disabled="isCompleted || (match.status === 'completed' && match.winner_id !== match.player_one_id)"
                                                  @click="chooseWinner(match, match.player_one_id)"
                                              >
-                                                 {{ match.player_one || 'BYE' }}
+                                                <div class="flex items-center justify-between w-full">
+                                                    <div class="flex items-center gap-2">
+                                                        <User class="h-4 w-4 opacity-50" />
+                                                        <span class="font-medium truncate">{{ match.player_one || 'BYE' }}</span>
+                                                    </div>
+                                                    <Check v-if="match.winner_id === match.player_one_id" class="h-4 w-4 text-blue-600" />
+                                                </div>
                                              </button>
 
                                              <button
@@ -418,7 +472,13 @@ onUnmounted(() => {
                                                  :disabled="isCompleted || (match.status === 'completed' && match.winner_id !== match.player_two_id)"
                                                  @click="chooseWinner(match, match.player_two_id)"
                                              >
-                                                 {{ match.player_two || 'BYE' }}
+                                                <div class="flex items-center justify-between w-full">
+                                                    <div class="flex items-center gap-2">
+                                                        <User class="h-4 w-4 opacity-50" />
+                                                        <span class="font-medium truncate">{{ match.player_two || 'BYE' }}</span>
+                                                    </div>
+                                                    <Check v-if="match.winner_id === match.player_two_id" class="h-4 w-4 text-green-600" />
+                                                </div>
                                              </button>
                                         </article>
                                     </div>
@@ -439,7 +499,7 @@ onUnmounted(() => {
                                                 <span v-if="isBye(match) && match.status !== 'completed'" class="px-1.5 py-0.5 rounded bg-blue-100 text-blue-700 text-[10px] font-bold animate-pulse">
                                                     BYE
                                                 </span>
-                                                <span>{{ match.status }}</span>
+                                                <span class="capitalize text-[10px] font-semibold" :class="match.status === 'completed' ? 'text-green-600' : 'text-slate-400'">{{ match.status }}</span>
                                             </div>
                                         </div>
                                         <button
@@ -448,7 +508,13 @@ onUnmounted(() => {
                                              :disabled="isCompleted || (match.status === 'completed' && match.winner_id !== match.player_one_id)"
                                              @click="chooseWinner(match, match.player_one_id)"
                                          >
-                                             {{ match.player_one || 'BYE' }}
+                                            <div class="flex items-center justify-between w-full">
+                                                <div class="flex items-center gap-2">
+                                                    <User class="h-4 w-4 opacity-50" />
+                                                    <span class="font-medium truncate">{{ match.player_one || 'BYE' }}</span>
+                                                </div>
+                                                <Check v-if="match.winner_id === match.player_one_id" class="h-4 w-4 text-blue-600" />
+                                            </div>
                                          </button>
                                          <button
                                              class="fighter fighter-green"
@@ -456,7 +522,13 @@ onUnmounted(() => {
                                              :disabled="isCompleted || (match.status === 'completed' && match.winner_id !== match.player_two_id)"
                                              @click="chooseWinner(match, match.player_two_id)"
                                          >
-                                             {{ match.player_two || 'BYE' }}
+                                            <div class="flex items-center justify-between w-full">
+                                                <div class="flex items-center gap-2">
+                                                    <User class="h-4 w-4 opacity-50" />
+                                                    <span class="font-medium truncate">{{ match.player_two || 'BYE' }}</span>
+                                                </div>
+                                                <Check v-if="match.winner_id === match.player_two_id" class="h-4 w-4 text-green-600" />
+                                            </div>
                                          </button>
                                     </article>
                                 </div>
@@ -478,27 +550,38 @@ onUnmounted(() => {
                                                     <span v-if="isBye(match) && match.status !== 'completed'" class="px-1.5 py-0.5 rounded bg-blue-100 text-blue-700 text-[10px] font-bold animate-pulse">
                                                         BYE
                                                     </span>
-                                                    <span>{{ match.status }}</span>
+                                                    <span class="capitalize text-[10px] font-semibold" :class="match.status === 'completed' ? 'text-green-600' : 'text-slate-400'">{{ match.status }}</span>
                                                 </div>
                                             </div>
 
                                             <button
-                                                 class="fighter fighter-blue"
-                                                 :class="{ 'winner': match.winner_id === match.player_one_id }"
-                                                 :disabled="isCompleted || (match.status === 'completed' && match.winner_id !== match.player_one_id)"
-                                                 @click="chooseWinner(match, match.player_one_id)"
-                                             >
-                                                 {{ match.player_one || 'BYE' }}
-                                             </button>
-
-                                             <button
-                                                 class="fighter fighter-green"
-                                                 :class="{ 'winner': match.winner_id === match.player_two_id }"
-                                                 :disabled="isCompleted || (match.status === 'completed' && match.winner_id !== match.player_two_id)"
-                                                 @click="chooseWinner(match, match.player_two_id)"
-                                             >
-                                                 {{ match.player_two || 'BYE' }}
-                                             </button>
+                                             class="fighter fighter-blue"
+                                             :class="{ 'winner': match.winner_id === match.player_one_id }"
+                                             :disabled="isCompleted || (match.status === 'completed' && match.winner_id !== match.player_one_id)"
+                                             @click="chooseWinner(match, match.player_one_id)"
+                                         >
+                                            <div class="flex items-center justify-between w-full">
+                                                <div class="flex items-center gap-2">
+                                                    <User class="h-4 w-4 opacity-50" />
+                                                    <span class="font-medium truncate">{{ match.player_one || 'BYE' }}</span>
+                                                </div>
+                                                <Check v-if="match.winner_id === match.player_one_id" class="h-4 w-4 text-blue-600" />
+                                            </div>
+                                         </button>
+                                         <button
+                                             class="fighter fighter-green"
+                                             :class="{ 'winner': match.winner_id === match.player_two_id }"
+                                             :disabled="isCompleted || (match.status === 'completed' && match.winner_id !== match.player_two_id)"
+                                             @click="chooseWinner(match, match.player_two_id)"
+                                         >
+                                            <div class="flex items-center justify-between w-full">
+                                                <div class="flex items-center gap-2">
+                                                    <User class="h-4 w-4 opacity-50" />
+                                                    <span class="font-medium truncate">{{ match.player_two || 'BYE' }}</span>
+                                                </div>
+                                                <Check v-if="match.winner_id === match.player_two_id" class="h-4 w-4 text-green-600" />
+                                            </div>
+                                         </button>
                                         </article>
                                     </div>
                                 </div>
@@ -511,7 +594,7 @@ onUnmounted(() => {
                                     <div class="match-head">
                                         <span>Bronze Match</span>
                                         <div class="flex items-center gap-2">
-                                            <span>{{ bronzeMatchFor(bracket)?.status }}</span>
+                                            <span class="capitalize text-[10px] font-semibold" :class="bronzeMatchFor(bracket)?.status === 'completed' ? 'text-green-600' : 'text-slate-400'">{{ bronzeMatchFor(bracket)?.status }}</span>
                                         </div>
                                     </div>
                                     <button
@@ -520,7 +603,13 @@ onUnmounted(() => {
                                          :disabled="isCompleted || (bronzeMatchFor(bracket)?.status === 'completed' && bronzeMatchFor(bracket)?.winner_id !== bronzeMatchFor(bracket)?.player_one_id)"
                                          @click="chooseWinner(bronzeMatchFor(bracket) as MatchItem, bronzeMatchFor(bracket)?.player_one_id ?? null)"
                                      >
-                                         {{ bronzeMatchFor(bracket)?.player_one || 'TBD' }}
+                                        <div class="flex items-center justify-between w-full">
+                                            <div class="flex items-center gap-2">
+                                                <User class="h-4 w-4 opacity-50" />
+                                                <span class="font-medium truncate">{{ bronzeMatchFor(bracket)?.player_one || 'TBD' }}</span>
+                                            </div>
+                                            <Check v-if="bronzeMatchFor(bracket)?.winner_id === bronzeMatchFor(bracket)?.player_one_id" class="h-4 w-4 text-blue-600" />
+                                        </div>
                                      </button>
                                      <button
                                          class="fighter fighter-green"
@@ -528,7 +617,13 @@ onUnmounted(() => {
                                          :disabled="isCompleted || (bronzeMatchFor(bracket)?.status === 'completed' && bronzeMatchFor(bracket)?.winner_id !== bronzeMatchFor(bracket)?.player_two_id)"
                                          @click="chooseWinner(bronzeMatchFor(bracket) as MatchItem, bronzeMatchFor(bracket)?.player_two_id ?? null)"
                                      >
-                                         {{ bronzeMatchFor(bracket)?.player_two || 'TBD' }}
+                                        <div class="flex items-center justify-between w-full">
+                                            <div class="flex items-center gap-2">
+                                                <User class="h-4 w-4 opacity-50" />
+                                                <span class="font-medium truncate">{{ bronzeMatchFor(bracket)?.player_two || 'TBD' }}</span>
+                                            </div>
+                                            <Check v-if="bronzeMatchFor(bracket)?.winner_id === bronzeMatchFor(bracket)?.player_two_id" class="h-4 w-4 text-green-600" />
+                                        </div>
                                      </button>
                                 </article>
                             </div>
@@ -545,7 +640,7 @@ onUnmounted(() => {
                                             <span v-if="isBye(match) && match.status !== 'completed'" class="px-1.5 py-0.5 rounded bg-blue-100 text-blue-700 text-[10px] font-bold animate-pulse">
                                                 BYE
                                             </span>
-                                            <span>{{ match.status }}</span>
+                                            <span class="capitalize text-[10px] font-semibold" :class="match.status === 'completed' ? 'text-green-600' : 'text-slate-400'">{{ match.status }}</span>
                                         </div>
                                     </div>
                                     <button
@@ -554,7 +649,13 @@ onUnmounted(() => {
                                          :disabled="isCompleted || (match.status === 'completed' && match.winner_id !== match.player_one_id)"
                                          @click="chooseWinner(match, match.player_one_id)"
                                      >
-                                         {{ match.player_one || 'BYE' }}
+                                        <div class="flex items-center justify-between w-full">
+                                            <div class="flex items-center gap-2">
+                                                <User class="h-4 w-4 opacity-50" />
+                                                <span class="font-medium truncate">{{ match.player_one || 'BYE' }}</span>
+                                            </div>
+                                            <Check v-if="match.winner_id === match.player_one_id" class="h-4 w-4 text-blue-600" />
+                                        </div>
                                      </button>
                                      <button
                                          class="fighter fighter-green"
@@ -562,7 +663,13 @@ onUnmounted(() => {
                                          :disabled="isCompleted || (match.status === 'completed' && match.winner_id !== match.player_two_id)"
                                          @click="chooseWinner(match, match.player_two_id)"
                                      >
-                                         {{ match.player_two || 'BYE' }}
+                                        <div class="flex items-center justify-between w-full">
+                                            <div class="flex items-center gap-2">
+                                                <User class="h-4 w-4 opacity-50" />
+                                                <span class="font-medium truncate">{{ match.player_two || 'BYE' }}</span>
+                                            </div>
+                                            <Check v-if="match.winner_id === match.player_two_id" class="h-4 w-4 text-green-600" />
+                                        </div>
                                      </button>
                                 </article>
                             </div>

@@ -460,9 +460,9 @@ const navItems = [
                            </div>
                        </div>
                        <!-- Decorative background text -->
-                       <div class="absolute -right-4 -bottom-4 text-6xl font-black text-white/[0.02] italic select-none group-hover/card:text-blue-500/[0.05] transition-colors uppercase">
-                           {{ athlete.rank }}
-                       </div>
+                        <div class="absolute -right-4 -bottom-4 text-6xl font-black text-white/2 italic select-none group-hover/card:text-blue-500/5 transition-colors uppercase">
+                            {{ athlete.rank }}
+                        </div>
                    </div>
                    <div v-if="rankings.male.length === 0" class="p-12 text-center text-slate-500 italic bg-[#0f172a]/30 rounded-3xl border border-dashed border-slate-800">
                        No male athletes found
@@ -505,9 +505,9 @@ const navItems = [
                            </div>
                        </div>
                        <!-- Decorative background text -->
-                       <div class="absolute -right-4 -bottom-4 text-6xl font-black text-white/[0.02] italic select-none group-hover/card:text-emerald-500/[0.05] transition-colors uppercase">
-                           {{ athlete.rank }}
-                       </div>
+                        <div class="absolute -right-4 -bottom-4 text-6xl font-black text-white/2 italic select-none group-hover/card:text-emerald-500/5 transition-colors uppercase">
+                            {{ athlete.rank }}
+                        </div>
                    </div>
                    <div v-if="rankings.female.length === 0" class="p-12 text-center text-slate-500 italic bg-[#0f172a]/30 rounded-3xl border border-dashed border-slate-800">
                        No female athletes found

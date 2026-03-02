@@ -214,7 +214,7 @@ const getStatusColor = (status: string) => {
                 <button 
                     @click="currentView = 'male'"
                     :class="[
-                        'px-8 py-3 rounded-xl text-xs font-black uppercase tracking-[0.1em] transition-all relative z-10 flex items-center gap-2',
+                        'px-8 py-3 rounded-xl text-xs font-black uppercase tracking-widest transition-all relative z-10 flex items-center gap-2',
                         currentView === 'male' ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/25' : 'text-slate-400 hover:text-white hover:bg-white/5'
                     ]"
                 >
@@ -224,7 +224,7 @@ const getStatusColor = (status: string) => {
                 <button 
                     @click="currentView = 'female'"
                     :class="[
-                        'px-8 py-3 rounded-xl text-xs font-black uppercase tracking-[0.1em] transition-all relative z-10 flex items-center gap-2',
+                        'px-8 py-3 rounded-xl text-xs font-black uppercase tracking-widest transition-all relative z-10 flex items-center gap-2',
                         currentView === 'female' ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-600/25' : 'text-slate-400 hover:text-white hover:bg-white/5'
                     ]"
                 >
@@ -327,7 +327,7 @@ const getStatusColor = (status: string) => {
                                 <div v-if="match.status === 'completed'" class="w-full md:w-auto border-t md:border-t-0 md:border-l border-slate-800 p-4 flex items-center justify-center bg-black/20">
                                      <div class="text-center md:w-24">
                                          <div class="text-[10px] font-black uppercase tracking-widest text-slate-500 mb-1">Winner</div>
-                                         <div class="text-sm font-bold text-yellow-500 break-words">{{ match.winner || 'Draw' }}</div>
+                                         <div class="text-sm font-bold text-yellow-500 wrap-break-word">{{ match.winner || 'Draw' }}</div>
                                      </div>
                                 </div>
                             </div>
@@ -430,7 +430,7 @@ const getStatusColor = (status: string) => {
                                 <div v-if="match.status === 'completed'" class="w-full md:w-auto border-t md:border-t-0 md:border-l border-slate-800 p-4 flex items-center justify-center bg-black/20">
                                      <div class="text-center md:w-24">
                                          <div class="text-[10px] font-black uppercase tracking-widest text-slate-500 mb-1">Winner</div>
-                                         <div class="text-sm font-bold text-yellow-500 break-words">{{ match.winner || 'Draw' }}</div>
+                                         <div class="text-sm font-bold text-yellow-500 wrap-break-word">{{ match.winner || 'Draw' }}</div>
                                      </div>
                                 </div>
                             </div>
