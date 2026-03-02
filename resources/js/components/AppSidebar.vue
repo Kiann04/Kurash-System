@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Link } from '@inertiajs/vue3';
-import { BookOpen, Folder, LayoutGrid, Brackets, Users, FileText, Trophy } from 'lucide-vue-next';
+import { BookOpen, Folder, LayoutGrid, Brackets, Users, FileText, Trophy, File } from 'lucide-vue-next';
 import NavFooter from '@/components/NavFooter.vue';
 import NavMain from '@/components/NavMain.vue';
 import NavUser from '@/components/NavUser.vue';
@@ -38,11 +38,6 @@ const mainNavItems: NavItem[] = [
         title: 'Generate Bracket',
         href: route('admin.brackets.index'),
         icon: Brackets,
-    },
-    {
-        title: 'Tournament Docs',
-        href: route('admin.tournaments.docs'),
-        icon: FileText,
     },
 ];
 

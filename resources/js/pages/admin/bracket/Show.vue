@@ -270,29 +270,7 @@ onUnmounted(() => {
                 No brackets generated yet for this tournament.
             </div>
 
-            <div v-if="(props.category_participants ?? []).length" class="rounded-xl border border-slate-200 bg-white p-4">
-                <h2 class="text-sm font-semibold mb-3">Category Participants</h2>
-                <div class="overflow-x-auto">
-                    <table class="w-full text-sm">
-                        <thead class="text-slate-500">
-                            <tr>
-                                <th class="text-left p-2">Gender</th>
-                                <th class="text-left p-2">Age Category</th>
-                                <th class="text-left p-2">Weight Category</th>
-                                <th class="text-right p-2">Participants</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr v-for="(item, idx) in (props.category_participants ?? [])" :key="`${item.gender}-${item.age_category}-${item.weight_category}-${idx}`" class="border-t">
-                                <td class="p-2">{{ item.gender }}</td>
-                                <td class="p-2">{{ item.age_category }}</td>
-                                <td class="p-2">{{ item.weight_category }}</td>
-                                <td class="p-2 text-right font-semibold">{{ item.participant_count }}</td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
+            
 
             <!-- Brackets Summary Table -->
             <div v-if="props.brackets.length > 0 && !activeBracketId" class="rounded-xl border border-slate-200 bg-white overflow-hidden shadow-sm">

@@ -351,6 +351,7 @@ class BracketController extends Controller
         while ($size < count($participants)) {
             $size *= 2;
         }
+        $rounds = (int) log($size, 2);
 
         $matchesCreated = 0;
         $firstRoundMatchesCount = (int) ($size / 2);
