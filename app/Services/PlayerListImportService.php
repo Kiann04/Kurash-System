@@ -474,6 +474,17 @@ class PlayerListImportService
             }
         }
 
+        // Handle tables where the first column is blank and the name starts in column 2.
+        if (count($cells) >= 5 && $cells[0] === '' && filled($cells[1])) {
+            return [
+                'full_name' => $cells[1],
+                'gender' => $cells[2] ?? '',
+                'age_category' => $cells[3] ?? '',
+                'uweight' => $cells[4] ?? '',
+                'weight' => $cells[4] ?? '',
+            ];
+        }
+
         // Expected format example:
         // [no, full_name, M/F, age_category, U50kg, ...]
         if (count($cells) >= 5 && is_numeric($cells[0]) && filled($cells[1])) {
@@ -505,6 +516,7 @@ class PlayerListImportService
         $key = $this->normalizeString($value);
 
         return match ($key) {
+            'no', 'no ', 'number', 'row', 'row number', 'row no' => '',
             'player id', 'playerid', 'id' => 'player_id',
             'email', 'e mail', 'email address' => 'email',
             'full name', 'fullname', 'player', 'player name', 'athlete', 'athlete name', 'participant', 'participant name', 'name' => 'full_name',
