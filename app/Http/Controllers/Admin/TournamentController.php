@@ -10,6 +10,7 @@ use App\Services\PlayerListImportService;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 
 class TournamentController extends Controller
 {
@@ -208,6 +209,80 @@ class TournamentController extends Controller
             ->with('success', 'Tournament updated successfully.');
     }
 
+    public function storeWeightCategory(Request $request)
+    {
+        $validated = $request->validate([
+            'name' => 'required|string|max:50',
+            'gender' => 'required|string',
+            'age_category_id' => 'required|exists:age_categories,id',
+        ]);
+
+        $gender = $this->normalizeGender($validated['gender']);
+        if ($gender === null) {
+            return response()->json([
+                'message' => 'Invalid gender selection.',
+            ], 422);
+        }
+
+        [$minWeight, $maxWeight] = $this->parseWeightRange($validated['name']);
+        if ($maxWeight === null) {
+            return response()->json([
+                'message' => 'Invalid weight format. Use -60, +70, or 60-66.',
+            ], 422);
+        }
+
+        if ($minWeight === null && $maxWeight !== null) {
+            $previousMax = WeightCategory::query()
+                ->where('gender', $gender)
+                ->where('age_category_id', $validated['age_category_id'])
+                ->where('max_weight', '<', $maxWeight)
+                ->max('max_weight');
+
+            $minWeight = $previousMax !== null ? (float) $previousMax : 0.0;
+        }
+
+        $existing = WeightCategory::query()
+            ->where('name', $validated['name'])
+            ->where('gender', $gender)
+            ->where('age_category_id', $validated['age_category_id'])
+            ->first();
+
+        if ($existing) {
+            return response()->json([
+                'category' => $this->formatWeightCategory($existing),
+                'created' => false,
+            ]);
+        }
+
+        $category = WeightCategory::create([
+            'name' => $validated['name'],
+            'gender' => $gender,
+            'age_category_id' => $validated['age_category_id'],
+            'min_weight' => $minWeight,
+            'max_weight' => $maxWeight,
+        ]);
+
+        return response()->json([
+            'category' => $this->formatWeightCategory($category),
+            'created' => true,
+        ], 201);
+    }
+
+    public function destroyWeightCategory(WeightCategory $weightCategory)
+    {
+        if ($weightCategory->registrations()->exists()) {
+            throw ValidationException::withMessages([
+                'weight_category' => 'Cannot delete a weight category that has registrations.',
+            ]);
+        }
+
+        $weightCategory->delete();
+
+        return response()->json([
+            'message' => 'Weight category deleted.',
+        ]);
+    }
+
     public function destroy(Tournament $tournament)
     {
         $tournament->delete();
@@ -233,15 +308,57 @@ class TournamentController extends Controller
             ->orderBy('age_category_id')
             ->orderBy('min_weight')
             ->get()
-            ->map(function ($category) {
-                return [
-                    'id' => $category->id,
-                    'gender' => $category->gender,
-                    'age_category_id' => $category->age_category_id,
-                    'age_category_name' => $category->ageCategory?->name ?? '-',
-                    'name' => $category->name,
-                ];
-            })
+            ->map(fn ($category) => $this->formatWeightCategory($category))
             ->values();
+    }
+
+    private function formatWeightCategory(WeightCategory $category): array
+    {
+        $category->loadMissing('ageCategory:id,name');
+
+        return [
+            'id' => $category->id,
+            'gender' => $category->gender,
+            'age_category_id' => $category->age_category_id,
+            'age_category_name' => $category->ageCategory?->name ?? '-',
+            'name' => $category->name,
+        ];
+    }
+
+    private function normalizeGender(string $value): ?string
+    {
+        $normalized = strtolower(trim($value));
+
+        return match ($normalized) {
+            'male', 'm' => 'Male',
+            'female', 'f' => 'Female',
+            default => null,
+        };
+    }
+
+    private function parseWeightRange(string $name): array
+    {
+        $clean = preg_replace('/\s+/', '', trim($name)) ?? '';
+
+        if (preg_match('/^-(\d+(?:\.\d+)?)$/', $clean, $matches)) {
+            return [null, (float) $matches[1]];
+        }
+
+        if (preg_match('/^\+(\d+(?:\.\d+)?)$/', $clean, $matches)) {
+            return [(float) $matches[1], 999.0];
+        }
+
+        if (preg_match('/^(\d+(?:\.\d+)?)\-(\d+(?:\.\d+)?)$/', $clean, $matches)) {
+            $min = (float) $matches[1];
+            $max = (float) $matches[2];
+
+            if ($max < $min) {
+                [$min, $max] = [$max, $min];
+            }
+
+            return [$min, $max];
+        }
+
+        return [null, null];
     }
 }

@@ -42,7 +42,9 @@ import {
     UserPlus,
     FileSpreadsheet,
     AlertCircle,
-    Save
+    Save,
+    Plus,
+    Trash2
 } from 'lucide-vue-next'
 import { ref, computed, watch } from 'vue'
 import { type BreadcrumbItem } from '@/types'
@@ -109,6 +111,8 @@ const props = defineProps<{
     tournamentWeightCategories: TournamentWeightCategory[]
 }>()
 
+const localWeightCategories = ref<TournamentWeightCategory[]>([...props.tournamentWeightCategories])
+
 const breadcrumbs: BreadcrumbItem[] = [
     { title: 'Tournaments', href: route('admin.tournaments.index') },
     { title: props.tournament.name, href: route('admin.tournaments.show', props.tournament.id) },
@@ -155,7 +159,7 @@ const normalizeGender = (value: string | null | undefined): 'male' | 'female' | 
 const genderOptions = computed(() =>
     Array.from(
         new Set(
-            props.tournamentWeightCategories
+            localWeightCategories.value
                 .map((category) => normalizeGender(category.gender))
                 .filter((gender): gender is 'male' | 'female' => gender === 'male' || gender === 'female'),
         ),
@@ -167,7 +171,7 @@ const selectedGender = ref<'male' | 'female'>(genderOptions.value[0] ?? 'male')
 const ageCategoryOptions = computed(() => {
     const map = new Map<number, string>()
 
-    props.tournamentWeightCategories
+    localWeightCategories.value
         .filter((category) => normalizeGender(category.gender) === selectedGender.value)
         .forEach((category) => {
             map.set(category.age_category_id, category.age_category_name || `Age Category #${category.age_category_id}`)
@@ -181,10 +185,13 @@ const ageCategoryOptions = computed(() => {
 const selectedAgeCategoryId = ref<number | null>(ageCategoryOptions.value[0]?.id ?? null)
 
 const weightCategoryOptions = computed(() =>
-    props.tournamentWeightCategories.filter((category) =>
-        normalizeGender(category.gender) === selectedGender.value &&
-        category.age_category_id === selectedAgeCategoryId.value,
-    ),
+    localWeightCategories.value
+        .filter((category) =>
+            normalizeGender(category.gender) === selectedGender.value &&
+            category.age_category_id === selectedAgeCategoryId.value,
+        )
+        .slice()
+        .sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true })),
 )
 
 const selectedCategoryId = ref<number | null>(weightCategoryOptions.value[0]?.id ?? null)
@@ -198,7 +205,7 @@ watch([selectedGender, selectedAgeCategoryId], () => {
 }, { immediate: true })
 
 const selectedCategory = computed(() =>
-    props.tournamentWeightCategories.find((category) => category.id === selectedCategoryId.value) ?? null,
+    localWeightCategories.value.find((category) => category.id === selectedCategoryId.value) ?? null,
 )
 
 const filteredPlayers = computed(() => {
@@ -219,7 +226,7 @@ const getPlayerRegistrations = (playerId: number) =>
     form.registrations.filter((registration) => registration.player_id === playerId)
 
 const getCategoryById = (categoryId: number) =>
-    props.tournamentWeightCategories.find((category) => category.id === categoryId) ?? null
+    localWeightCategories.value.find((category) => category.id === categoryId) ?? null
 
 const getPlayerNameById = (playerId: number) =>
     props.players.find((player) => player.id === playerId)?.full_name ?? `#${playerId}`
@@ -331,6 +338,95 @@ const onImportFileChange = (event: Event) => {
 const getCsrfToken = () => {
     const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content')
     return token ?? ''
+}
+
+const createWeightCategory = async () => {
+    if (!selectedGender.value || !selectedAgeCategoryId.value) {
+        window.alert('Select gender and age category first.')
+        return
+    }
+
+    const input = window.prompt('Enter weight category (e.g. -60, +70, 60-66)')
+    if (!input) {
+        return
+    }
+
+    const name = input.trim()
+    if (!name) {
+        return
+    }
+
+    try {
+        const response = await fetch(route('admin.weight-categories.store', undefined, false), {
+            method: 'POST',
+            credentials: 'same-origin',
+            headers: {
+                'X-CSRF-TOKEN': getCsrfToken(),
+                'X-Requested-With': 'XMLHttpRequest',
+                'Accept': 'application/json',
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                name,
+                gender: selectedGender.value,
+                age_category_id: selectedAgeCategoryId.value,
+            }),
+        })
+
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => ({}))
+            const message = errorData?.message ?? 'Failed to create weight category.'
+            throw new Error(message)
+        }
+
+        const data = await response.json()
+        const newCategory = data.category as TournamentWeightCategory
+        const exists = localWeightCategories.value.some((category) => category.id === newCategory.id)
+
+        if (!exists) {
+            localWeightCategories.value.push(newCategory)
+        }
+
+        selectedCategoryId.value = newCategory.id
+    } catch (error) {
+        const message = error instanceof Error ? error.message : 'Failed to create weight category.'
+        window.alert(message)
+    }
+}
+
+const deleteWeightCategory = async () => {
+    if (!selectedCategoryId.value) {
+        return
+    }
+
+    const confirmDelete = window.confirm('Remove this weight category? This cannot be undone.')
+    if (!confirmDelete) {
+        return
+    }
+
+    try {
+        const response = await fetch(route('admin.weight-categories.destroy', selectedCategoryId.value, false), {
+            method: 'DELETE',
+            credentials: 'same-origin',
+            headers: {
+                'X-CSRF-TOKEN': getCsrfToken(),
+                'X-Requested-With': 'XMLHttpRequest',
+                'Accept': 'application/json',
+            },
+        })
+
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => ({}))
+            const message = errorData?.message ?? errorData?.errors?.weight_category?.[0] ?? 'Failed to delete weight category.'
+            throw new Error(message)
+        }
+
+        localWeightCategories.value = localWeightCategories.value.filter((category) => category.id !== selectedCategoryId.value)
+        selectedCategoryId.value = weightCategoryOptions.value[0]?.id ?? null
+    } catch (error) {
+        const message = error instanceof Error ? error.message : 'Failed to delete weight category.'
+        window.alert(message)
+    }
 }
 
 const analyzeAndImportFile = async () => {
@@ -634,16 +730,46 @@ const analyzeAndImportFile = async () => {
                                 </div>
                                 <div class="space-y-2">
                                     <Label class="dark:text-slate-300">Weight Category</Label>
-                                    <div class="relative">
+                                    <div class="flex items-center gap-2">
                                         <select
                                             v-model="selectedCategoryId"
                                             class="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 appearance-none dark:bg-slate-950 dark:border-slate-800 dark:text-slate-100"
+                                            :disabled="weightCategoryOptions.length === 0"
                                         >
+                                            <option v-if="weightCategoryOptions.length === 0" :value="null" disabled>
+                                                No categories available
+                                            </option>
                                             <option v-for="cat in weightCategoryOptions" :key="cat.id" :value="cat.id">
                                                 {{ cat.name }}
                                             </option>
                                         </select>
+                                        <div class="flex items-center gap-1">
+                                            <Button
+                                                variant="outline"
+                                                size="icon"
+                                                class="h-10 w-10 shrink-0"
+                                                type="button"
+                                                @click="createWeightCategory"
+                                                aria-label="Add weight category"
+                                            >
+                                                <Plus class="h-4 w-4" />
+                                            </Button>
+                                            <Button
+                                                variant="outline"
+                                                size="icon"
+                                                class="h-10 w-10 shrink-0 text-destructive hover:text-destructive/90"
+                                                type="button"
+                                                :disabled="!selectedCategoryId"
+                                                @click="deleteWeightCategory"
+                                                aria-label="Remove weight category"
+                                            >
+                                                <Trash2 class="h-4 w-4" />
+                                            </Button>
+                                        </div>
                                     </div>
+                                    <p class="text-[11px] text-muted-foreground">
+                                        Add or remove categories for the selected gender and age group.
+                                    </p>
                                 </div>
                             </CardContent>
                         </Card>

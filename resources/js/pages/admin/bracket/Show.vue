@@ -217,6 +217,21 @@ const globalCompletedMatches = computed(() => {
     return items.sort((a, b) => b.id - a.id)
 })
 
+const tournamentMatchOrder = computed(() => {
+    const items: Array<MatchItem & { bracket: BracketItem }> = []
+    props.brackets.forEach((br) => {
+        (br.matches ?? []).forEach((m) => {
+            items.push({ ...m, bracket: br })
+        })
+    })
+    // Order: by round_number asc, then by bracket order, then match_number asc
+    return items.sort((a, b) => {
+        if (a.round_number !== b.round_number) return a.round_number - b.round_number
+        if (a.bracket.id !== b.bracket.id) return a.bracket.id - b.bracket.id
+        return a.match_number - b.match_number
+    })
+})
+
 const confirmAndChooseWinner = (match: MatchItem, winnerId: number | null) => {
     if (isCompleted) return
     if (!matchReady(match)) return
@@ -259,7 +274,6 @@ const chooseWinner = (match: MatchItem, winnerId: number | null) => {
 }
 
 const exportPdf = () => {
-    if (!isCompleted) return
     window.print()
 }
 
@@ -329,7 +343,6 @@ onUnmounted(() => {
                 </div>
                 <div class="flex items-center gap-2">
                     <Button
-                        v-if="isCompleted"
                         variant="outline"
                         @click="exportPdf"
                     >
@@ -342,6 +355,58 @@ onUnmounted(() => {
                             Back
                         </Link>
                     </Button>
+                </div>
+            </div>
+            <!-- Tournament Document (Match Order) -->
+            <div class="tournament-document rounded-xl border border-slate-200 bg-white overflow-hidden shadow-sm">
+                <div class="p-4 border-b bg-slate-50/50 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <div>
+                        <h2 class="text-sm font-semibold text-slate-700 uppercase tracking-wider">Tournament Document</h2>
+                        <p class="text-xs text-slate-500">Match order for all categories.</p>
+                    </div>
+                    <Button variant="outline" class="print:hidden" @click="exportPdf">
+                        <Download class="h-4 w-4 mr-2" />
+                        Download PDF
+                    </Button>
+                </div>
+                <div class="p-4 print:pt-0">
+                    <div class="print-only mb-4">
+                        <h1 class="text-lg font-bold">{{ props.tournament.name }}</h1>
+                        <div class="text-xs text-slate-600">
+                            {{ props.tournament.tournament_date }} - {{ props.tournament.status }}
+                        </div>
+                    </div>
+                    <table class="w-full text-sm">
+                        <thead class="bg-slate-50/50">
+                            <tr>
+                                <th class="p-3 text-left">Order</th>
+                                <th class="p-3 text-left">Category</th>
+                                <th class="p-3 text-center">Round</th>
+                                <th class="p-3 text-center">Match</th>
+                                <th class="p-3 text-left">Player One</th>
+                                <th class="p-3 text-left">Player Two</th>
+                                <th class="p-3 text-center">Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr v-for="(m, idx) in tournamentMatchOrder" :key="`doc-${m.id}`" class="border-t">
+                                <td class="p-3 text-slate-500">{{ idx + 1 }}</td>
+                                <td class="p-3">
+                                    {{ (m.bracket.gender || 'unknown') }} - {{ m.bracket.age_category || '-' }} - {{ m.bracket.weight_category || '-' }}
+                                </td>
+                                <td class="p-3 text-center">{{ m.round_number }}</td>
+                                <td class="p-3 text-center">
+                                    {{ roundLabel(finalRoundNumber(m.bracket), m.round_number, m.bracket.entrant_count, m.bracket.format) }}
+                                </td>
+                                <td class="p-3">{{ m.player_one || 'BYE' }}</td>
+                                <td class="p-3">{{ m.player_two || 'BYE' }}</td>
+                                <td class="p-3 text-center capitalize">{{ m.status }}</td>
+                            </tr>
+                            <tr v-if="tournamentMatchOrder.length === 0">
+                                <td colspan="7" class="p-4 text-center text-slate-500">No matches available.</td>
+                            </tr>
+                        </tbody>
+                    </table>
                 </div>
             </div>
             <!-- Global Match List -->
@@ -1125,6 +1190,25 @@ onUnmounted(() => {
     display: grid;
     gap: 10px;
     grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+}
+
+.print-only {
+    display: none;
+}
+
+@media print {
+    .print-only {
+        display: block;
+    }
+
+    .bracket-page > :not(.tournament-document) {
+        display: none !important;
+    }
+
+    .tournament-document {
+        border: none;
+        box-shadow: none;
+    }
 }
 
 @media (max-width: 1100px) {

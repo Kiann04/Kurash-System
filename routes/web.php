@@ -46,6 +46,8 @@ Route::prefix('admin')
         Route::resource('tournaments', AdminTournamentController::class);
         Route::post('tournaments/import-registrations', [AdminTournamentController::class, 'importRegistrations'])->name('tournaments.import-registrations');
         Route::get('tournamentDocs', [AdminTournamentController::class, 'docs'])->name('tournaments.docs');
+        Route::post('weight-categories', [AdminTournamentController::class, 'storeWeightCategory'])->name('weight-categories.store');
+        Route::delete('weight-categories/{weightCategory}', [AdminTournamentController::class, 'destroyWeightCategory'])->name('weight-categories.destroy');
 
         Route::get('brackets', [AdminBracketController::class, 'index'])->name('brackets.index');
         Route::get('tournaments/{tournament}/brackets', [AdminBracketController::class, 'show'])
