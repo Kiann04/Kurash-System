@@ -10,6 +10,7 @@ use DOMXPath;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
+use SimpleXMLElement;
 use ZipArchive;
 
 class PlayerListImportService
@@ -263,10 +264,8 @@ class PlayerListImportService
             return $shared;
         }
 
-        $sx->registerXPathNamespace('x', 'http://schemas.openxmlformats.org/spreadsheetml/2006/main');
-
-        foreach (($sx->xpath('//x:si') ?: []) as $si) {
-            $parts = $si->xpath('.//x:t') ?: [];
+        foreach ($this->safeXPath($sx, '//x:si', 'x', 'http://schemas.openxmlformats.org/spreadsheetml/2006/main') as $si) {
+            $parts = $this->safeXPath($si, './/x:t', 'x', 'http://schemas.openxmlformats.org/spreadsheetml/2006/main');
             $shared[] = trim(implode('', array_map(fn ($node) => (string) $node, $parts)));
         }
 
@@ -289,11 +288,12 @@ class PlayerListImportService
             return 'xl/worksheets/sheet1.xml';
         }
 
-        $workbook->registerXPathNamespace('x', 'http://schemas.openxmlformats.org/spreadsheetml/2006/main');
-        $workbook->registerXPathNamespace('r', 'http://schemas.openxmlformats.org/officeDocument/2006/relationships');
-        $rels->registerXPathNamespace('r', 'http://schemas.openxmlformats.org/package/2006/relationships');
-
-        $firstSheet = ($workbook->xpath('//x:sheets/x:sheet[1]') ?: [])[0] ?? null;
+        $firstSheet = ($this->safeXPath(
+            $workbook,
+            '//x:sheets/x:sheet[1]',
+            'x',
+            'http://schemas.openxmlformats.org/spreadsheetml/2006/main'
+        ) ?: [])[0] ?? null;
         if (!$firstSheet) {
             return 'xl/worksheets/sheet1.xml';
         }
@@ -303,7 +303,7 @@ class PlayerListImportService
             return 'xl/worksheets/sheet1.xml';
         }
 
-        foreach (($rels->xpath('//r:Relationship') ?: []) as $relationship) {
+        foreach ($this->safeXPath($rels, '//r:Relationship', 'r', 'http://schemas.openxmlformats.org/package/2006/relationships') as $relationship) {
             if ((string) $relationship['Id'] !== $relationshipId) {
                 continue;
             }
@@ -330,13 +330,12 @@ class PlayerListImportService
             return [];
         }
 
-        $sx->registerXPathNamespace('x', 'http://schemas.openxmlformats.org/spreadsheetml/2006/main');
         $rows = [];
 
-        foreach (($sx->xpath('//x:sheetData/x:row') ?: []) as $rowNode) {
+        foreach ($this->safeXPath($sx, '//x:sheetData/x:row', 'x', 'http://schemas.openxmlformats.org/spreadsheetml/2006/main') as $rowNode) {
             $row = [];
 
-            foreach (($rowNode->xpath('./x:c') ?: []) as $cell) {
+            foreach ($this->safeXPath($rowNode, './x:c', 'x', 'http://schemas.openxmlformats.org/spreadsheetml/2006/main') as $cell) {
                 $reference = (string) $cell['r'];
                 preg_match('/([A-Z]+)/', $reference, $matches);
                 $columnLetters = $matches[1] ?? 'A';
@@ -349,7 +348,7 @@ class PlayerListImportService
                     $sharedIndex = (int) ($cell->v ?? 0);
                     $value = $sharedStrings[$sharedIndex] ?? '';
                 } elseif ($type === 'inlineStr') {
-                    $parts = $cell->xpath('.//x:t') ?: [];
+                    $parts = $this->safeXPath($cell, './/x:t', 'x', 'http://schemas.openxmlformats.org/spreadsheetml/2006/main');
                     $value = implode('', array_map(fn ($node) => (string) $node, $parts));
                 } else {
                     $value = (string) ($cell->v ?? '');
@@ -375,6 +374,21 @@ class PlayerListImportService
         }
 
         return $rows;
+    }
+
+    private function safeXPath(SimpleXMLElement $element, string $path, ?string $prefix = null, ?string $namespace = null): array
+    {
+        if ($prefix && $namespace) {
+            $element->registerXPathNamespace($prefix, $namespace);
+        }
+
+        $result = @$element->xpath($path);
+        if (($result === false || $result === []) && $prefix) {
+            $fallbackPath = str_replace($prefix.':', '', $path);
+            $result = @$element->xpath($fallbackPath);
+        }
+
+        return $result ?: [];
     }
 
     private function normalizeRows(array $rows): array
