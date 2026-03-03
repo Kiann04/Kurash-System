@@ -1,14 +1,5 @@
 <script setup lang="ts">
 import { Head, Link, router } from '@inertiajs/vue3';
-import AppLayout from '@/layouts/AppLayout.vue';
-import { ref, computed } from 'vue';
-import { route } from 'ziggy-js';
-import { type BreadcrumbItem } from '@/types';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Input } from '@/components/ui/input';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { 
     Trophy, 
     Calendar, 
@@ -21,14 +12,12 @@ import {
     Dumbbell,
     Swords
 } from 'lucide-vue-next';
-import {
-    Table,
-    TableBody,
-    TableCell,
-    TableHead,
-    TableHeader,
-    TableRow,
-} from '@/components/ui/table';
+import { ref, computed } from 'vue';
+import { route } from 'ziggy-js';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -38,6 +27,17 @@ import {
     DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { Input } from '@/components/ui/input';
+import {
+    Table,
+    TableBody,
+    TableCell,
+    TableHead,
+    TableHeader,
+    TableRow,
+} from '@/components/ui/table';
+import AppLayout from '@/layouts/AppLayout.vue';
+import { type BreadcrumbItem } from '@/types';
 
 interface Player {
     id: number;
@@ -315,7 +315,6 @@ const getInitials = (name: string) => {
                                     <TableHead>Club</TableHead>
                                     <TableHead class="text-center">Gender</TableHead>
                                     <TableHead>Age Category</TableHead>
-                                    <TableHead class="text-center">Weight (kg)</TableHead>
                                     <TableHead>Assigned Class</TableHead>
                                 </TableRow>
                             </TableHeader>
@@ -343,9 +342,6 @@ const getInitials = (name: string) => {
                                         </Badge>
                                     </TableCell>
                                     <TableCell>{{ player.age_category }}</TableCell>
-                                    <TableCell class="text-center font-mono text-xs">
-                                        {{ player.weigh_in_weight ?? '-' }}
-                                    </TableCell>
                                     <TableCell>
                                         <div class="flex items-center gap-2">
                                             <span :class="{'text-muted-foreground': !player.weight_category_id, 'font-medium text-blue-600 dark:text-blue-400': player.weight_category_id}">
@@ -355,7 +351,7 @@ const getInitials = (name: string) => {
                                     </TableCell>
                                 </TableRow>
                                 <TableRow v-if="paginatedPlayers.length === 0">
-                                    <TableCell colspan="6" class="h-24 text-center text-muted-foreground">
+                                    <TableCell colspan="5" class="h-24 text-center text-muted-foreground">
                                         No players found matching your filters.
                                     </TableCell>
                                 </TableRow>

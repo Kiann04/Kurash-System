@@ -1,11 +1,11 @@
 <script setup lang="ts">
 import { Link, Head } from '@inertiajs/vue3';
-import AppLayout from '@/layouts/AppLayout.vue';
-import { type BreadcrumbItem } from '@/types';
-import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
+import { Users, UserCheck, UserX, ArrowRight, Shield, Calendar } from 'lucide-vue-next';
+import { route } from 'ziggy-js';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/ui/card';
 import {
     Table,
     TableBody,
@@ -14,8 +14,8 @@ import {
     TableHeader,
     TableRow,
 } from '@/components/ui/table';
-import { Users, UserCheck, UserX, ArrowRight, Shield, Calendar } from 'lucide-vue-next';
-import { route } from 'ziggy-js';
+import AppLayout from '@/layouts/AppLayout.vue';
+import { type BreadcrumbItem } from '@/types';
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
@@ -55,7 +55,7 @@ const getInitials = (name: string) => {
     <Head title="Dashboard" />
 
     <AppLayout :breadcrumbs="breadcrumbs">
-        <div class="flex flex-1 flex-col gap-8 p-6">
+        <div class="flex flex-1 flex-col gap-8 p-6 dark:bg-slate-950">
             <!-- Stats Overview -->
             <div class="grid gap-6 md:grid-cols-3">
                 <Card class="relative overflow-hidden border-l-4 border-l-blue-500 shadow-sm hover:shadow-md transition-all dark:bg-slate-950 dark:border-slate-800 dark:border-l-blue-500">

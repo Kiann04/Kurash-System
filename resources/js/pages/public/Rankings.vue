@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { Head } from '@inertiajs/vue3'
 const route = window.route;
-import { ref, computed } from 'vue'
 import { 
     Instagram, 
     Facebook, 
@@ -9,8 +8,17 @@ import {
     Users, 
     Filter, 
     ChevronDown,
-    Search
+    Search,
+    Check
 } from 'lucide-vue-next'
+import { ref, computed } from 'vue'
+import { Button } from '@/components/ui/button'
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
 
 interface Player {
     id: number
@@ -108,7 +116,7 @@ const navItems = [
                     </div>
                 </a>
 
-                <nav class="hidden lg:flex items-center gap-x-2 xl:gap-x-4 text-[10px] xl:text-xs font-bold tracking-wider uppercase h-full font-serif">
+                <nav class="hidden lg:flex items-center gap-x-2 xl:gap-x-4 text-xs xl:text-xs font-bold tracking-wider uppercase h-full font-serif">
                     <template v-for="item in navItems" :key="item.name">
                         <a 
                             v-if="item.route"
@@ -152,7 +160,7 @@ const navItems = [
         </header>
 
         <main class="max-w-7xl mx-auto px-4 py-12 relative">
-            <div class="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-3xl h-64 bg-blue-900/10 blur-[100px] rounded-full pointer-events-none"></div>
+            <div class="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-3xl h-64 bg-blue-900/10 blur-3xl rounded-full pointer-events-none"></div>
 
             <section class="mb-24">
                 <div class="text-center mb-12">
@@ -176,20 +184,46 @@ const navItems = [
 
                         <!-- Gender -->
                         <div class="relative group/select">
-                            <select v-model="selectedGender" class="w-full bg-[#050a14] border border-slate-700 text-gray-300 rounded-lg px-4 py-3 appearance-none focus:outline-none focus:border-yellow-500 transition-colors cursor-pointer text-sm">
-                                <option value="">All Genders</option>
-                                <option v-for="gender in genders" :key="gender" :value="gender">{{ gender.charAt(0).toUpperCase() + gender.slice(1) }}</option>
-                            </select>
-                            <ChevronDown class="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500 group-hover/select:text-yellow-500 transition-colors pointer-events-none" />
+                            <DropdownMenu>
+                                <DropdownMenuTrigger as-child>
+                                    <Button variant="outline" class="w-full justify-between bg-[#050a14] border-slate-700 text-gray-300 hover:bg-slate-900 hover:text-white h-11.5 px-4 py-3 font-normal text-sm">
+                                        {{ selectedGender ? (selectedGender.charAt(0).toUpperCase() + selectedGender.slice(1)) : 'All Genders' }}
+                                        <ChevronDown class="ml-2 h-4 w-4 text-slate-500 group-hover/select:text-yellow-500 transition-colors" />
+                                    </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent class="w-(--radix-dropdown-menu-trigger-width) bg-[#0f172a] border-slate-800 text-slate-300">
+                                    <DropdownMenuItem @click="selectedGender = ''" class="cursor-pointer hover:bg-slate-800 hover:text-white">
+                                        All Genders
+                                        <Check v-if="selectedGender === ''" class="ml-auto h-4 w-4" />
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem v-for="gender in genders" :key="gender" @click="selectedGender = gender" class="cursor-pointer hover:bg-slate-800 hover:text-white">
+                                        {{ gender.charAt(0).toUpperCase() + gender.slice(1) }}
+                                        <Check v-if="selectedGender === gender" class="ml-auto h-4 w-4" />
+                                    </DropdownMenuItem>
+                                </DropdownMenuContent>
+                            </DropdownMenu>
                         </div>
 
                         <!-- Club -->
                         <div class="relative group/select">
-                            <select v-model="selectedAcademy" class="w-full bg-[#050a14] border border-slate-700 text-gray-300 rounded-lg px-4 py-3 appearance-none focus:outline-none focus:border-yellow-500 transition-colors cursor-pointer text-sm">
-                                <option value="">All Clubs</option>
-                                <option v-for="academy in academies" :key="academy" :value="academy">{{ academy }}</option>
-                            </select>
-                            <ChevronDown class="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500 group-hover/select:text-yellow-500 transition-colors pointer-events-none" />
+                            <DropdownMenu>
+                                <DropdownMenuTrigger as-child>
+                                    <Button variant="outline" class="w-full justify-between bg-[#050a14] border-slate-700 text-gray-300 hover:bg-slate-900 hover:text-white h-11.5 px-4 py-3 font-normal text-sm">
+                                        <span class="truncate">{{ selectedAcademy || 'All Clubs' }}</span>
+                                        <ChevronDown class="ml-2 h-4 w-4 text-slate-500 group-hover/select:text-yellow-500 transition-colors" />
+                                    </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent class="w-(--radix-dropdown-menu-trigger-width) bg-[#0f172a] border-slate-800 text-slate-300 max-h-75 overflow-y-auto">
+                                    <DropdownMenuItem @click="selectedAcademy = ''" class="cursor-pointer hover:bg-slate-800 hover:text-white">
+                                        All Clubs
+                                        <Check v-if="selectedAcademy === ''" class="ml-auto h-4 w-4" />
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem v-for="academy in academies" :key="academy" @click="selectedAcademy = academy" class="cursor-pointer hover:bg-slate-800 hover:text-white">
+                                        {{ academy }}
+                                        <Check v-if="selectedAcademy === academy" class="ml-auto h-4 w-4" />
+                                    </DropdownMenuItem>
+                                </DropdownMenuContent>
+                            </DropdownMenu>
                         </div>
                     </div>
                 </div>
@@ -247,7 +281,7 @@ const navItems = [
                                 <div class="text-right shrink-0 px-4 z-10">
                                     <div class="flex flex-col items-end">
                                         <div class="text-3xl font-black text-white tracking-tighter group-hover:text-blue-400 transition-colors">{{ athlete.points }}</div>
-                                        <div class="text-[10px] text-slate-500 uppercase tracking-widest font-black bg-slate-800/50 px-2 py-0.5 rounded mt-1">PTS</div>
+                                        <div class="text-xs text-slate-500 uppercase tracking-widest font-black bg-slate-800/50 px-2 py-0.5 rounded mt-1">PTS</div>
                                     </div>
                                 </div>
                             </div>
@@ -304,7 +338,7 @@ const navItems = [
 
                                 <div class="flex-1 min-w-0 z-10">
                                     <div class="flex items-center gap-2 mb-1">
-                                        <span class="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-tighter bg-green-500/10 text-green-400 border border-green-500/20">Active</span>
+                                        <span class="px-2 py-0.5 rounded text-xs font-bold uppercase tracking-tighter bg-green-500/10 text-green-400 border border-green-500/20">Active</span>
                                         <div class="h-px w-8 bg-slate-800"></div>
                                     </div>
                                     <h4 class="text-2xl font-black text-white truncate group-hover:text-green-400 transition-colors tracking-tight italic uppercase">{{ athlete.name }}</h4>
@@ -317,7 +351,7 @@ const navItems = [
                                 <div class="text-right shrink-0 px-4 z-10">
                                     <div class="flex flex-col items-end">
                                         <div class="text-3xl font-black text-white tracking-tighter group-hover:text-green-400 transition-colors">{{ athlete.points }}</div>
-                                        <div class="text-[10px] text-slate-500 uppercase tracking-widest font-black bg-slate-800/50 px-2 py-0.5 rounded mt-1">PTS</div>
+                                        <div class="text-xs text-slate-500 uppercase tracking-widest font-black bg-slate-800/50 px-2 py-0.5 rounded mt-1">PTS</div>
                                     </div>
                                 </div>
                             </div>

@@ -7,8 +7,8 @@ declare global {
 }
 
 const route = window.route || ((name: string) => name);
-import { ref, computed } from 'vue'
 import { Instagram, Facebook, Trophy, Users, LayoutGrid, X, ArrowLeft, Search, SlidersHorizontal } from 'lucide-vue-next'
+import { ref, computed } from 'vue'
 
 interface Tournament {
     id: number

@@ -1,7 +1,7 @@
 <script setup lang="ts">
+import { route } from 'ziggy-js';
 import AppLayout from '@/layouts/AppLayout.vue';
 import PlayerForm from './components/PlayerForm.vue';
-import { route } from 'ziggy-js';
 
 const props = defineProps<{
     player: {

@@ -1,13 +1,25 @@
 <script setup lang="ts">
 import { Head, useForm } from '@inertiajs/vue3'
-import AppLayout from '@/layouts/AppLayout.vue'
+import { 
+    Trophy, 
+    Upload, 
+    Users, 
+    Search, 
+    Check, 
+    X,
+    UserPlus,
+    FileSpreadsheet,
+    AlertCircle,
+    Plus,
+    Trash2,
+    Loader2,
+    ChevronDown
+} from 'lucide-vue-next'
+import { ref, computed, watch, onMounted } from 'vue'
 import { route } from 'ziggy-js'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Badge } from '@/components/ui/badge'
-import { Separator } from '@/components/ui/separator'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
 import {
     Card,
     CardContent,
@@ -21,7 +33,17 @@ import {
     DialogHeader,
     DialogTitle,
     DialogFooter,
+    DialogDescription,
 } from '@/components/ui/dialog'
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Separator } from '@/components/ui/separator'
 import {
     Table,
     TableBody,
@@ -30,20 +52,7 @@ import {
     TableHeader,
     TableRow,
 } from '@/components/ui/table'
-import { 
-    Trophy, 
-    Upload, 
-    Users, 
-    Search, 
-    Check, 
-    X,
-    UserPlus,
-    FileSpreadsheet,
-    AlertCircle,
-    Plus,
-    Trash2
-} from 'lucide-vue-next'
-import { ref, computed, watch, onMounted } from 'vue'
+import AppLayout from '@/layouts/AppLayout.vue'
 import { type BreadcrumbItem } from '@/types'
 
 interface Player {
@@ -326,21 +335,39 @@ const getCsrfToken = () => {
     return token ?? ''
 }
 
-const createWeightCategory = async () => {
+// Create Weight Category State
+const isCreateCategoryOpen = ref(false)
+const isCreateCategoryLoading = ref(false)
+const createCategoryForm = ref({
+    name: '',
+    error: '',
+})
+
+// Delete Weight Category State
+const isDeleteCategoryOpen = ref(false)
+const isDeleteCategoryLoading = ref(false)
+const deleteCategoryError = ref('')
+
+const createWeightCategory = () => {
     if (!selectedGender.value || !selectedAgeCategoryId.value) {
-        window.alert('Select gender and age category first.')
+        // Ideally this should be a toast, but for now we'll just return
+        // The button should be disabled if these are not selected
         return
     }
+    createCategoryForm.value.name = ''
+    createCategoryForm.value.error = ''
+    isCreateCategoryOpen.value = true
+}
 
-    const input = window.prompt('Enter weight category (e.g. -60, +70, 60-66)')
-    if (!input) {
-        return
-    }
-
-    const name = input.trim()
+const submitCreateWeightCategory = async () => {
+    const name = createCategoryForm.value.name.trim()
     if (!name) {
+        createCategoryForm.value.error = 'Category name is required'
         return
     }
+
+    isCreateCategoryLoading.value = true
+    createCategoryForm.value.error = ''
 
     try {
         const response = await fetch(route('admin.weight-categories.store', undefined, false), {
@@ -374,21 +401,26 @@ const createWeightCategory = async () => {
         }
 
         selectedCategoryId.value = newCategory.id
+        isCreateCategoryOpen.value = false
     } catch (error) {
         const message = error instanceof Error ? error.message : 'Failed to create weight category.'
-        window.alert(message)
+        createCategoryForm.value.error = message
+    } finally {
+        isCreateCategoryLoading.value = false
     }
 }
 
-const deleteWeightCategory = async () => {
-    if (!selectedCategoryId.value) {
-        return
-    }
+const deleteWeightCategory = () => {
+    if (!selectedCategoryId.value) return
+    deleteCategoryError.value = ''
+    isDeleteCategoryOpen.value = true
+}
 
-    const confirmDelete = window.confirm('Remove this weight category? This cannot be undone.')
-    if (!confirmDelete) {
-        return
-    }
+const submitDeleteWeightCategory = async () => {
+    if (!selectedCategoryId.value) return
+
+    isDeleteCategoryLoading.value = true
+    deleteCategoryError.value = ''
 
     try {
         const response = await fetch(route('admin.weight-categories.destroy', selectedCategoryId.value, false), {
@@ -409,9 +441,12 @@ const deleteWeightCategory = async () => {
 
         localWeightCategories.value = localWeightCategories.value.filter((category) => category.id !== selectedCategoryId.value)
         selectedCategoryId.value = weightCategoryOptions.value[0]?.id ?? null
+        isDeleteCategoryOpen.value = false
     } catch (error) {
         const message = error instanceof Error ? error.message : 'Failed to delete weight category.'
-        window.alert(message)
+        deleteCategoryError.value = message
+    } finally {
+        isDeleteCategoryLoading.value = false
     }
 }
 
@@ -515,19 +550,32 @@ const analyzeAndImportFile = async () => {
                             <div class="space-y-2">
                                 <Label for="status" class="dark:text-slate-300">Status</Label>
                                 <div class="relative">
-                                    <select
-                                        id="status"
-                                        v-model="form.status"
-                                        class="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 appearance-none dark:bg-slate-950 dark:border-slate-800 dark:text-slate-100"
-                                    >
-                                        <option value="draft">Draft</option>
-                                        <option value="open">Open</option>
-                                        <option value="ongoing">Ongoing</option>
-                                        <option value="completed">Completed</option>
-                                    </select>
-                                    <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700 dark:text-gray-400">
-                                        <svg class="h-4 w-4 fill-current" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/></svg>
-                                    </div>
+                                    <DropdownMenu>
+                                        <DropdownMenuTrigger as-child>
+                                            <Button variant="outline" class="w-full justify-between dark:bg-slate-950 dark:border-slate-800 dark:text-slate-100 capitalize font-normal">
+                                                {{ form.status }}
+                                                <ChevronDown class="ml-2 h-4 w-4 opacity-50" />
+                                            </Button>
+                                        </DropdownMenuTrigger>
+                                        <DropdownMenuContent class="w-(--radix-dropdown-menu-trigger-width) dark:bg-slate-950 dark:border-slate-800">
+                                            <DropdownMenuItem @click="form.status = 'draft'" class="capitalize dark:text-slate-100 cursor-pointer">
+                                                Draft
+                                                <Check v-if="form.status === 'draft'" class="ml-auto h-4 w-4" />
+                                            </DropdownMenuItem>
+                                            <DropdownMenuItem @click="form.status = 'open'" class="capitalize dark:text-slate-100 cursor-pointer">
+                                                Open
+                                                <Check v-if="form.status === 'open'" class="ml-auto h-4 w-4" />
+                                            </DropdownMenuItem>
+                                            <DropdownMenuItem @click="form.status = 'ongoing'" class="capitalize dark:text-slate-100 cursor-pointer">
+                                                Ongoing
+                                                <Check v-if="form.status === 'ongoing'" class="ml-auto h-4 w-4" />
+                                            </DropdownMenuItem>
+                                            <DropdownMenuItem @click="form.status = 'completed'" class="capitalize dark:text-slate-100 cursor-pointer">
+                                                Completed
+                                                <Check v-if="form.status === 'completed'" class="ml-auto h-4 w-4" />
+                                            </DropdownMenuItem>
+                                        </DropdownMenuContent>
+                                    </DropdownMenu>
                                 </div>
                                 <p v-if="form.errors.status" class="text-sm text-destructive">{{ form.errors.status }}</p>
                             </div>
@@ -680,44 +728,79 @@ const analyzeAndImportFile = async () => {
                                 <div class="space-y-2">
                                     <Label class="dark:text-slate-300">Gender</Label>
                                     <div class="relative">
-                                        <select
-                                            v-model="selectedGender"
-                                            class="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 appearance-none capitalize dark:bg-slate-950 dark:border-slate-800 dark:text-slate-100"
-                                        >
-                                            <option v-for="gender in genderOptions" :key="gender" :value="gender">
-                                                {{ gender }}
-                                            </option>
-                                        </select>
+                                        <DropdownMenu>
+                                            <DropdownMenuTrigger as-child>
+                                                <Button variant="outline" class="w-full justify-between dark:bg-slate-950 dark:border-slate-800 dark:text-slate-100 capitalize font-normal">
+                                                    {{ selectedGender }}
+                                                    <ChevronDown class="ml-2 h-4 w-4 opacity-50" />
+                                                </Button>
+                                            </DropdownMenuTrigger>
+                                            <DropdownMenuContent class="w-(--radix-dropdown-menu-trigger-width) dark:bg-slate-950 dark:border-slate-800">
+                                                <DropdownMenuItem 
+                                                    v-for="gender in genderOptions" 
+                                                    :key="gender" 
+                                                    @click="selectedGender = gender"
+                                                    class="capitalize dark:text-slate-100 cursor-pointer"
+                                                >
+                                                    {{ gender }}
+                                                    <Check v-if="selectedGender === gender" class="ml-auto h-4 w-4" />
+                                                </DropdownMenuItem>
+                                            </DropdownMenuContent>
+                                        </DropdownMenu>
                                     </div>
                                 </div>
                                 <div class="space-y-2">
-                                    <Label>Age Category</Label>
+                                    <Label class="dark:text-slate-300">Age Category</Label>
                                     <div class="relative">
-                                        <select
-                                            v-model="selectedAgeCategoryId"
-                                            class="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 appearance-none dark:bg-slate-950 dark:border-slate-800 dark:text-slate-100"
-                                        >
-                                            <option v-for="age in ageCategoryOptions" :key="age.id" :value="age.id">
-                                                {{ age.name }}
-                                            </option>
-                                        </select>
+                                        <DropdownMenu>
+                                            <DropdownMenuTrigger as-child>
+                                                <Button variant="outline" class="w-full justify-between dark:bg-slate-950 dark:border-slate-800 dark:text-slate-100 font-normal">
+                                                    {{ ageCategoryOptions.find(a => a.id === selectedAgeCategoryId)?.name || 'Select Age Category' }}
+                                                    <ChevronDown class="ml-2 h-4 w-4 opacity-50" />
+                                                </Button>
+                                            </DropdownMenuTrigger>
+                                            <DropdownMenuContent class="w-(--radix-dropdown-menu-trigger-width) dark:bg-slate-950 dark:border-slate-800 max-h-75 overflow-y-auto">
+                                                <DropdownMenuItem 
+                                                    v-for="age in ageCategoryOptions" 
+                                                    :key="age.id" 
+                                                    @click="selectedAgeCategoryId = age.id"
+                                                    class="dark:text-slate-100 cursor-pointer"
+                                                >
+                                                    {{ age.name }}
+                                                    <Check v-if="selectedAgeCategoryId === age.id" class="ml-auto h-4 w-4" />
+                                                </DropdownMenuItem>
+                                            </DropdownMenuContent>
+                                        </DropdownMenu>
                                     </div>
                                 </div>
                                 <div class="space-y-2">
-                                    <Label>Weight Category</Label>
+                                    <Label class="dark:text-slate-300">Weight Category</Label>
                                     <div class="flex items-center gap-2">
-                                        <select
-                                            v-model="selectedCategoryId"
-                                            class="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 appearance-none dark:bg-slate-950 dark:border-slate-800 dark:text-slate-100"
-                                            :disabled="weightCategoryOptions.length === 0"
-                                        >
-                                            <option v-if="weightCategoryOptions.length === 0" :value="null" disabled>
-                                                No categories available
-                                            </option>
-                                            <option v-for="cat in weightCategoryOptions" :key="cat.id" :value="cat.id">
-                                                {{ cat.name }}
-                                            </option>
-                                        </select>
+                                        <div class="relative w-full">
+                                            <DropdownMenu>
+                                                <DropdownMenuTrigger as-child>
+                                                    <Button 
+                                                        variant="outline" 
+                                                        class="w-full justify-between dark:bg-slate-950 dark:border-slate-800 dark:text-slate-100 font-normal"
+                                                        :disabled="weightCategoryOptions.length === 0"
+                                                    >
+                                                        {{ weightCategoryOptions.find(c => c.id === selectedCategoryId)?.name || (weightCategoryOptions.length === 0 ? 'No categories available' : 'Select Weight Category') }}
+                                                        <ChevronDown class="ml-2 h-4 w-4 opacity-50" />
+                                                    </Button>
+                                                </DropdownMenuTrigger>
+                                                <DropdownMenuContent class="w-(--radix-dropdown-menu-trigger-width) dark:bg-slate-950 dark:border-slate-800 max-h-75 overflow-y-auto">
+                                                    <DropdownMenuItem 
+                                                        v-for="cat in weightCategoryOptions" 
+                                                        :key="cat.id" 
+                                                        @click="selectedCategoryId = cat.id"
+                                                        class="dark:text-slate-100 cursor-pointer"
+                                                    >
+                                                        {{ cat.name }}
+                                                        <Check v-if="selectedCategoryId === cat.id" class="ml-auto h-4 w-4" />
+                                                    </DropdownMenuItem>
+                                                </DropdownMenuContent>
+                                            </DropdownMenu>
+                                        </div>
                                         <div class="flex items-center gap-1">
                                             <Button
                                                 variant="outline"
@@ -742,7 +825,7 @@ const analyzeAndImportFile = async () => {
                                             </Button>
                                         </div>
                                     </div>
-                                    <p class="text-[11px] text-muted-foreground">
+                                    <p class="text-xs text-muted-foreground">
                                         Add or remove categories for the selected gender and age group.
                                     </p>
                                 </div>
@@ -797,7 +880,7 @@ const analyzeAndImportFile = async () => {
                                                     <TableCell class="p-3">
                                                         <div class="text-xs space-y-1">
                                                             <div v-if="getAssignedCategoryName(player.id) !== '-'" class="flex flex-wrap gap-1">
-                                                                <Badge variant="outline" class="text-[10px] font-normal dark:border-slate-700 dark:text-slate-300">
+                                                                <Badge variant="outline" class="text-xs font-normal dark:border-slate-700 dark:text-slate-300">
                                                                     {{ getAssignedCategoryName(player.id) }}
                                                                 </Badge>
                                                             </div>
@@ -854,7 +937,7 @@ const analyzeAndImportFile = async () => {
                                                 <TableRow class="border-b last:border-0 hover:bg-muted/50 dark:border-slate-800">
                                                     <TableCell class="p-2">
                                                         <div class="font-medium dark:text-slate-100">{{ item.category_name }}</div>
-                                                        <div class="text-[10px] text-muted-foreground capitalize">
+                                                        <div class="text-xs text-muted-foreground capitalize">
                                                             {{ item.gender }} • {{ item.age_category }}
                                                         </div>
                                                     </TableCell>
@@ -959,5 +1042,65 @@ const analyzeAndImportFile = async () => {
                 </DialogContent>
             </Dialog>
         </div>
+
+        <Dialog :open="isCreateCategoryOpen" @update:open="isCreateCategoryOpen = $event">
+            <DialogContent class="sm:max-w-106.25 dark:bg-slate-950 dark:border-slate-800">
+                <DialogHeader>
+                    <DialogTitle class="dark:text-slate-100">Add Weight Category</DialogTitle>
+                    <DialogDescription class="dark:text-slate-400">
+                        Create a new weight category for the selected gender and age group.
+                    </DialogDescription>
+                </DialogHeader>
+                <div class="grid gap-4 py-4">
+                    <div class="grid gap-2">
+                        <Label for="category-name" class="dark:text-slate-300">Category Name</Label>
+                        <Input
+                            id="category-name"
+                            v-model="createCategoryForm.name"
+                            placeholder="e.g. -60, +70, 60-66"
+                            class="dark:bg-slate-950 dark:border-slate-800 dark:text-slate-100"
+                            @keyup.enter="submitCreateWeightCategory"
+                        />
+                        <p v-if="createCategoryForm.error" class="text-sm text-destructive">{{ createCategoryForm.error }}</p>
+                    </div>
+                </div>
+                <DialogFooter>
+                    <Button variant="outline" @click="isCreateCategoryOpen = false" class="dark:border-slate-800 dark:text-slate-300">
+                        Cancel
+                    </Button>
+                    <Button @click="submitCreateWeightCategory" :disabled="isCreateCategoryLoading">
+                        <Loader2 v-if="isCreateCategoryLoading" class="mr-2 h-4 w-4 animate-spin" />
+                        Create
+                    </Button>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
+
+        <Dialog :open="isDeleteCategoryOpen" @update:open="isDeleteCategoryOpen = $event">
+            <DialogContent class="sm:max-w-106.25 dark:bg-slate-950 dark:border-slate-800">
+                <DialogHeader>
+                    <DialogTitle class="flex items-center gap-2 text-destructive dark:text-red-500">
+                        <AlertCircle class="h-5 w-5" />
+                        Delete Weight Category
+                    </DialogTitle>
+                    <DialogDescription class="dark:text-slate-400">
+                        Are you sure you want to delete this weight category? This action cannot be undone.
+                    </DialogDescription>
+                </DialogHeader>
+                <div v-if="deleteCategoryError" class="text-sm text-destructive mb-4">
+                    {{ deleteCategoryError }}
+                </div>
+                <DialogFooter class="gap-2 sm:gap-0">
+                    <Button variant="outline" @click="isDeleteCategoryOpen = false" class="dark:border-slate-800 dark:text-slate-300">
+                        Cancel
+                    </Button>
+                    <Button variant="destructive" @click="submitDeleteWeightCategory" :disabled="isDeleteCategoryLoading">
+                        <Loader2 v-if="isDeleteCategoryLoading" class="mr-2 h-4 w-4 animate-spin" />
+                        <Trash2 v-else class="mr-2 h-4 w-4" />
+                        Delete Category
+                    </Button>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
     </AppLayout>
 </template>

@@ -1,14 +1,14 @@
 <script setup lang="ts">
 import { Head, Link, router } from '@inertiajs/vue3';
-import AppLayout from '@/layouts/AppLayout.vue';
-import { type BreadcrumbItem } from '@/types';
+import { watchDebounced } from '@vueuse/core';
+import { UserPlus, Users } from 'lucide-vue-next';
+import { ref, watch } from 'vue';
 import { route } from 'ziggy-js';
 import { Button } from '@/components/ui/button';
-import { ref, watch } from 'vue';
-import { watchDebounced } from '@vueuse/core';
+import AppLayout from '@/layouts/AppLayout.vue';
+import { type BreadcrumbItem } from '@/types';
 import PlayerFilters from './components/PlayerFilters.vue';
 import PlayerTable from './components/PlayerTable.vue';
-import { UserPlus, Users } from 'lucide-vue-next';
 
 const breadcrumbs: BreadcrumbItem[] = [
     { title: 'Players', href: route('admin.players.index') },
@@ -69,8 +69,8 @@ watch([gender, status], ([newGender, newStatus]) => {
             <!-- Header Section -->
             <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                 <div class="flex items-center gap-3">
-                    <div class="h-10 w-10 rounded-lg bg-blue-500/10 flex items-center justify-center dark:bg-blue-500/20">
-                        <Users class="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                    <div class="h-12 w-12 rounded-xl bg-blue-50 flex items-center justify-center border border-blue-100 dark:bg-blue-900/20 dark:border-blue-800">
+                        <Users class="h-6 w-6 text-blue-600 dark:text-blue-400" />
                     </div>
                     <div>
                         <h1 class="text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100">Player Management</h1>
@@ -84,7 +84,7 @@ watch([gender, status], ([newGender, newStatus]) => {
                         class="flex-1 md:flex-none"
                     />
                     <Link :href="route('admin.players.create')">
-                        <Button class="gap-2 shadow-sm">
+                        <Button class="gap-2 shadow-sm bg-blue-600 hover:bg-blue-700 text-white dark:bg-blue-600 dark:hover:bg-blue-700">
                             <UserPlus class="h-4 w-4" />
                             Add Player
                         </Button>

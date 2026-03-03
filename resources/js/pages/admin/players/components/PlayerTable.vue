@@ -1,26 +1,5 @@
 <script setup lang="ts">
 import { Link, router } from '@inertiajs/vue3';
-import { route } from 'ziggy-js';
-import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import {
-    Table,
-    TableBody,
-    TableCell,
-    TableHead,
-    TableHeader,
-    TableRow,
-} from '@/components/ui/table';
-import { 
-    DropdownMenu, 
-    DropdownMenuContent, 
-    DropdownMenuItem, 
-    DropdownMenuLabel, 
-    DropdownMenuSeparator, 
-    DropdownMenuTrigger 
-} from '@/components/ui/dropdown-menu';
 import { 
     MoreHorizontal, 
     Edit, 
@@ -30,7 +9,37 @@ import {
     Calendar,
     Shield
 } from 'lucide-vue-next';
+import { ref } from 'vue';
+import { route } from 'ziggy-js';
 import Pagination from '@/components/Pagination.vue';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+} from '@/components/ui/dialog';
+import { 
+    DropdownMenu, 
+    DropdownMenuContent, 
+    DropdownMenuItem, 
+    DropdownMenuLabel, 
+    DropdownMenuSeparator, 
+    DropdownMenuTrigger 
+} from '@/components/ui/dropdown-menu';
+import {
+    Table,
+    TableBody,
+    TableCell,
+    TableHead,
+    TableHeader,
+    TableRow,
+} from '@/components/ui/table';
 
 interface Player {
     id: number;
@@ -50,9 +59,23 @@ defineProps<{
     };
 }>();
 
+
+const isRenewDialogOpen = ref(false);
+const renewPlayerId = ref<number | null>(null);
+
 function renewMembership(playerId: number) {
-    if (confirm('Renew this membership for another year?')) {
-        router.post(route('admin.players.renew', playerId));
+    renewPlayerId.value = playerId;
+    isRenewDialogOpen.value = true;
+}
+
+function submitRenewMembership() {
+    if (renewPlayerId.value) {
+        router.post(route('admin.players.renew', renewPlayerId.value), {}, {
+            onFinish: () => {
+                isRenewDialogOpen.value = false;
+                renewPlayerId.value = null;
+            }
+        });
     }
 }
 
@@ -100,7 +123,7 @@ const getInitials = (name: string) => {
                                     <div class="flex items-center gap-1 text-slate-600 dark:text-slate-400">
                                         <span class="font-medium">{{ player.age }}</span> years old
                                     </div>
-                                    <Badge variant="outline" class="w-fit text-[10px] px-1.5 py-0 h-5 border-slate-200 text-slate-500 dark:border-slate-700 dark:text-slate-400">
+                                    <Badge variant="outline" class="w-fit text-xs px-1.5 py-0 h-5 border-slate-200 text-slate-500 dark:border-slate-700 dark:text-slate-400">
                                         {{ player.gender }}
                                     </Badge>
                                 </div>
@@ -183,4 +206,39 @@ const getInitials = (name: string) => {
             </div>
         </CardContent>
     </Card>
+
+    <Dialog :open="isRenewDialogOpen" @update:open="isRenewDialogOpen = $event">
+        <DialogContent class="sm:max-w-md dark:bg-slate-950 dark:border-slate-800">
+            <DialogHeader>
+                <DialogTitle class="flex items-center gap-2 dark:text-slate-100">
+                    <RefreshCw class="h-5 w-5 text-green-600 dark:text-green-500" />
+                    Renew Membership
+                </DialogTitle>
+                <DialogDescription class="dark:text-slate-400">
+                    Are you sure you want to renew this player's membership for another year?
+                </DialogDescription>
+            </DialogHeader>
+            <div class="py-4" v-if="renewPlayerId">
+                <div class="rounded-md border p-4 bg-muted/20 dark:bg-slate-900/50 dark:border-slate-800 flex items-center gap-3">
+                    <Shield class="h-8 w-8 text-slate-400 dark:text-slate-500" />
+                    <div class="flex flex-col">
+                        <span class="font-medium dark:text-slate-200">
+                            {{ players.data.find(p => p.id === renewPlayerId)?.full_name }}
+                        </span>
+                        <span class="text-xs text-muted-foreground">
+                            ID: #{{ renewPlayerId.toString().padStart(4, '0') }}
+                        </span>
+                    </div>
+                </div>
+            </div>
+            <DialogFooter>
+                <Button variant="outline" @click="isRenewDialogOpen = false" class="dark:border-slate-800 dark:text-slate-300">
+                    Cancel
+                </Button>
+                <Button @click="submitRenewMembership" class="bg-green-600 hover:bg-green-700 text-white dark:bg-green-700 dark:hover:bg-green-600">
+                    Renew Membership
+                </Button>
+            </DialogFooter>
+        </DialogContent>
+    </Dialog>
 </template>

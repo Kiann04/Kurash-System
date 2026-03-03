@@ -6,9 +6,9 @@ declare global {
   }
 }
 const route = window.route || ((name: string) => name);
-import Pagination from '@/components/Pagination.vue'
-import { ref, computed } from 'vue'
 import { Instagram, Facebook, Calendar, Trophy, ChevronRight, Search, SlidersHorizontal } from 'lucide-vue-next'
+import { ref, computed } from 'vue'
+import Pagination from '@/components/Pagination.vue'
 
 interface Tournament {
     id: number

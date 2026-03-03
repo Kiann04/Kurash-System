@@ -8,9 +8,9 @@ declare global {
 }
 
 const route = window.route;
-import Pagination from '@/components/Pagination.vue'
-import { ref, computed } from 'vue'
 import { Instagram, Facebook, Search } from 'lucide-vue-next'
+import { ref, computed } from 'vue'
+import Pagination from '@/components/Pagination.vue'
 
 interface Player {
     id: number

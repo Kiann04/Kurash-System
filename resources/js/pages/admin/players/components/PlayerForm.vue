@@ -1,11 +1,5 @@
 <script setup lang="ts">
 import { useForm } from '@inertiajs/vue3';
-import { route } from 'ziggy-js';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Card, CardHeader, CardTitle, CardContent, CardFooter, CardDescription } from '@/components/ui/card';
-import { Separator } from '@/components/ui/separator';
 import { 
     User, 
     Calendar, 
@@ -14,8 +8,22 @@ import {
     Mail, 
     Phone, 
     Save,
-    AlertCircle
+    AlertCircle,
+    ChevronDown,
+    Check
 } from 'lucide-vue-next';
+import { route } from 'ziggy-js';
+import { Button } from '@/components/ui/button';
+import { Card, CardHeader, CardTitle, CardContent, CardFooter, CardDescription } from '@/components/ui/card';
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Separator } from '@/components/ui/separator';
 
 const props = defineProps<{
   player?: {
@@ -57,9 +65,9 @@ function submit() {
   <form @submit.prevent="submit" class="space-y-6">
     <div class="grid gap-6 md:grid-cols-2">
         <!-- Personal Information -->
-        <Card>
+        <Card class="dark:bg-slate-950 dark:border-slate-800">
             <CardHeader>
-                <CardTitle class="flex items-center gap-2">
+                <CardTitle class="flex items-center gap-2 dark:text-slate-100">
                     <User class="h-5 w-5 text-primary" />
                     Personal Information
                 </CardTitle>
@@ -67,49 +75,56 @@ function submit() {
             </CardHeader>
             <CardContent class="space-y-4">
                 <div class="space-y-2">
-                    <Label for="full_name">Full Name</Label>
+                    <Label for="full_name" class="dark:text-slate-300">Full Name</Label>
                     <div class="relative">
                         <User class="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                        <Input id="full_name" v-model="form.full_name" placeholder="John Doe" class="pl-9" />
+                        <Input id="full_name" v-model="form.full_name" placeholder="John Doe" class="pl-9 dark:bg-slate-950 dark:border-slate-800 dark:text-slate-100" />
                     </div>
                     <p v-if="form.errors.full_name" class="text-sm text-destructive">{{ form.errors.full_name }}</p>
                 </div>
 
                 <div class="grid grid-cols-2 gap-4">
                     <div class="space-y-2">
-                        <Label for="gender">Gender</Label>
-                        <div class="relative">
-                            <select 
-                                id="gender"
-                                v-model="form.gender" 
-                                class="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 appearance-none"
+                    <Label class="dark:text-slate-300">Gender</Label>
+                    <DropdownMenu>
+                        <DropdownMenuTrigger as-child>
+                            <Button 
+                                variant="outline" 
+                                class="w-full justify-between dark:bg-slate-950 dark:border-slate-800 dark:text-slate-100 font-normal"
                             >
-                                <option value="" disabled>Select Gender</option>
-                                <option value="Male">Male</option>
-                                <option value="Female">Female</option>
-                            </select>
-                            <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
-                                <svg class="h-4 w-4 fill-current" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/></svg>
-                            </div>
-                        </div>
-                        <p v-if="form.errors.gender" class="text-sm text-destructive">{{ form.errors.gender }}</p>
-                    </div>
+                                {{ form.gender || 'Select Gender' }}
+                                <ChevronDown class="ml-2 h-4 w-4 opacity-50" />
+                            </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent class="w-(--radix-dropdown-menu-trigger-width) dark:bg-slate-950 dark:border-slate-800">
+                            <DropdownMenuItem @click="form.gender = 'Male'" class="dark:text-slate-100 cursor-pointer">
+                                Male
+                                <Check v-if="form.gender === 'Male'" class="ml-auto h-4 w-4" />
+                            </DropdownMenuItem>
+                            <DropdownMenuItem @click="form.gender = 'Female'" class="dark:text-slate-100 cursor-pointer">
+                                Female
+                                <Check v-if="form.gender === 'Female'" class="ml-auto h-4 w-4" />
+                            </DropdownMenuItem>
+                        </DropdownMenuContent>
+                    </DropdownMenu>
+                    <p v-if="form.errors.gender" class="text-sm text-destructive">{{ form.errors.gender }}</p>
+                </div>
                     
                     <div class="space-y-2">
-                        <Label for="birthday">Birthday</Label>
+                        <Label for="birthday" class="dark:text-slate-300">Birthday</Label>
                         <div class="relative">
                             <Calendar class="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                            <Input id="birthday" type="date" v-model="form.birthday" class="pl-9" />
+                            <Input id="birthday" type="date" v-model="form.birthday" class="pl-9 dark:bg-slate-950 dark:border-slate-800 dark:text-slate-100" />
                         </div>
                         <p v-if="form.errors.birthday" class="text-sm text-destructive">{{ form.errors.birthday }}</p>
                     </div>
                 </div>
 
                 <div class="space-y-2">
-                    <Label for="club">Club / Affiliation</Label>
+                    <Label for="club" class="dark:text-slate-300">Club / Affiliation</Label>
                     <div class="relative">
                         <Users class="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                        <Input id="club" v-model="form.club" placeholder="Team Kurash" class="pl-9" />
+                        <Input id="club" v-model="form.club" placeholder="Team Kurash" class="pl-9 dark:bg-slate-950 dark:border-slate-800 dark:text-slate-100" />
                     </div>
                     <p v-if="form.errors.club" class="text-sm text-destructive">{{ form.errors.club }}</p>
                 </div>
@@ -117,9 +132,9 @@ function submit() {
         </Card>
 
         <!-- Contact Information -->
-        <Card>
+        <Card class="dark:bg-slate-950 dark:border-slate-800">
             <CardHeader>
-                <CardTitle class="flex items-center gap-2">
+                <CardTitle class="flex items-center gap-2 dark:text-slate-100">
                     <MapPin class="h-5 w-5 text-primary" />
                     Contact Details
                 </CardTitle>
@@ -127,19 +142,19 @@ function submit() {
             </CardHeader>
             <CardContent class="space-y-4">
                 <div class="space-y-2">
-                    <Label for="address">Address</Label>
+                    <Label for="address" class="dark:text-slate-300">Address</Label>
                     <div class="relative">
                         <MapPin class="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                        <Input id="address" v-model="form.address" placeholder="123 Main St, City" class="pl-9" />
+                        <Input id="address" v-model="form.address" placeholder="123 Main St, City" class="pl-9 dark:bg-slate-950 dark:border-slate-800 dark:text-slate-100" />
                     </div>
                     <p v-if="form.errors.address" class="text-sm text-destructive">{{ form.errors.address }}</p>
                 </div>
 
                 <div class="space-y-2">
-                    <Label for="email">Email Address</Label>
+                    <Label for="email" class="dark:text-slate-300">Email Address</Label>
                     <div class="relative">
                         <Mail class="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                        <Input id="email" type="email" v-model="form.email" placeholder="john.doe@example.com" class="pl-9" />
+                        <Input id="email" type="email" v-model="form.email" placeholder="john.doe@example.com" class="pl-9 dark:bg-slate-950 dark:border-slate-800 dark:text-slate-100" />
                     </div>
                     <p v-if="form.errors.email" class="text-sm text-destructive">{{ form.errors.email }}</p>
                 </div>
@@ -147,21 +162,21 @@ function submit() {
                 <Separator class="my-2" />
 
                 <div class="space-y-2">
-                    <Label class="text-sm font-semibold flex items-center gap-1">
+                    <Label class="text-sm font-semibold flex items-center gap-1 dark:text-slate-300">
                         <AlertCircle class="h-3 w-3 text-amber-500" />
                         Emergency Contact
                     </Label>
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div class="space-y-2">
                             <Label for="emergency_contact" class="text-xs text-muted-foreground">Name</Label>
-                            <Input id="emergency_contact" v-model="form.emergency_contact" placeholder="Contact Person" />
+                            <Input id="emergency_contact" v-model="form.emergency_contact" placeholder="Contact Person" class="dark:bg-slate-950 dark:border-slate-800 dark:text-slate-100" />
                             <p v-if="form.errors.emergency_contact" class="text-sm text-destructive">{{ form.errors.emergency_contact }}</p>
                         </div>
                         <div class="space-y-2">
                             <Label for="emergency_contact_number" class="text-xs text-muted-foreground">Phone Number</Label>
                             <div class="relative">
                                 <Phone class="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                                <Input id="emergency_contact_number" v-model="form.emergency_contact_number" placeholder="+123456789" class="pl-9" />
+                                <Input id="emergency_contact_number" v-model="form.emergency_contact_number" placeholder="+123456789" class="pl-9 dark:bg-slate-950 dark:border-slate-800 dark:text-slate-100" />
                             </div>
                             <p v-if="form.errors.emergency_contact_number" class="text-sm text-destructive">{{ form.errors.emergency_contact_number }}</p>
                         </div>
@@ -169,8 +184,8 @@ function submit() {
                 </div>
 
                 <div class="space-y-2 pt-2">
-                    <Label for="registered_at">Registration Date</Label>
-                    <Input id="registered_at" type="date" v-model="form.registered_at" />
+                    <Label for="registered_at" class="dark:text-slate-300">Registration Date</Label>
+                    <Input id="registered_at" type="date" v-model="form.registered_at" class="dark:bg-slate-950 dark:border-slate-800 dark:text-slate-100" />
                     <p v-if="form.errors.registered_at" class="text-sm text-destructive">{{ form.errors.registered_at }}</p>
                 </div>
             </CardContent>

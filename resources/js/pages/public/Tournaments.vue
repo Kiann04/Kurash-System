@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue'
 import { Head } from '@inertiajs/vue3'
+import { ref, computed } from 'vue'
 const route = window.route;
 import Pagination from '@/components/Pagination.vue'
 import { Instagram, Facebook, Calendar, MapPin, ExternalLink, Search, Filter, SlidersHorizontal } from 'lucide-vue-next'

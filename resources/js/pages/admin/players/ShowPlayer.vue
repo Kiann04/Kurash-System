@@ -1,10 +1,4 @@
 <script setup lang="ts">
-import AppLayout from '@/layouts/AppLayout.vue';
-import { route } from 'ziggy-js';
-import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Link } from '@inertiajs/vue3';
 import { 
     User, 
@@ -18,6 +12,12 @@ import {
     Clock,
     Activity
 } from 'lucide-vue-next';
+import { route } from 'ziggy-js';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/ui/card';
+import AppLayout from '@/layouts/AppLayout.vue';
 
 const props = defineProps<{
     player: {
