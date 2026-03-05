@@ -1,4 +1,4 @@
-import { MatchItem, BracketItem } from '@/types/bracket'
+import type { MatchItem, BracketItem } from '@/types/bracket'
 
 /**
  * Bracket Logic Composable

@@ -1,6 +1,7 @@
 <script setup lang="ts">
+import { Check, Search, Users, Filter, Plus, Trash2 } from 'lucide-vue-next'
 import { computed, ref, watch } from 'vue'
-import { Check, Search, Users, Filter } from 'lucide-vue-next'
+import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import {
     Card,
@@ -10,7 +11,6 @@ import {
     CardTitle,
 } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
-import { Badge } from '@/components/ui/badge'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import {
     Select,
@@ -20,19 +20,19 @@ import {
     SelectValue,
 } from '@/components/ui/select'
 import {
-    Tooltip,
-    TooltipContent,
-    TooltipProvider,
-    TooltipTrigger,
-} from '@/components/ui/tooltip'
-import {
     TableBody,
     TableCell,
     TableHead,
     TableHeader,
     TableRow,
 } from '@/components/ui/table'
-import { Player, TournamentWeightCategory, Registration } from '@/types/tournament'
+import {
+    Tooltip,
+    TooltipContent,
+    TooltipProvider,
+    TooltipTrigger,
+} from '@/components/ui/tooltip'
+import type { Player, TournamentWeightCategory, Registration } from '@/types/tournament'
 
 interface Props {
     players: Player[]
@@ -51,12 +51,11 @@ const emit = defineEmits<{
 const searchQuery = ref('')
 const genderFilter = ref<string>('all')
 
-// Watcher: Automatically sets the gender filter based on the selected weight category.
-// If the category is 'Male' or 'Female', it sets the filter accordingly.
-// If no category is selected, it defaults to 'all'.
-watch(() => props.selectedCategory, (newCategory) => {
-    if (newCategory) {
-        genderFilter.value = newCategory.gender.toLowerCase() === 'male' || newCategory.gender.toLowerCase() === 'm' ? 'male' : 'female'
+// Sync gender filter when category gender changes; if cleared, allow 'all'
+watch(() => props.selectedCategory?.gender, (g) => {
+    if (g) {
+        const normalized = String(g).toLowerCase()
+        genderFilter.value = normalized === 'male' || normalized === 'm' ? 'male' : 'female'
     } else {
         genderFilter.value = 'all'
     }
@@ -67,8 +66,6 @@ watch(() => props.selectedCategory, (newCategory) => {
 // 2. Search query (matches name or club)
 // 3. Gender filter (matches selected gender)
 const filteredPlayers = computed(() => {
-    if (!props.selectedCategory) return []
-    
     const query = searchQuery.value.toLowerCase()
 
     return props.players.filter((player) => {
@@ -89,11 +86,17 @@ const filteredPlayers = computed(() => {
             player.full_name.toLowerCase().includes(query) ||
             player.club.toLowerCase().includes(query)
         
-        // 3. Gender Filter Check
+        // 3. Gender logic:
+        // If the selected category has a gender, enforce it; otherwise use the filter
+        const playerGender = (player.gender || '').toLowerCase()
         let matchesGender = true
-        if (genderFilter.value !== 'all') {
-            const playerGender = player.gender.toLowerCase()
-            matchesGender = 
+        const categoryGender = (props.selectedCategory?.gender || '').toLowerCase()
+        if (categoryGender) {
+            matchesGender =
+                ((categoryGender === 'male' || categoryGender === 'm') && (playerGender === 'male' || playerGender === 'm')) ||
+                ((categoryGender === 'female' || categoryGender === 'f') && (playerGender === 'female' || playerGender === 'f'))
+        } else if (genderFilter.value !== 'all') {
+            matchesGender =
                 (genderFilter.value === 'male' && (playerGender === 'male' || playerGender === 'm')) ||
                 (genderFilter.value === 'female' && (playerGender === 'female' || playerGender === 'f'))
         }
@@ -111,6 +114,27 @@ const isPlayerRegisteredInCurrentCategory = (playerId: number) => {
     )
 }
 
+// Helper: Eligibility for current category by gender
+const isEligiblePlayer = (player: Player) => {
+    if (!props.selectedCategory) return false
+    const categoryGender = (props.selectedCategory.gender || '').toLowerCase()
+    if (!categoryGender) return true
+    const playerGender = (player.gender || '').toLowerCase()
+    return (
+        ((categoryGender === 'male' || categoryGender === 'm') && (playerGender === 'male' || playerGender === 'm')) ||
+        ((categoryGender === 'female' || categoryGender === 'f') && (playerGender === 'female' || playerGender === 'f'))
+    )
+}
+
+// Helper: Gender letter styling (M blue, F pink)
+const getGenderClass = (gender: string) => {
+    const g = (gender || '').toLowerCase()
+    if (g === 'male' || g === 'm') {
+        return 'text-blue-600 dark:text-blue-400'
+    }
+    return 'text-pink-600 dark:text-pink-400'
+}
+
 // Helper: Returns the ID of the weight category a player is registered in (if any).
 const getPlayerRegistrationCategory = (playerId: number) => {
     const reg = props.registrations.find((r) => r.player_id === playerId)
@@ -123,6 +147,8 @@ const getPlayerRegistrationCategory = (playerId: number) => {
 // Note: Logic allows checking if player is already in another category (commented out single-category rule).
 const togglePlayerRegistration = (player: Player) => {
     if (!props.selectedCategory) return
+
+    if (!isEligiblePlayer(player)) return
 
     const isRegistered = isPlayerRegisteredInCurrentCategory(player.id)
     let newRegistrations = [...props.registrations]
@@ -204,7 +230,7 @@ const getPlayerAssignment = (playerId: number) => {
             </div>
         </CardHeader>
         <CardContent class="p-0 flex-1 flex flex-col min-h-0">
-            <!-- Filter Controls: Search and Gender Selection -->
+            <!-- Filter Controls: Search + Gender -->
             <div class="p-3 border-b dark:border-slate-800 space-y-3 bg-white dark:bg-slate-950">
                 <div class="flex gap-2">
                     <div class="relative flex-1">
@@ -215,55 +241,26 @@ const getPlayerAssignment = (playerId: number) => {
                             class="pl-9 bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-800 h-9"
                         />
                     </div>
-                    <Select v-model="genderFilter">
-                        <SelectTrigger class="w-28 h-9 dark:bg-slate-900 dark:border-slate-800">
-                            <div class="flex items-center gap-2">
-                                <Filter class="w-3.5 h-3.5 text-slate-500" />
-                                <SelectValue placeholder="Gender" />
-                            </div>
-                        </SelectTrigger>
-                        <SelectContent class="dark:bg-slate-900 dark:border-slate-800">
-                            <SelectItem value="all">All</SelectItem>
-                            <SelectItem value="male">Male</SelectItem>
-                            <SelectItem value="female">Female</SelectItem>
-                        </SelectContent>
-                    </Select>
+                    <div class="w-28">
+                        <Select v-model="genderFilter">
+                            <SelectTrigger class="h-9 dark:bg-slate-900 dark:border-slate-800" :disabled="!!props.selectedCategory && !!props.selectedCategory.gender">
+                                <div class="flex items-center gap-2">
+                                    <Filter class="w-3.5 h-3.5 text-slate-500" />
+                                    <SelectValue placeholder="Gender" />
+                                </div>
+                            </SelectTrigger>
+                            <SelectContent class="dark:bg-slate-900 dark:border-slate-800">
+                                <SelectItem value="all">All</SelectItem>
+                                <SelectItem value="male">Male</SelectItem>
+                                <SelectItem value="female">Female</SelectItem>
+                            </SelectContent>
+                        </Select>
+                    </div>
                 </div>
             </div>
 
             <ScrollArea class="flex-1">
-                <!-- Empty State: No Category Selected -->
-                <div v-if="!selectedCategory" class="flex flex-col items-center justify-center h-full p-8 text-center w-full">
-                    <div class="w-12 h-12 bg-slate-100 dark:bg-slate-800 rounded-full flex items-center justify-center mb-4">
-                        <Users class="w-6 h-6 text-slate-400" />
-                    </div>
-                    <h3 class="text-sm font-medium text-slate-900 dark:text-slate-100">No Category Selected</h3>
-                    <p class="text-xs text-slate-500 dark:text-slate-400 mt-1 max-w-64">
-                        Select a weight category from the left panel to assign players.
-                    </p>
-                </div>
-
-                <!-- Empty State: No Players Found matching filters -->
-                <div v-else-if="filteredPlayers.length === 0" class="flex flex-col items-center justify-center h-full p-8 text-center w-full">
-                    <div class="w-12 h-12 bg-slate-100 dark:bg-slate-800 rounded-full flex items-center justify-center mb-4">
-                        <Search class="w-6 h-6 text-slate-400" />
-                    </div>
-                    <h3 class="text-sm font-medium text-slate-900 dark:text-slate-100">No Players Found</h3>
-                    <p class="text-xs text-slate-500 dark:text-slate-400 mt-1 max-w-64">
-                        No active players found matching the current filters and category requirements.
-                    </p>
-                    <Button 
-                        v-if="searchQuery || genderFilter !== 'all'"
-                        variant="link" 
-                        class="mt-2 text-indigo-600 dark:text-indigo-400 h-auto p-0 text-xs"
-                        @click="searchQuery = ''; genderFilter = 'all'"
-                    >
-                        Clear filters
-                    </Button>
-                </div>
-
-                <!-- Player List Table -->
-                <div v-else class="relative w-full">
+                <div class="relative w-full">
                     <table class="w-full caption-bottom text-sm table-fixed">
                         <TableHeader class="sticky top-0 bg-slate-50 dark:bg-slate-900 z-10 shadow-sm">
                             <TableRow class="hover:bg-transparent border-b border-slate-200 dark:border-slate-800">
@@ -277,7 +274,7 @@ const getPlayerAssignment = (playerId: number) => {
                                 <TableHead class="w-20 text-right">Action</TableHead>
                             </TableRow>
                         </TableHeader>
-                        <TableBody>
+                        <TableBody class="min-h-64">
                             <TableRow
                                 v-for="player in filteredPlayers"
                                 :key="player.id"
@@ -301,7 +298,11 @@ const getPlayerAssignment = (playerId: number) => {
                                     {{ player.full_name }}
                                 </TableCell>
                                 <TableCell class="text-slate-600 dark:text-slate-400">{{ player.club }}</TableCell>
-                                <TableCell class="capitalize text-slate-600 dark:text-slate-400">{{ player.gender }}</TableCell>
+                                <TableCell>
+                                    <span :class="getGenderClass(player.gender)" class="font-medium">
+                                        {{ (player.gender || '').charAt(0).toUpperCase() }}
+                                    </span>
+                                </TableCell>
                                 <TableCell class="text-slate-600 dark:text-slate-400">{{ calculateAge(player.dob) }}</TableCell>
                                 <TableCell>
                                     <span :class="getPlayerAssignment(player.id).class" class="text-sm">
@@ -318,9 +319,25 @@ const getPlayerAssignment = (playerId: number) => {
                                 </TableCell>
                                 <TableCell class="text-right">
                                      <Button size="sm" variant="ghost" class="h-8 w-8 p-0 hover:bg-slate-200 dark:hover:bg-slate-800">
-                                        <Plus v-if="!isPlayerRegisteredInCurrentCategory(player.id) && !getPlayerRegistrationCategory(player.id)" class="h-4 w-4 text-slate-500 hover:text-indigo-600" />
+                                        <Plus v-if="isEligiblePlayer(player) && !isPlayerRegisteredInCurrentCategory(player.id) && !getPlayerRegistrationCategory(player.id)" class="h-4 w-4 text-slate-500 hover:text-indigo-600" />
                                         <Trash2 v-if="isPlayerRegisteredInCurrentCategory(player.id)" class="h-4 w-4 text-red-500" />
                                      </Button>
+                                </TableCell>
+                            </TableRow>
+                            <TableRow v-if="filteredPlayers.length === 0">
+                                <TableCell colspan="8" class="p-8 text-center text-muted-foreground">
+                                    <div class="flex flex-col items-center justify-center gap-2">
+                                        <Search class="h-8 w-8 text-slate-300 dark:text-slate-600" />
+                                        <p>No players found matching your criteria.</p>
+                                        <Button 
+                                            v-if="searchQuery || (!props.selectedCategory?.gender && genderFilter !== 'all')"
+                                            variant="link" 
+                                            class="mt-2 text-indigo-600 dark:text-indigo-400 h-auto p-0 text-xs"
+                                            @click="searchQuery = ''; genderFilter = 'all'"
+                                        >
+                                            Clear filters
+                                        </Button>
+                                    </div>
                                 </TableCell>
                             </TableRow>
                         </TableBody>

@@ -25,15 +25,15 @@ import {
     DialogHeader,
     DialogTitle,
 } from '@/components/ui/dialog'
-import AppLayout from '@/layouts/AppLayout.vue'
-import { MatchItem, BracketItem, TournamentItem, CategoryParticipant } from '@/types/bracket'
 import { useBracketLogic } from '@/composables/useBracketLogic'
+import AppLayout from '@/layouts/AppLayout.vue'
+import type { MatchItem, BracketItem, TournamentItem, CategoryParticipant } from '@/types/bracket'
 
 // Components
-import TournamentDocument from './components/TournamentDocument.vue'
-import MatchList from './components/MatchList.vue'
-import MatchHistory from './components/MatchHistory.vue'
 import BracketView from './components/BracketView.vue'
+import MatchHistory from './components/MatchHistory.vue'
+import MatchList from './components/MatchList.vue'
+import TournamentDocument from './components/TournamentDocument.vue'
 
 type TabType = 'document' | 'matches' | 'history' | 'brackets'
 
@@ -191,7 +191,7 @@ const confirmWinner = () => {
     if (!confirmWinnerMatch.value || !confirmWinnerId.value) return
 
     router.post(
-        route('admin.matches.update-winner', confirmWinnerMatch.value.id),
+        route('admin.tournaments.matches.advance', { tournament: props.tournament.id, match: confirmWinnerMatch.value.id }),
         { winner_id: confirmWinnerId.value },
         {
             preserveScroll: true,
@@ -226,7 +226,7 @@ const revertMatch = () => {
     if (!revertMatchItem.value) return
 
     router.post(
-        route('admin.matches.revert', revertMatchItem.value.id),
+        route('admin.tournaments.matches.revert', { tournament: props.tournament.id, match: revertMatchItem.value.id }),
         {},
         {
             preserveScroll: true,
@@ -254,7 +254,7 @@ const goBack = () => {
         <Head title="Bracket Management" />
 
         <div class="py-6" :class="{ 'fixed inset-0 z-50 bg-background overflow-auto p-4': fullscreenBracketId }">
-            <div :class="{ 'max-w-7xl mx-auto sm:px-6 lg:px-8': !fullscreenBracketId, 'h-full': fullscreenBracketId }">
+            <div :class="{ 'max-w-[90rem] mx-auto sm:px-4 lg:px-6': !fullscreenBracketId, 'h-full': fullscreenBracketId }">
                 <!-- Header (Hidden in Fullscreen) -->
                 <div v-if="!fullscreenBracketId" class="mb-6">
                     <Button variant="ghost" class="mb-4 pl-0 hover:bg-transparent hover:text-primary" @click="goBack">

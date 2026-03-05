@@ -1,6 +1,7 @@
-import { ref, watch } from 'vue'
 import { useForm } from '@inertiajs/vue3'
-import { Registration, TournamentWeightCategory, Player } from '@/types/tournament'
+import { ref, watch } from 'vue'
+import type { Registration, TournamentWeightCategory} from '@/types/tournament';
+import { Player } from '@/types/tournament'
 
 /**
  * Composable for managing tournament form state and logic.

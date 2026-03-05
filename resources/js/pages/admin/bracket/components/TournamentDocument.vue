@@ -17,7 +17,7 @@ import {
     TableHeader,
     TableRow,
 } from '@/components/ui/table'
-import { MatchItem, BracketItem, TournamentItem } from '@/types/bracket'
+import type { MatchItem, BracketItem, TournamentItem } from '@/types/bracket'
 
 /**
  * Component props

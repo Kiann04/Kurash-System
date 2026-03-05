@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { useVModel } from '@vueuse/core'
+import { ChevronDown } from 'lucide-vue-next'
 import { computed } from 'vue'
 import { Button } from '@/components/ui/button'
 import {
@@ -16,8 +18,6 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { ChevronDown } from 'lucide-vue-next'
-import { useVModel } from '@vueuse/core'
 
 interface Props {
     name: string
@@ -93,8 +93,6 @@ const localStatus = useVModel(props, 'status', emit)
                         <DropdownMenuContent align="end" class="dark:bg-slate-950 dark:border-slate-800">
                             <DropdownMenuItem @click="localStatus = 'draft'" class="capitalize dark:text-slate-200 dark:focus:bg-slate-800">Draft</DropdownMenuItem>
                             <DropdownMenuItem @click="localStatus = 'open'" class="capitalize dark:text-slate-200 dark:focus:bg-slate-800">Open</DropdownMenuItem>
-                            <DropdownMenuItem @click="localStatus = 'ongoing'" class="capitalize dark:text-slate-200 dark:focus:bg-slate-800">Ongoing</DropdownMenuItem>
-                            <DropdownMenuItem @click="localStatus = 'completed'" class="capitalize dark:text-slate-200 dark:focus:bg-slate-800">Completed</DropdownMenuItem>
                         </DropdownMenuContent>
                     </DropdownMenu>
                     <p v-if="errors.status" class="text-sm text-destructive">{{ errors.status }}</p>

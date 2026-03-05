@@ -50,15 +50,23 @@ class TournamentController extends Controller
      *
      * @return \Inertia\Response
      */
-    public function create()
+    public function create(Request $request)
     {
         $players = $this->mapPlayers();
         $tournamentWeightCategories = $this->mapTournamentWeightCategories();
+
+        $initial = [
+            'name' => (string) $request->query('name', ''),
+            'location' => $request->query('location') ?: null,
+            'tournament_date' => (string) $request->query('date', ''),
+            'status' => in_array($request->query('status'), ['draft', 'open']) ? $request->query('status') : 'draft',
+        ];
 
         return Inertia::render('admin/tournament/Create', [
             'players' => $players,
             'tournamentWeightCategories' => $tournamentWeightCategories,
             'weightCategories' => $tournamentWeightCategories,
+            'initial' => $initial,
         ]);
     }
 
@@ -97,7 +105,8 @@ class TournamentController extends Controller
                 ->values();
 
             $playerIds = $registrations->pluck('player_id')->unique();
-            $invalidPlayers = Player::whereIn('id', $playerIds)
+            $playersMap = Player::whereIn('id', $playerIds)->get(['id', 'gender', 'full_name'])->keyBy('id');
+            $invalidPlayers = $playersMap
                 ->where(function ($query) {
                     $query->where('status', 'inactive')
                         ->orWhere(function ($q) {
@@ -115,8 +124,24 @@ class TournamentController extends Controller
 
             $categoryMap = WeightCategory::query()
                 ->whereIn('id', $registrations->pluck('tournament_weight_category_id'))
-                ->get(['id', 'age_category_id'])
+                ->get(['id', 'age_category_id', 'gender'])
                 ->keyBy('id');
+
+            $genderMismatches = collect($registrations)->filter(function ($registration) use ($playersMap, $categoryMap) {
+                $player = $playersMap->get($registration['player_id']);
+                $category = $categoryMap->get($registration['tournament_weight_category_id']);
+                if (!$player || !$category) return false;
+                $pg = strtolower($player->gender);
+                $cg = strtolower($category->gender);
+                return (($cg === 'male' || $cg === 'm') && !($pg === 'male' || $pg === 'm')) ||
+                       (($cg === 'female' || $cg === 'f') && !($pg === 'female' || $pg === 'f'));
+            })->map(fn($reg) => $playersMap->get($reg['player_id'])?->full_name)->filter()->values();
+
+            if ($genderMismatches->isNotEmpty()) {
+                throw ValidationException::withMessages([
+                    'registrations' => 'The following players do not match the selected category gender: ' . $genderMismatches->implode(', '),
+                ]);
+            }
 
             foreach ($registrations as $registration) {
                 $category = $categoryMap->get($registration['tournament_weight_category_id']);
@@ -170,26 +195,17 @@ class TournamentController extends Controller
      */
     public function downloadRegistrationTemplate()
     {
-        $phpWord = new \PhpOffice\PhpWord\PhpWord();
-        $section = $phpWord->addSection();
+        $tempFile = tempnam(sys_get_temp_dir(), 'registration_template_csv');
+        $handle = fopen($tempFile, 'w');
+        // Header row
+        fputcsv($handle, ['Full Name', 'Gender', 'Weight Category']);
+        // Example row
+        fputcsv($handle, ['John Doe', 'Male', '-66kg']);
+        fclose($handle);
 
-        $table = $section->addTable(['borderSize' => 6, 'borderColor' => '000000', 'cellMargin' => 80]);
-
-        $table->addRow();
-        $table->addCell(4000)->addText('Full Name', ['bold' => true]);
-        $table->addCell(2000)->addText('Gender', ['bold' => true]);
-        $table->addCell(2000)->addText('Weight Category', ['bold' => true]);
-
-        $table->addRow();
-        $table->addCell(4000)->addText('John Doe');
-        $table->addCell(2000)->addText('Male');
-        $table->addCell(2000)->addText('-66kg');
-
-        $tempFile = tempnam(sys_get_temp_dir(), 'registration_template');
-        $objWriter = \PhpOffice\PhpWord\IOFactory::createWriter($phpWord, 'Word2007');
-        $objWriter->save($tempFile);
-
-        return response()->download($tempFile, 'registration_template.docx')->deleteFileAfterSend(true);
+        return response()->download($tempFile, 'registration_template.csv', [
+            'Content-Type' => 'text/csv',
+        ])->deleteFileAfterSend(true);
     }
 
     /**
@@ -280,7 +296,8 @@ class TournamentController extends Controller
                 ->values();
 
             $playerIds = $registrations->pluck('player_id')->unique();
-            $invalidPlayers = Player::whereIn('id', $playerIds)
+            $playersMap = Player::whereIn('id', $playerIds)->get(['id', 'gender', 'full_name'])->keyBy('id');
+            $invalidPlayers = $playersMap
                 ->where(function ($query) {
                     $query->where('status', 'inactive')
                         ->orWhere(function ($q) {
@@ -298,8 +315,24 @@ class TournamentController extends Controller
 
             $categoryMap = WeightCategory::query()
                 ->whereIn('id', $registrations->pluck('tournament_weight_category_id'))
-                ->get(['id', 'age_category_id'])
+                ->get(['id', 'age_category_id', 'gender'])
                 ->keyBy('id');
+
+            $genderMismatches = collect($registrations)->filter(function ($registration) use ($playersMap, $categoryMap) {
+                $player = $playersMap->get($registration['player_id']);
+                $category = $categoryMap->get($registration['tournament_weight_category_id']);
+                if (!$player || !$category) return false;
+                $pg = strtolower($player->gender);
+                $cg = strtolower($category->gender);
+                return (($cg === 'male' || $cg === 'm') && !($pg === 'male' || $pg === 'm')) ||
+                       (($cg === 'female' || $cg === 'f') && !($pg === 'female' || $pg === 'f'));
+            })->map(fn($reg) => $playersMap->get($reg['player_id'])?->full_name)->filter()->values();
+
+            if ($genderMismatches->isNotEmpty()) {
+                throw ValidationException::withMessages([
+                    'registrations' => 'The following players do not match the selected category gender: ' . $genderMismatches->implode(', '),
+                ]);
+            }
 
             $tournament->registrations()->delete();
 

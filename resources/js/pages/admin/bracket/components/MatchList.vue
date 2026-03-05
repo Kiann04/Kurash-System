@@ -6,6 +6,7 @@
  * Used for managing the schedule and entering results.
  */
 import { User, Check } from 'lucide-vue-next'
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/ui/card'
@@ -17,10 +18,9 @@ import {
     TableHeader,
     TableRow,
 } from '@/components/ui/table'
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
-import { MatchItem, BracketItem } from '@/types/bracket'
 import { useBracketLogic } from '@/composables/useBracketLogic'
 import { useInitials } from '@/composables/useInitials'
+import type { MatchItem, BracketItem } from '@/types/bracket'
 
 /**
  * Component props
@@ -143,12 +143,8 @@ const confirmAndChooseWinner = (match: MatchItem, winnerId: number | null) => {
                                 <div class="flex items-center justify-center gap-2">
                                     <Button
                                          size="sm"
-                                         :variant="m.winner_id === m.player_one_id ? 'default' : 'outline'"
-                                         class="w-full sm:w-auto h-8 text-xs dark:border-slate-700 dark:bg-slate-900 dark:hover:bg-slate-800"
-                                         :class="{ 
-                                            'bg-green-600 hover:bg-green-700 text-white dark:bg-green-600 dark:hover:bg-green-700 border-green-600': m.winner_id === m.player_one_id,
-                                            'hover:border-green-500 hover:text-green-600 dark:hover:text-green-400': m.winner_id !== m.player_one_id && !isCompleted && m.player_one_id
-                                         }"
+                                         :variant="'outline'"
+                                         class="w-full sm:w-auto h-8 text-xs border-blue-600 bg-blue-600 text-white hover:bg-white hover:text-blue-600 dark:border-blue-500 dark:bg-blue-600 dark:hover:bg-slate-900 dark:hover:text-blue-400"
                                          :disabled="m.player_one_id === null || isCompleted"
                                          @click="confirmAndChooseWinner(m, m.player_one_id)"
                                      >
@@ -158,13 +154,9 @@ const confirmAndChooseWinner = (match: MatchItem, winnerId: number | null) => {
                                      </Button>
                                      <span class="text-muted-foreground text-xs font-bold uppercase">vs</span>
                                      <Button
-                                         size="sm"
-                                         :variant="m.winner_id === m.player_two_id ? 'default' : 'outline'"
-                                         class="w-full sm:w-auto h-8 text-xs dark:border-slate-700 dark:bg-slate-900 dark:hover:bg-slate-800"
-                                         :class="{ 
-                                            'bg-green-600 hover:bg-green-700 text-white dark:bg-green-600 dark:hover:bg-green-700 border-green-600': m.winner_id === m.player_two_id,
-                                            'hover:border-green-500 hover:text-green-600 dark:hover:text-green-400': m.winner_id !== m.player_two_id && !isCompleted && m.player_two_id
-                                         }"
+                                        size="sm"
+                                        :variant="'outline'"
+                                        class="w-full sm:w-auto h-8 text-xs border-green-600 bg-green-600 text-white hover:bg-white hover:text-green-600 dark:border-green-500 dark:bg-green-600 dark:hover:bg-slate-900 dark:hover:text-green-400"
                                          :disabled="m.player_two_id === null || isCompleted"
                                          @click="confirmAndChooseWinner(m, m.player_two_id)"
                                      >

@@ -1,6 +1,8 @@
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
 import { Plus, Trash2, Loader2, Trophy, Users, Check } from 'lucide-vue-next'
+import { computed, ref, watch } from 'vue'
+import { route } from 'ziggy-js'
+import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import {
     Card,
@@ -27,9 +29,7 @@ import {
     SelectValue,
 } from '@/components/ui/select'
 import { Separator } from '@/components/ui/separator'
-import { Badge } from '@/components/ui/badge'
-import { TournamentWeightCategory } from '@/types/tournament'
-import { route } from 'ziggy-js'
+import type { TournamentWeightCategory } from '@/types/tournament'
 
 interface Props {
     weightCategories: TournamentWeightCategory[]
@@ -74,15 +74,15 @@ const genderOptions = computed(() =>
     ),
 )
 
-// State: Selected gender for filtering
-const selectedGender = ref<'male' | 'female'>(genderOptions.value[0] ?? 'male')
+// State: Selected gender for filtering (allow empty to clear)
+const selectedGender = ref<'male' | 'female' | ''>(genderOptions.value[0] ?? 'male')
 
 // Computed: Filters available age categories based on selected gender
 const ageCategoryOptions = computed(() => {
     const map = new Map<number, string>()
 
     localWeightCategories.value
-        .filter((category) => normalizeGender(category.gender) === selectedGender.value)
+        .filter((category) => !selectedGender.value || normalizeGender(category.gender) === selectedGender.value)
         .forEach((category) => {
             map.set(category.age_category_id, category.age_category_name || `Age Category #${category.age_category_id}`)
         })
@@ -96,25 +96,35 @@ const ageCategoryOptions = computed(() => {
 const selectedAgeCategoryId = ref<number | null>(ageCategoryOptions.value[0]?.id ?? null)
 
 // Computed: Filters weight categories based on selected gender and age category
-const weightCategoryOptions = computed(() =>
-    localWeightCategories.value
+const weightCategoryOptions = computed(() => {
+    if (!selectedGender.value || !selectedAgeCategoryId.value) {
+        return []
+    }
+    return localWeightCategories.value
         .filter((category) =>
             normalizeGender(category.gender) === selectedGender.value &&
             category.age_category_id === selectedAgeCategoryId.value,
         )
         .slice()
-        .sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true })),
-)
+        .sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true }))
+})
 
 // Watcher: Resets age category selection when gender changes
 watch(selectedGender, () => {
-    selectedAgeCategoryId.value = ageCategoryOptions.value[0]?.id ?? null
+    selectedAgeCategoryId.value = selectedGender.value ? (ageCategoryOptions.value[0]?.id ?? null) : null
 })
 
 // Watcher: Auto-selects the first weight category when filters change
 watch([selectedGender, selectedAgeCategoryId], () => {
     selectedCategoryId.value = weightCategoryOptions.value[0]?.id ?? null
 }, { immediate: true })
+
+// Action: Clear all selections (gender, age category, weight category)
+const clearSelection = () => {
+    selectedGender.value = ''
+    selectedAgeCategoryId.value = null
+    selectedCategoryId.value = null
+}
 
 // Create Weight Category State
 const isCreateCategoryOpen = ref(false)
@@ -249,8 +259,21 @@ const submitDeleteWeightCategory = async () => {
 <template>
     <Card class="shadow-sm border-slate-200 dark:bg-slate-950 dark:border-slate-800 h-125 flex flex-col">
         <CardHeader class="border-b bg-slate-50/50 dark:bg-slate-900/50 dark:border-slate-800 pb-4">
-            <CardTitle class="text-base font-semibold text-slate-900 dark:text-slate-100">Category Selection</CardTitle>
-            <CardDescription>Select weight category to manage.</CardDescription>
+            <div class="flex items-center justify-between">
+                <div>
+                    <CardTitle class="text-base font-semibold text-slate-900 dark:text-slate-100">Category Selection</CardTitle>
+                    <CardDescription>Select weight category to manage.</CardDescription>
+                </div>
+                <Button
+                    variant="ghost"
+                    size="sm"
+                    class="h-7 text-xs text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800"
+                    @click="clearSelection"
+                    title="Clear Gender, Age, and Weight Category"
+                >
+                    Clear Selection
+                </Button>
+            </div>
         </CardHeader>
         <CardContent class="space-y-4 pt-6 flex-1 flex flex-col min-h-0">
             <!-- Gender Selection -->
@@ -349,7 +372,7 @@ const submitDeleteWeightCategory = async () => {
 
     <!-- Create Category Dialog -->
     <Dialog :open="isCreateCategoryOpen" @update:open="isCreateCategoryOpen = $event">
-        <DialogContent class="sm:max-w-106.25 dark:bg-slate-950 dark:border-slate-800">
+        <DialogContent class="sm:max-w-[425px] dark:bg-slate-950 dark:border-slate-800">
             <DialogHeader>
                 <DialogTitle class="dark:text-slate-100">Add Weight Category</DialogTitle>
                 <DialogDescription>
@@ -387,7 +410,7 @@ const submitDeleteWeightCategory = async () => {
 
     <!-- Delete Category Confirmation -->
     <Dialog :open="isDeleteCategoryOpen" @update:open="isDeleteCategoryOpen = $event">
-        <DialogContent class="sm:max-w-106.25 dark:bg-slate-950 dark:border-slate-800">
+        <DialogContent class="sm:max-w-[425px] dark:bg-slate-950 dark:border-slate-800">
             <DialogHeader>
                 <DialogTitle class="dark:text-slate-100">Delete Weight Category</DialogTitle>
                 <DialogDescription>

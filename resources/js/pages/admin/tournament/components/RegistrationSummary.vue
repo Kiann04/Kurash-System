@@ -1,5 +1,7 @@
 <script setup lang="ts">
+import { Trash2, ChevronDown, ChevronRight } from 'lucide-vue-next'
 import { computed, ref } from 'vue'
+import { Button } from '@/components/ui/button'
 import {
     Card,
     CardContent,
@@ -8,9 +10,7 @@ import {
     CardTitle,
 } from '@/components/ui/card'
 import { ScrollArea } from '@/components/ui/scroll-area'
-import { Button } from '@/components/ui/button'
-import { Trash2, ChevronDown, ChevronRight } from 'lucide-vue-next'
-import { Player, TournamentWeightCategory, Registration } from '@/types/tournament'
+import type { Player, TournamentWeightCategory, Registration } from '@/types/tournament'
 
 interface Props {
     registrations: Registration[]

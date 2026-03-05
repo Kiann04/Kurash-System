@@ -1,5 +1,10 @@
 <script setup lang="ts">
+import { Loader2, Upload, AlertTriangle, CheckCircle2, FileText } from 'lucide-vue-next'
 import { ref } from 'vue'
+import { route } from 'ziggy-js'
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
+import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
 import {
     Card,
     CardContent,
@@ -7,10 +12,7 @@ import {
     CardHeader,
     CardTitle,
 } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
-import { Loader2, Upload, AlertTriangle, CheckCircle2, FileText } from 'lucide-vue-next'
 import {
     Table,
     TableBody,
@@ -19,9 +21,7 @@ import {
     TableHeader,
     TableRow,
 } from '@/components/ui/table'
-import { Badge } from '@/components/ui/badge'
-import { ImportAnalysis, ImportRowResult } from '@/types/tournament'
-import { route } from 'ziggy-js'
+import type { ImportAnalysis, ImportRowResult } from '@/types/tournament'
 
 interface Props {
     csrfToken: string

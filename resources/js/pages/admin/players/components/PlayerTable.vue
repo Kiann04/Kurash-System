@@ -64,6 +64,24 @@ defineProps<{
 const isRenewDialogOpen = ref(false);
 const renewPlayerId = ref<number | null>(null);
 
+function getUiStatus(player: Player) {
+    try {
+        const now = new Date();
+        const expiry = new Date(player.membership_expires_at);
+        const diffMs = expiry.getTime() - now.getTime();
+        const diffDays = diffMs / (1000 * 60 * 60 * 24);
+        if (player.status === 'inactive' || expiry < now) {
+            return 'inactive';
+        }
+        if (diffDays >= 0 && diffDays <= 7) {
+            return 'expiring';
+        }
+        return 'active';
+    } catch {
+        return player.status;
+    }
+}
+
 function renewMembership(playerId: number) {
     renewPlayerId.value = playerId;
     isRenewDialogOpen.value = true;
@@ -149,12 +167,14 @@ const getInitials = (name: string) => {
                                 </div>
                             </TableCell>
                             <TableCell class="p-4 align-middle text-center">
-                                <Badge :variant="player.status === 'active' ? 'default' : 'destructive'" 
+                                <Badge 
                                     :class="[
                                         'capitalize shadow-none font-normal',
-                                        player.status === 'active' ? 'bg-green-100 text-green-700 hover:bg-green-200 dark:bg-green-900/30 dark:text-green-400 dark:hover:bg-green-900/50' : 'bg-red-100 text-red-700 hover:bg-red-200 dark:bg-red-900/30 dark:text-red-400 dark:hover:bg-red-900/50'
+                                        getUiStatus(player) === 'active' && 'bg-green-100 text-green-700 hover:bg-green-200 dark:bg-green-900/30 dark:text-green-400 dark:hover:bg-green-900/50',
+                                        getUiStatus(player) === 'expiring' && 'bg-amber-100 text-amber-700 hover:bg-amber-200 dark:bg-amber-900/30 dark:text-amber-400 dark:hover:bg-amber-900/50',
+                                        getUiStatus(player) === 'inactive' && 'bg-red-100 text-red-700 hover:bg-red-200 dark:bg-red-900/30 dark:text-red-400 dark:hover:bg-red-900/50'
                                     ]">
-                                    {{ player.status }}
+                                    {{ getUiStatus(player) === 'expiring' ? 'Expiring' : getUiStatus(player) }}
                                 </Badge>
                             </TableCell>
                             <TableCell class="p-4 align-middle text-right">

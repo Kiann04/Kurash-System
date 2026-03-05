@@ -85,12 +85,11 @@ class PlayerController extends Controller
             'emergency_contact' => 'required|string|max:255',
             'emergency_contact_number' => 'required|string|max:20',
             'registered_at' => 'required|date',
-            'membership_start_date' => 'nullable|date',
         ]);
 
-        // Auto-calculate membership expiry (1 year from start date or registration)
-        $startDate = $validated['membership_start_date'] ?? $validated['registered_at'];
-        $validated['membership_expires_at'] = \Carbon\Carbon::parse($startDate)->addYear();
+        // Set membership start date from registration and auto-calculate expiry (+1 year)
+        $validated['membership_start_date'] = $validated['registered_at'];
+        $validated['membership_expires_at'] = \Carbon\Carbon::parse($validated['registered_at'])->addYear();
         $validated['status'] = 'active';
 
         Player::create($validated);
@@ -139,9 +138,12 @@ class PlayerController extends Controller
             'registered_at' => 'required|date',
         ]);
 
-        // Update membership expiry if registered_at changes
-        if ($request->has('registered_at') && $request->registered_at !== $player->registered_at->format('Y-m-d')) {
-            $validated['membership_expires_at'] = \Carbon\Carbon::parse($validated['registered_at'])->addYear();
+        // Keep membership start synced to registration date and update expiry when registration changes
+        if ($request->has('registered_at')) {
+            $validated['membership_start_date'] = $validated['registered_at'];
+            if ($request->registered_at !== $player->registered_at->format('Y-m-d')) {
+                $validated['membership_expires_at'] = \Carbon\Carbon::parse($validated['registered_at'])->addYear();
+            }
         }
 
         $player->update($validated);

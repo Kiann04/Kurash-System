@@ -12,9 +12,8 @@
  */
 import { Head } from '@inertiajs/vue3'
 import { Save, Loader2, Trash2 } from 'lucide-vue-next'
+import { computed } from 'vue'
 import { route } from 'ziggy-js'
-import { Button } from '@/components/ui/button'
-import { Toaster } from '@/components/ui/sonner'
 import {
     AlertDialog,
     AlertDialogAction,
@@ -26,17 +25,20 @@ import {
     AlertDialogTitle,
     AlertDialogTrigger,
 } from '@/components/ui/alert-dialog'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent } from '@/components/ui/card'
+import { Toaster } from '@/components/ui/sonner'
+import { useTournamentForm } from '@/composables/tournament/useTournamentForm'
 import AppLayout from '@/layouts/AppLayout.vue'
 import { type BreadcrumbItem } from '@/types'
-import { Player, TournamentWeightCategory, Registration, TournamentRegistration } from '@/types/tournament'
-import { useTournamentForm } from '@/composables/tournament/useTournamentForm'
+import type { Player, TournamentWeightCategory, Registration, TournamentRegistration } from '@/types/tournament'
 
 // Components
-import TournamentForm from './components/TournamentForm.vue'
-import WeightCategoryManager from './components/WeightCategoryManager.vue'
+import ImportSection from './components/ImportSection.vue'
 import RegistrationManager from './components/RegistrationManager.vue'
 import RegistrationSummary from './components/RegistrationSummary.vue'
-import ImportSection from './components/ImportSection.vue'
+import TournamentForm from './components/TournamentForm.vue'
+import WeightCategoryManager from './components/WeightCategoryManager.vue'
 
 /**
  * Page props
@@ -92,8 +94,6 @@ const {
     weight_categories: props.tournamentWeightCategories
 })
 
-import { computed } from 'vue'
-import { Card, CardContent } from '@/components/ui/card'
 import { Users, LayoutGrid, CheckCircle2, UserCheck } from 'lucide-vue-next'
 
 /**

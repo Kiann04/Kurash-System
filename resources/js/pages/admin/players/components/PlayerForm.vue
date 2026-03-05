@@ -51,7 +51,6 @@ const form = useForm({
   emergency_contact: props.player?.emergency_contact || '',
   emergency_contact_number: props.player?.emergency_contact_number || '',
   registered_at: props.player?.registered_at || new Date().toISOString().split('T')[0],
-  membership_start_date: props.player?.membership_start_date || new Date().toISOString().split('T')[0],
 });
 
 function submit() {
@@ -189,12 +188,6 @@ function submit() {
                     <Label for="registered_at" class="dark:text-slate-300">Registration Date</Label>
                     <Input id="registered_at" type="date" v-model="form.registered_at" class="dark:bg-slate-950 dark:border-slate-800 dark:text-slate-100" />
                     <p v-if="form.errors.registered_at" class="text-sm text-destructive">{{ form.errors.registered_at }}</p>
-                </div>
-
-                <div class="space-y-2 pt-2">
-                    <Label for="membership_start_date" class="dark:text-slate-300">Membership Start Date</Label>
-                    <Input id="membership_start_date" type="date" v-model="form.membership_start_date" class="dark:bg-slate-950 dark:border-slate-800 dark:text-slate-100" />
-                    <p v-if="form.errors.membership_start_date" class="text-sm text-destructive">{{ form.errors.membership_start_date }}</p>
                 </div>
             </CardContent>
             <CardFooter class="flex justify-end border-t pt-4">

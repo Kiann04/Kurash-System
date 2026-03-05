@@ -14,17 +14,17 @@ import { Save, Loader2 } from 'lucide-vue-next'
 import { route } from 'ziggy-js'
 import { Button } from '@/components/ui/button'
 import { Toaster } from '@/components/ui/sonner'
+import { useTournamentForm } from '@/composables/tournament/useTournamentForm'
 import AppLayout from '@/layouts/AppLayout.vue'
 import { type BreadcrumbItem } from '@/types'
-import { Player, TournamentWeightCategory, Registration } from '@/types/tournament'
-import { useTournamentForm } from '@/composables/tournament/useTournamentForm'
+import type { Player, TournamentWeightCategory, Registration } from '@/types/tournament'
 
 // Components
-import TournamentForm from './components/TournamentForm.vue'
-import WeightCategoryManager from './components/WeightCategoryManager.vue'
+import ImportSection from './components/ImportSection.vue'
 import RegistrationManager from './components/RegistrationManager.vue'
 import RegistrationSummary from './components/RegistrationSummary.vue'
-import ImportSection from './components/ImportSection.vue'
+import TournamentForm from './components/TournamentForm.vue'
+import WeightCategoryManager from './components/WeightCategoryManager.vue'
 
 /**
  * Page props
@@ -34,6 +34,12 @@ import ImportSection from './components/ImportSection.vue'
 interface Props {
     players: Player[]
     tournamentWeightCategories: TournamentWeightCategory[]
+    initial?: {
+        name?: string
+        location?: string | null
+        tournament_date?: string
+        status?: string
+    }
 }
 
 const props = defineProps<Props>()
@@ -56,7 +62,11 @@ const {
     addRegistrations,
     removeRegistration
 } = useTournamentForm({
-    weight_categories: props.tournamentWeightCategories
+    weight_categories: props.tournamentWeightCategories,
+    name: props.initial?.name ?? '',
+    location: props.initial?.location ?? '',
+    tournament_date: props.initial?.tournament_date ?? undefined,
+    status: props.initial?.status ?? 'draft'
 })
 
 /**

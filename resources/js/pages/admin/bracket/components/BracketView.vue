@@ -11,10 +11,10 @@
  * - Fullscreen mode toggle
  */
 import { Trophy, ArrowLeft, Maximize2, Minimize2, AlertCircle, Medal, Crown } from 'lucide-vue-next'
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/ui/card'
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import {
     Table,
     TableBody,
@@ -23,8 +23,8 @@ import {
     TableHeader,
     TableRow,
 } from '@/components/ui/table'
-import { MatchItem, BracketItem } from '@/types/bracket'
 import { useBracketLogic } from '@/composables/useBracketLogic'
+import type { MatchItem, BracketItem } from '@/types/bracket'
 
 /**
  * Component props
