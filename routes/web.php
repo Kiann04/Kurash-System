@@ -44,7 +44,8 @@ Route::prefix('admin')
         Route::post('players/{player}/renew', [AdminPlayerController::class, 'renew'])->name('players.renew');
 
         Route::resource('tournaments', AdminTournamentController::class);
-        Route::post('tournaments/import-registrations', [AdminTournamentController::class, 'importRegistrations'])->name('tournaments.import-registrations');
+        Route::get('tournaments/registration-template/download', [AdminTournamentController::class, 'downloadRegistrationTemplate'])->name('tournaments.download-template');
+        Route::post('tournaments/import-analysis', [AdminTournamentController::class, 'importRegistrations'])->name('tournaments.import-analysis');
         Route::get('tournamentDocs', [AdminTournamentController::class, 'docs'])->name('tournaments.docs');
         Route::post('weight-categories', [AdminTournamentController::class, 'storeWeightCategory'])->name('weight-categories.store');
         Route::delete('weight-categories/{weightCategory}', [AdminTournamentController::class, 'destroyWeightCategory'])->name('weight-categories.destroy');

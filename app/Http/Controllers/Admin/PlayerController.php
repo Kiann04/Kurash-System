@@ -14,9 +14,9 @@ class PlayerController extends Controller
         $players = Player::query()
             ->when($request->search, function ($query, $search) {
                 $query->where('full_name', 'like', "%{$search}%")
-                      ->orWhere('club', 'like', "%{$search}%")
-                      ->orWhere('email', 'like', "%{$search}%")
-                      ->orWhere('address', 'like', "%{$search}%");
+                    ->orWhere('club', 'like', "%{$search}%")
+                    ->orWhere('email', 'like', "%{$search}%")
+                    ->orWhere('address', 'like', "%{$search}%");
             })
             ->when($request->gender, function ($query, $gender) {
                 if ($gender !== 'all') {
@@ -27,22 +27,29 @@ class PlayerController extends Controller
                 if ($status === 'active') {
                     $query->where(function ($q) {
                         $q->where('membership_expires_at', '>=', now())
-                        ->where('status', 'active');
+                            ->where('status', 'active');
                     });
                 }
 
                 if ($status === 'inactive') {
                     $query->where(function ($q) {
                         $q->where('membership_expires_at', '<', now())
-                        ->orWhere('status', 'inactive');
+                            ->orWhere('status', 'inactive');
                     });
                 }
 
+                if ($status === 'expiring_soon') {
+                    $query->where('membership_expires_at', '>=', now())
+                        ->where('membership_expires_at', '<=', now()->addWeek());
+                }
+            })
+            ->when($request->membership_start, function ($query, $date) {
+                $query->whereDate('membership_start_date', '>=', $date);
             })
             ->latest()
             ->paginate(10)
             ->withQueryString()
-            ->through(fn ($player) => [
+            ->through(fn($player) => [
                 'id' => $player->id,
                 'full_name' => $player->full_name,
                 'gender' => $player->gender ?? 'N/A',
@@ -50,13 +57,14 @@ class PlayerController extends Controller
                 'age' => $player->age,
                 'club' => $player->club ?? '-',
                 'address' => $player->address ?? '-',
+                'membership_start_date' => $player->membership_start_date ? $player->membership_start_date->format('M d, Y') : 'N/A',
                 'membership_expires_at' => $player->membership_expires_at ? $player->membership_expires_at->format('M d, Y') : 'N/A',
                 'status' => $player->status,
             ]);
 
         return Inertia::render('admin/players/Index', [
             'players' => $players,
-            'filters' => $request->only(['search', 'gender', 'status']),
+            'filters' => $request->only(['search', 'gender', 'status', 'membership_start']),
         ]);
     }
 
@@ -77,10 +85,12 @@ class PlayerController extends Controller
             'emergency_contact' => 'required|string|max:255',
             'emergency_contact_number' => 'required|string|max:20',
             'registered_at' => 'required|date',
+            'membership_start_date' => 'nullable|date',
         ]);
 
-        // Auto-calculate membership expiry (1 year from registration)
-        $validated['membership_expires_at'] = \Carbon\Carbon::parse($validated['registered_at'])->addYear();
+        // Auto-calculate membership expiry (1 year from start date or registration)
+        $startDate = $validated['membership_start_date'] ?? $validated['registered_at'];
+        $validated['membership_expires_at'] = \Carbon\Carbon::parse($startDate)->addYear();
         $validated['status'] = 'active';
 
         Player::create($validated);
@@ -149,5 +159,3 @@ class PlayerController extends Controller
         return back()->with('success', 'Membership renewed successfully.');
     }
 }
-
-

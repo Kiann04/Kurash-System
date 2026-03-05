@@ -1,4 +1,10 @@
 <script setup lang="ts">
+/**
+ * Tournament Dashboard Page
+ * 
+ * Displays detailed statistics and player list for a specific tournament.
+ * Provides filtering, pagination, and bracket generation functionality.
+ */
 import { Head, Link, router } from '@inertiajs/vue3';
 import { 
     Trophy, 
@@ -14,6 +20,8 @@ import {
 } from 'lucide-vue-next';
 import { ref, computed } from 'vue';
 import { route } from 'ziggy-js';
+
+// Components
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -39,6 +47,9 @@ import {
 import AppLayout from '@/layouts/AppLayout.vue';
 import { type BreadcrumbItem } from '@/types';
 
+/**
+ * Interface representing a registered player
+ */
 interface Player {
     id: number;
     full_name: string;
@@ -49,12 +60,18 @@ interface Player {
     weight_category_id?: number | null;
 }
 
+/**
+ * Interface representing a weight category
+ */
 interface WeightCategory {
     id: number;
     gender: 'male' | 'female';
     name: string;
 }
 
+/**
+ * Interface representing tournament details
+ */
 interface Tournament {
     id: number;
     name: string;
@@ -62,27 +79,55 @@ interface Tournament {
     status: string;
 }
 
+/**
+ * Props received from the Inertia controller
+ * @property tournament The tournament details
+ * @property players List of all players registered for this tournament
+ * @property weightCategories List of available weight categories
+ */
 const props = defineProps<{
     tournament: Tournament;
     players: Player[];
     weightCategories: WeightCategory[];
 }>();
 
+/**
+ * Breadcrumbs configuration
+ */
 const breadcrumbs: BreadcrumbItem[] = [
     { title: 'Tournaments', href: route('admin.tournaments.index') },
     { title: props.tournament.name, href: '' },
 ];
 
 /* ================= REACTIVE STATES ================= */
+
+/**
+ * Filter state for gender selection (all, male, female)
+ */
 const selectedGender = ref<string>('all');
+
+/**
+ * Filter state for age category selection
+ */
 const selectedAge = ref<string>('all');
+
+/**
+ * Search query string for filtering players
+ */
 const search = ref('');
 
-// Pagination
+// Pagination state
 const currentPage = ref(1);
 const perPage = 20;
 
 /* ================= FILTERS ================= */
+
+/**
+ * Computed property that filters the players list based on:
+ * 1. Selected Gender
+ * 2. Selected Age Category
+ * 3. Search Query (matches name or club)
+ */
 const filteredPlayers = computed(() => {
     let list = props.players;
 
@@ -111,17 +156,29 @@ const filteredPlayers = computed(() => {
     return list;
 });
 
-// Paginated slice
+/**
+ * Returns the subset of filtered players for the current page
+ */
 const paginatedPlayers = computed(() => {
     const start = (currentPage.value - 1) * perPage;
     return filteredPlayers.value.slice(start, start + perPage);
 });
 
+/**
+ * Calculates total number of pages based on filtered results
+ */
 const totalPages = computed(() =>
     Math.ceil(filteredPlayers.value.length / perPage)
 );
 
 /* ================= WEIGHT CLASS ================= */
+
+/**
+ * Helper to resolve and display the weight category name for a player
+ * 
+ * @param player The player object
+ * @returns The name of the weight category or '-' if not assigned
+ */
 const getWeightClass = (player: Player) => {
     if (!player.weight_category_id) return '-';
     const matched = props.weightCategories.find(w => w.id === player.weight_category_id);
@@ -129,6 +186,10 @@ const getWeightClass = (player: Player) => {
 };
 
 /* ================= AGE CATEGORIES ================= */
+
+/**
+ * Extracts a unique list of age categories from the players list for the filter dropdown
+ */
 const ageCategories = computed(() => {
     const cats = new Set(props.players.map(p => p.age_category).filter(Boolean));
     return Array.from(cats).sort();
@@ -136,6 +197,10 @@ const ageCategories = computed(() => {
 
 const generating = ref(false);
 
+/**
+ * Triggers the bracket generation process via a POST request.
+ * Handles loading state during the request.
+ */
 const generateBrackets = () => {
     if (generating.value) return;
 
@@ -149,6 +214,9 @@ const generateBrackets = () => {
     });
 };
 
+/**
+ * Formats a date string into a localized human-readable format.
+ */
 const formatDate = (date: string) => {
     return new Date(date).toLocaleDateString('en-PH', {
         year: 'numeric',
@@ -157,6 +225,9 @@ const formatDate = (date: string) => {
     });
 };
 
+/**
+ * Returns the appropriate CSS classes for a tournament status badge.
+ */
 const getStatusColor = (status: string) => {
     switch(status.toLowerCase()) {
         case 'open': return 'bg-green-100 text-green-700 hover:bg-green-200 dark:bg-green-500/10 dark:text-green-400 dark:hover:bg-green-500/20';
@@ -166,6 +237,9 @@ const getStatusColor = (status: string) => {
     }
 };
 
+/**
+ * Computed statistics for the dashboard cards
+ */
 const stats = computed(() => [
     {
         title: 'Total Players',
@@ -190,6 +264,9 @@ const stats = computed(() => [
     }
 ]);
 
+/**
+ * Generates 2-letter initials from a full name for avatars
+ */
 const getInitials = (name: string) => {
     return name
         .split(' ')

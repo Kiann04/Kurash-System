@@ -22,6 +22,7 @@ interface Player {
     club: string;
     address: string;
     membership_expires_at: string;
+    membership_start_date: string;
     status: string;
 }
 
@@ -34,29 +35,31 @@ const props = defineProps<{
         search?: string;
         gender?: string;
         status?: string;
+        membership_start?: string;
     };
 }>();
 
 const search = ref(props.filters.search || '');
 const gender = ref(props.filters.gender || 'all');
 const status = ref(props.filters.status || 'all');
+const membership_start = ref(props.filters.membership_start || '');
 
 watchDebounced(
     search,
     (value) => {
         router.get(
             route('admin.players.index'),
-            { search: value, gender: gender.value, status: status.value },
+            { search: value, gender: gender.value, status: status.value, membership_start: membership_start.value },
             { preserveState: true, replace: true }
         );
     },
     { debounce: 300 }
 );
 
-watch([gender, status], ([newGender, newStatus]) => {
+watch([gender, status, membership_start], ([newGender, newStatus, newMembershipStart]) => {
     router.get(
         route('admin.players.index'),
-        { search: search.value, gender: newGender, status: newStatus },
+        { search: search.value, gender: newGender, status: newStatus, membership_start: newMembershipStart },
         { preserveState: true, replace: true }
     );
 });
@@ -81,6 +84,7 @@ watch([gender, status], ([newGender, newStatus]) => {
                     <PlayerFilters 
                         v-model:search="search"
                         v-model:gender="gender"
+                        v-model:membership_start="membership_start"
                         class="flex-1 md:flex-none"
                     />
                     <Link :href="route('admin.players.create')">
@@ -94,15 +98,16 @@ watch([gender, status], ([newGender, newStatus]) => {
 
             <!-- Status Tabs -->
             <div class="w-full border-b border-slate-200 dark:border-slate-800">
-                <div class="flex gap-6">
+                <div class="flex gap-6 overflow-x-auto">
                     <button 
                         v-for="tab in [
                             { id: 'all', label: 'All Players' },
                             { id: 'active', label: 'Active Members' },
-                            { id: 'inactive', label: 'Inactive / Expired' }
+                            { id: 'expiring_soon', label: 'Expiring Soon' },
+                            { id: 'inactive', label: 'Inactive Members' }
                         ]"
                         :key="tab.id"
-                        class="relative pb-3 text-sm font-medium transition-all"
+                        class="relative pb-3 text-sm font-medium transition-all whitespace-nowrap"
                         :class="status === tab.id ? 'text-blue-600 dark:text-blue-400' : 'text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200'"
                         @click="status = tab.id"
                     >

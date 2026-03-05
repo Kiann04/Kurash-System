@@ -49,6 +49,7 @@ interface Player {
     club: string;
     address: string;
     membership_expires_at: string;
+    membership_start_date: string;
     status: string;
 }
 
@@ -97,10 +98,11 @@ const getInitials = (name: string) => {
                     <TableHeader>
                         <TableRow class="bg-slate-50 hover:bg-slate-50 dark:bg-slate-800/50 dark:hover:bg-slate-800/50">
                             <TableHead class="h-12 px-4 align-middle font-medium dark:text-slate-400">Player</TableHead>
-                            <TableHead class="h-12 px-4 align-middle font-medium dark:text-slate-400">Details</TableHead>
+                            <TableHead class="h-12 px-4 align-middle font-medium dark:text-slate-400">Age</TableHead>
+                            <TableHead class="h-12 px-4 align-middle font-medium dark:text-slate-400">Gender</TableHead>
                             <TableHead class="h-12 px-4 align-middle font-medium dark:text-slate-400">Club / Address</TableHead>
-                            <TableHead class="h-12 px-4 align-middle font-medium dark:text-slate-400">Membership</TableHead>
-                            <TableHead class="h-12 px-4 align-middle font-medium text-center dark:text-slate-400">Status</TableHead>
+                            <TableHead class="h-12 px-4 align-middle font-medium dark:text-slate-400">Membership Date</TableHead>
+                            <TableHead class="h-12 px-4 align-middle font-medium text-center dark:text-slate-400">Membership Status</TableHead>
                             <TableHead class="h-12 px-4 align-middle font-medium text-right dark:text-slate-400">Actions</TableHead>
                         </TableRow>
                     </TableHeader>
@@ -119,14 +121,14 @@ const getInitials = (name: string) => {
                                 </div>
                             </TableCell>
                             <TableCell class="p-4 align-middle">
-                                <div class="flex flex-col gap-1 text-xs">
-                                    <div class="flex items-center gap-1 text-slate-600 dark:text-slate-400">
-                                        <span class="font-medium">{{ player.age }}</span> years old
-                                    </div>
-                                    <Badge variant="outline" class="w-fit text-xs px-1.5 py-0 h-5 border-slate-200 text-slate-500 dark:border-slate-700 dark:text-slate-400">
-                                        {{ player.gender }}
-                                    </Badge>
+                                <div class="flex items-center gap-1 text-slate-600 dark:text-slate-400">
+                                    <span class="font-medium">{{ player.age }}</span> years old
                                 </div>
+                            </TableCell>
+                            <TableCell class="p-4 align-middle">
+                                <Badge variant="outline" class="w-fit text-xs px-1.5 py-0 h-5 border-slate-200 text-slate-500 dark:border-slate-700 dark:text-slate-400">
+                                    {{ player.gender }}
+                                </Badge>
                             </TableCell>
                             <TableCell class="p-4 align-middle">
                                 <div class="flex flex-col gap-1">
@@ -143,7 +145,7 @@ const getInitials = (name: string) => {
                             <TableCell class="p-4 align-middle">
                                 <div class="flex items-center gap-2 text-slate-600 text-xs dark:text-slate-400">
                                     <Calendar class="h-3.5 w-3.5 text-slate-400" />
-                                    <span>{{ player.membership_expires_at }}</span>
+                                    <span>{{ player.membership_start_date }} - {{ player.membership_expires_at }}</span>
                                 </div>
                             </TableCell>
                             <TableCell class="p-4 align-middle text-center">

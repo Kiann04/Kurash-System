@@ -14,6 +14,11 @@ use Illuminate\Validation\ValidationException;
 
 class TournamentController extends Controller
 {
+    /**
+     * Display a listing of the tournaments.
+     *
+     * @return \Inertia\Response
+     */
     public function index()
     {
         $tournaments = Tournament::latest()->paginate(10);
@@ -23,6 +28,11 @@ class TournamentController extends Controller
         ]);
     }
 
+    /**
+     * Display the tournament documentation page.
+     *
+     * @return \Inertia\Response
+     */
     public function docs()
     {
         $tournaments = Tournament::query()
@@ -35,6 +45,11 @@ class TournamentController extends Controller
         ]);
     }
 
+    /**
+     * Show the form for creating a new tournament.
+     *
+     * @return \Inertia\Response
+     */
     public function create()
     {
         $players = $this->mapPlayers();
@@ -47,10 +62,17 @@ class TournamentController extends Controller
         ]);
     }
 
+    /**
+     * Store a newly created tournament in storage.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\Http\RedirectResponse
+     */
     public function store(Request $request)
     {
         $validated = $request->validate([
             'name' => 'required|string|max:255',
+            'location' => 'nullable|string|max:255',
             'tournament_date' => 'required|date',
             'status' => 'required|in:draft,open',
             'registrations' => 'array',
@@ -61,17 +83,35 @@ class TournamentController extends Controller
         DB::transaction(function () use ($validated) {
             $tournament = Tournament::create([
                 'name' => $validated['name'],
+                'location' => $validated['location'] ?? null,
                 'tournament_date' => $validated['tournament_date'],
                 'status' => $validated['status'],
             ]);
 
             $registrations = collect($validated['registrations'] ?? [])
-                ->map(fn ($registration) => [
+                ->map(fn($registration) => [
                     'player_id' => (int) $registration['player_id'],
                     'tournament_weight_category_id' => (int) $registration['tournament_weight_category_id'],
                 ])
-                ->unique(fn ($registration) => $registration['player_id'].'-'.$registration['tournament_weight_category_id'])
+                ->unique(fn($registration) => $registration['player_id'] . '-' . $registration['tournament_weight_category_id'])
                 ->values();
+
+            $playerIds = $registrations->pluck('player_id')->unique();
+            $invalidPlayers = Player::whereIn('id', $playerIds)
+                ->where(function ($query) {
+                    $query->where('status', 'inactive')
+                        ->orWhere(function ($q) {
+                            $q->whereNotNull('membership_expires_at')
+                                ->where('membership_expires_at', '<', now());
+                        });
+                })
+                ->pluck('full_name');
+
+            if ($invalidPlayers->isNotEmpty()) {
+                throw ValidationException::withMessages([
+                    'registrations' => 'The following players have expired memberships or are inactive: ' . $invalidPlayers->implode(', '),
+                ]);
+            }
 
             $categoryMap = WeightCategory::query()
                 ->whereIn('id', $registrations->pluck('tournament_weight_category_id'))
@@ -98,6 +138,13 @@ class TournamentController extends Controller
             ->with('success', 'Tournament created successfully.');
     }
 
+    /**
+     * Import registrations from a file.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @param  \App\Services\PlayerListImportService  $importService
+     * @return \Illuminate\Http\JsonResponse
+     */
     public function importRegistrations(Request $request, PlayerListImportService $importService)
     {
         $validated = $request->validate([
@@ -116,6 +163,41 @@ class TournamentController extends Controller
         ]);
     }
 
+    /**
+     * Download the registration template file.
+     *
+     * @return \Symfony\Component\HttpFoundation\BinaryFileResponse
+     */
+    public function downloadRegistrationTemplate()
+    {
+        $phpWord = new \PhpOffice\PhpWord\PhpWord();
+        $section = $phpWord->addSection();
+
+        $table = $section->addTable(['borderSize' => 6, 'borderColor' => '000000', 'cellMargin' => 80]);
+
+        $table->addRow();
+        $table->addCell(4000)->addText('Full Name', ['bold' => true]);
+        $table->addCell(2000)->addText('Gender', ['bold' => true]);
+        $table->addCell(2000)->addText('Weight Category', ['bold' => true]);
+
+        $table->addRow();
+        $table->addCell(4000)->addText('John Doe');
+        $table->addCell(2000)->addText('Male');
+        $table->addCell(2000)->addText('-66kg');
+
+        $tempFile = tempnam(sys_get_temp_dir(), 'registration_template');
+        $objWriter = \PhpOffice\PhpWord\IOFactory::createWriter($phpWord, 'Word2007');
+        $objWriter->save($tempFile);
+
+        return response()->download($tempFile, 'registration_template.docx')->deleteFileAfterSend(true);
+    }
+
+    /**
+     * Display the specified tournament.
+     *
+     * @param  \App\Models\Tournament  $tournament
+     * @return \Inertia\Response
+     */
     public function show(Tournament $tournament)
     {
         $tournament->load('registrations.player', 'registrations.ageCategory', 'registrations.weightCategory');
@@ -141,6 +223,12 @@ class TournamentController extends Controller
         ]);
     }
 
+    /**
+     * Show the form for editing the specified tournament.
+     *
+     * @param  \App\Models\Tournament  $tournament
+     * @return \Inertia\Response
+     */
     public function edit(Tournament $tournament)
     {
         $players = $this->mapPlayers();
@@ -156,10 +244,18 @@ class TournamentController extends Controller
         ]);
     }
 
+    /**
+     * Update the specified tournament in storage.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @param  \App\Models\Tournament  $tournament
+     * @return \Illuminate\Http\RedirectResponse
+     */
     public function update(Request $request, Tournament $tournament)
     {
         $validated = $request->validate([
             'name' => 'required|string|max:255',
+            'location' => 'nullable|string|max:255',
             'tournament_date' => 'required|date',
             'status' => 'required|in:draft,open,ongoing,completed',
             'registrations' => 'array',
@@ -170,17 +266,35 @@ class TournamentController extends Controller
         DB::transaction(function () use ($validated, $tournament) {
             $tournament->update([
                 'name' => $validated['name'],
+                'location' => $validated['location'] ?? null,
                 'tournament_date' => $validated['tournament_date'],
                 'status' => $validated['status'],
             ]);
 
             $registrations = collect($validated['registrations'] ?? [])
-                ->map(fn ($registration) => [
+                ->map(fn($registration) => [
                     'player_id' => (int) $registration['player_id'],
                     'tournament_weight_category_id' => (int) $registration['tournament_weight_category_id'],
                 ])
-                ->unique(fn ($registration) => $registration['player_id'].'-'.$registration['tournament_weight_category_id'])
+                ->unique(fn($registration) => $registration['player_id'] . '-' . $registration['tournament_weight_category_id'])
                 ->values();
+
+            $playerIds = $registrations->pluck('player_id')->unique();
+            $invalidPlayers = Player::whereIn('id', $playerIds)
+                ->where(function ($query) {
+                    $query->where('status', 'inactive')
+                        ->orWhere(function ($q) {
+                            $q->whereNotNull('membership_expires_at')
+                                ->where('membership_expires_at', '<', now());
+                        });
+                })
+                ->pluck('full_name');
+
+            if ($invalidPlayers->isNotEmpty()) {
+                throw ValidationException::withMessages([
+                    'registrations' => 'The following players have expired memberships or are inactive: ' . $invalidPlayers->implode(', '),
+                ]);
+            }
 
             $categoryMap = WeightCategory::query()
                 ->whereIn('id', $registrations->pluck('tournament_weight_category_id'))
@@ -209,6 +323,12 @@ class TournamentController extends Controller
             ->with('success', 'Tournament updated successfully.');
     }
 
+    /**
+     * Store a newly created weight category.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\Http\JsonResponse
+     */
     public function storeWeightCategory(Request $request)
     {
         $validated = $request->validate([
@@ -268,6 +388,12 @@ class TournamentController extends Controller
         ], 201);
     }
 
+    /**
+     * Remove the specified weight category from storage.
+     *
+     * @param  \App\Models\WeightCategory  $weightCategory
+     * @return \Illuminate\Http\JsonResponse
+     */
     public function destroyWeightCategory(WeightCategory $weightCategory)
     {
         if ($weightCategory->registrations()->exists()) {
@@ -283,6 +409,12 @@ class TournamentController extends Controller
         ]);
     }
 
+    /**
+     * Remove the specified tournament from storage.
+     *
+     * @param  \App\Models\Tournament  $tournament
+     * @return \Illuminate\Http\RedirectResponse
+     */
     public function destroy(Tournament $tournament)
     {
         $tournament->delete();
@@ -292,14 +424,24 @@ class TournamentController extends Controller
             ->with('success', 'Tournament deleted successfully.');
     }
 
+    /**
+     * Map players to a standardized format for the frontend.
+     *
+     * @return \Illuminate\Database\Eloquent\Collection
+     */
     private function mapPlayers()
     {
         return Player::query()
-            ->select('id', 'full_name', 'gender', 'club')
+            ->select('id', 'full_name', 'gender', 'club', 'status', 'membership_expires_at', 'birthday as dob')
             ->orderBy('full_name')
             ->get();
     }
 
+    /**
+     * Map tournament weight categories to a standardized format for the frontend.
+     *
+     * @return \Illuminate\Support\Collection
+     */
     private function mapTournamentWeightCategories()
     {
         return WeightCategory::query()
@@ -308,10 +450,16 @@ class TournamentController extends Controller
             ->orderBy('age_category_id')
             ->orderBy('min_weight')
             ->get()
-            ->map(fn ($category) => $this->formatWeightCategory($category))
+            ->map(fn($category) => $this->formatWeightCategory($category))
             ->values();
     }
 
+    /**
+     * Format a weight category model to an array.
+     *
+     * @param  \App\Models\WeightCategory  $category
+     * @return array
+     */
     private function formatWeightCategory(WeightCategory $category): array
     {
         $category->loadMissing('ageCategory:id,name');
@@ -325,6 +473,12 @@ class TournamentController extends Controller
         ];
     }
 
+    /**
+     * Normalize gender string to a standard format.
+     *
+     * @param  string  $value
+     * @return string|null
+     */
     private function normalizeGender(string $value): ?string
     {
         $normalized = strtolower(trim($value));
@@ -336,6 +490,12 @@ class TournamentController extends Controller
         };
     }
 
+    /**
+     * Parse a weight category name into a min/max range.
+     *
+     * @param  string  $name
+     * @return array
+     */
     private function parseWeightRange(string $name): array
     {
         $clean = preg_replace('/\s+/', '', trim($name)) ?? '';

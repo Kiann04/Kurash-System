@@ -16,16 +16,19 @@ use Inertia\Response;
 
 class BracketController extends Controller
 {
-    public function __construct(private BronzeMatchService $bronzeMatchService)
-    {
-    }
+    public function __construct(private BronzeMatchService $bronzeMatchService) {}
 
+    /**
+     * Display a listing of tournaments for bracket generation.
+     *
+     * @return \Inertia\Response
+     */
     public function index(): Response
     {
         $all = Tournament::query()
             ->withCount(['registrations', 'brackets'])
             ->latest()
-            ->get(['id', 'name', 'tournament_date', 'status']);
+            ->get(['id', 'name', 'location', 'tournament_date', 'status']);
 
         $generated = $all->where('brackets_count', '>', 0)->values();
         $notGenerated = $all->where('brackets_count', 0)->values();
@@ -36,6 +39,13 @@ class BracketController extends Controller
         ]);
     }
 
+    /**
+     * Generate brackets for a specific tournament based on registrations.
+     * Handles both Round Robin (2-5 players) and Single Elimination formats.
+     *
+     * @param \App\Models\Tournament $tournament
+     * @return \Illuminate\Http\RedirectResponse
+     */
     public function generate(Tournament $tournament): RedirectResponse
     {
         $registrations = $tournament->registrations()
@@ -49,6 +59,7 @@ class BracketController extends Controller
                 ->with('error', 'No eligible registrations with weight categories found.');
         }
 
+        // Group registrations by Gender + Age + Weight Category
         $grouped = $registrations->groupBy(function ($registration) {
             return implode('|', [
                 $registration->player?->gender,
@@ -78,12 +89,13 @@ class BracketController extends Controller
                             'club' => (string) ($registration->player?->club ?? ''),
                         ];
                     })
-                    ->filter(fn ($participant) => !empty($participant['id']))
+                    ->filter(fn($participant) => !empty($participant['id']))
                     ->values()
                     ->all();
 
                 $playerCount = count($participants);
 
+                // Determine format based on player count
                 if ($playerCount === 1) {
                     $rounds = $this->singleEliminationRounds($playerCount);
                     $format = 'single_elimination';
@@ -109,7 +121,7 @@ class BracketController extends Controller
                 if ($format === 'round_robin') {
                     $createdMatches += $this->createRoundRobinMatches(
                         $bracket->id,
-                        array_map(fn ($p) => $p['id'], $participants)
+                        array_map(fn($p) => $p['id'], $participants)
                     );
                 } else {
                     $createdMatches += $this->createSingleEliminationMatches($bracket->id, $participants);
@@ -126,6 +138,12 @@ class BracketController extends Controller
             ->with('success', "Brackets generated: {$createdBrackets}, matches generated: {$createdMatches}.");
     }
 
+    /**
+     * Display the brackets and matches for a tournament.
+     *
+     * @param \App\Models\Tournament $tournament
+     * @return \Inertia\Response
+     */
     public function show(Tournament $tournament): Response
     {
         // Auto-advance any stuck BYE matches every time the bracket is viewed
@@ -133,6 +151,7 @@ class BracketController extends Controller
         $this->autoAdvanceAllByes($tournament);
         $this->updateTournamentStatus($tournament);
 
+        // Prepare participants grouped by category for display
         $categoryParticipants = $tournament->registrations()
             ->with([
                 'player:id,gender',
@@ -160,6 +179,7 @@ class BracketController extends Controller
             })
             ->values();
 
+        // Fetch brackets with matches and player details
         $brackets = Bracket::query()
             ->where('tournament_id', $tournament->id)
             ->with([
@@ -233,10 +253,18 @@ class BracketController extends Controller
         ]);
     }
 
+    /**
+     * Advance a match winner to the next round.
+     * Validates winner selection and updates match status.
+     *
+     * @param \Illuminate\Http\Request $request
+     * @param \App\Models\Tournament $tournament
+     * @param \App\Models\TournamentMatch $match
+     * @return \Illuminate\Http\RedirectResponse
+     */
     public function advance(Request $request, Tournament $tournament, TournamentMatch $match): RedirectResponse
     {
         $match->load('bracket');
-
         if (!$match->bracket || $match->bracket->tournament_id !== $tournament->id) {
             abort(404);
         }
@@ -282,6 +310,15 @@ class BracketController extends Controller
         return back()->with('success', 'Winner updated.');
     }
 
+    /**
+     * Revert a completed match to scheduled status.
+     * Also clears propagated winners in subsequent rounds.
+     *
+     * @param \Illuminate\Http\Request $request
+     * @param \App\Models\Tournament $tournament
+     * @param \App\Models\TournamentMatch $match
+     * @return \Illuminate\Http\RedirectResponse
+     */
     public function revert(Request $request, Tournament $tournament, TournamentMatch $match): RedirectResponse
     {
         $match->load('bracket');
@@ -325,6 +362,12 @@ class BracketController extends Controller
 
         return back()->with('success', 'Match reverted successfully.');
     }
+    /**
+     * Check and update tournament status based on match completion.
+     *
+     * @param \App\Models\Tournament $tournament
+     * @return void
+     */
     private function updateTournamentStatus(Tournament $tournament): void
     {
         $brackets = $tournament->brackets()->with('matches')->get();
@@ -343,11 +386,24 @@ class BracketController extends Controller
             $tournament->update(['status' => $newStatus]);
         }
     }
+
+    /**
+     * Calculate rounds for Round Robin format.
+     *
+     * @param int $playerCount
+     * @return int
+     */
     private function roundRobinRounds(int $playerCount): int
     {
         return $playerCount % 2 === 0 ? $playerCount - 1 : $playerCount;
     }
 
+    /**
+     * Calculate rounds for Single Elimination format.
+     *
+     * @param int $playerCount
+     * @return int
+     */
     private function singleEliminationRounds(int $playerCount): int
     {
         $size = 1;
@@ -358,6 +414,14 @@ class BracketController extends Controller
         return (int) log($size, 2);
     }
 
+    /**
+     * Generate matches for Round Robin format.
+     * Uses the "circle method" to rotate players.
+     *
+     * @param int $bracketId
+     * @param array $playerIds
+     * @return int Number of matches created
+     */
     private function createRoundRobinMatches(int $bracketId, array $playerIds): int
     {
         $players = $playerIds;
@@ -400,6 +464,14 @@ class BracketController extends Controller
         return $matchesCreated;
     }
 
+    /**
+     * Generate matches for Single Elimination format.
+     * Includes seeding logic and automatic BYE handling.
+     *
+     * @param int $bracketId
+     * @param array $participants
+     * @return int Number of matches created
+     */
     private function createSingleEliminationMatches(int $bracketId, array $participants): int
     {
         shuffle($participants);
@@ -536,7 +608,7 @@ class BracketController extends Controller
         // A match can be auto-completed if its source matches are already done.
         // For Round 1, source matches don't exist, but they are handled at creation.
         if ($match->round_number === 1) {
-            return; 
+            return;
         }
 
         $sourceMatch1 = $this->getSourceMatch($match, 1);
@@ -553,10 +625,10 @@ class BracketController extends Controller
             if ($p1 !== null && $p2 !== null) {
                 return;
             }
-            
+
             // If at least one slot is NULL, it's a BYE (or a dead match if both are NULL).
             $winnerId = $p1 ?? $p2;
-            
+
             DB::transaction(function () use ($match, $winnerId) {
                 $match->update([
                     'winner_id' => $winnerId,
@@ -564,7 +636,6 @@ class BracketController extends Controller
                 ]);
                 $this->advanceWinnerToNextRound($match, $winnerId);
             });
-
         }
     }
 
@@ -588,7 +659,7 @@ class BracketController extends Controller
         $matches = TournamentMatch::query()
             ->whereHas('bracket', function ($query) use ($tournament) {
                 $query->where('tournament_id', $tournament->id)
-                      ->where('format', 'single_elimination');
+                    ->where('format', 'single_elimination');
             })
             ->orderBy('round_number')
             ->orderBy('match_number')
@@ -616,7 +687,6 @@ class BracketController extends Controller
                 }
             }
         }
-
     }
 
     private function splitByRegion(array $participants, int $halfSize): array

@@ -1,4 +1,10 @@
 <script setup lang="ts">
+/**
+ * Bracket Generation Index Page
+ * 
+ * Displays lists of tournaments with pending and generated brackets.
+ * Allows administrators to generate new brackets or regenerate existing ones.
+ */
 import { Head, Link, router } from '@inertiajs/vue3'
 import { 
     Trophy, 
@@ -11,7 +17,8 @@ import {
     CheckCircle2,
     Clock,
     RefreshCw,
-    Trash2
+    Trash2,
+    MapPin
 } from 'lucide-vue-next'
 import { ref, computed } from 'vue'
 import { route } from 'ziggy-js'
@@ -38,32 +45,57 @@ import {
 } from '@/components/ui/table'
 import AppLayout from '@/layouts/AppLayout.vue'
 
+/**
+ * Interface representing a tournament in the context of bracket generation
+ */
 interface Tournament {
     id: number
     name: string
+    location: string | null
     tournament_date: string
     status: 'draft' | 'open' | 'ongoing' | 'completed'
     registrations_count: number
 }
 
+/**
+ * Props received from the Inertia controller
+ * @property generated Tournaments that already have brackets
+ * @property not_generated Tournaments pending bracket generation
+ */
 const props = defineProps<{
     generated: Tournament[]
     not_generated: Tournament[]
 }>()
 
+// State for search filter and regeneration modal
 const search = ref('')
 const tournamentToRegenerate = ref<Tournament | null>(null)
 const isRegenerateDialogOpen = ref(false)
 
+/**
+ * Triggers bracket generation for a specific tournament.
+ * This will create matches based on registered players and weight categories.
+ * 
+ * @param tournamentId The ID of the tournament
+ */
 const generate = (tournamentId: number) => {
     router.post(route('admin.tournaments.brackets.generate', tournamentId))
 }
 
+/**
+ * Opens the regeneration confirmation dialog.
+ * 
+ * @param tournament The tournament object to regenerate
+ */
 const confirmRegenerate = (tournament: Tournament) => {
     tournamentToRegenerate.value = tournament
     isRegenerateDialogOpen.value = true
 }
 
+/**
+ * Executes the regeneration process after confirmation.
+ * This will wipe existing matches and create new ones.
+ */
 const handleRegenerate = () => {
     if (tournamentToRegenerate.value) {
         generate(tournamentToRegenerate.value.id)
@@ -72,6 +104,9 @@ const handleRegenerate = () => {
     }
 }
 
+/**
+ * Formats a date string into a localized human-readable format.
+ */
 const formatDate = (date: string) => {
     return new Date(date).toLocaleDateString('en-PH', {
         year: 'numeric',
@@ -80,6 +115,9 @@ const formatDate = (date: string) => {
     })
 }
 
+/**
+ * Returns the appropriate CSS classes for a tournament status badge.
+ */
 const getStatusClass = (status: string) => {
     switch (status) {
         case 'draft':
@@ -95,6 +133,9 @@ const getStatusClass = (status: string) => {
     }
 }
 
+/**
+ * Filters the list of tournaments without brackets based on search query.
+ */
 const filteredNotGenerated = computed(() => {
     if (!search.value) return props.not_generated
     return props.not_generated.filter(t => 
@@ -102,6 +143,9 @@ const filteredNotGenerated = computed(() => {
     )
 })
 
+/**
+ * Filters the list of tournaments with generated brackets based on search query.
+ */
 const filteredGenerated = computed(() => {
     if (!search.value) return props.generated
     return props.generated.filter(t => 
@@ -147,8 +191,9 @@ const filteredGenerated = computed(() => {
                         <Table>
                             <TableHeader class="bg-slate-50/50 dark:bg-slate-900/50 sticky top-0 z-10">
                                 <TableRow class="hover:bg-transparent dark:hover:bg-transparent border-b dark:border-slate-800">
-                                    <TableHead class="w-[40%] font-semibold text-slate-500 dark:text-slate-400">Tournament</TableHead>
+                                    <TableHead class="w-[30%] font-semibold text-slate-500 dark:text-slate-400">Tournament</TableHead>
                                     <TableHead class="hidden md:table-cell font-semibold text-slate-500 dark:text-slate-400">Date</TableHead>
+                                    <TableHead class="hidden md:table-cell font-semibold text-slate-500 dark:text-slate-400">Location</TableHead>
                                     <TableHead class="font-semibold text-slate-500 dark:text-slate-400">Status</TableHead>
                                     <TableHead class="text-center font-semibold text-slate-500 dark:text-slate-400">Registrations</TableHead>
                                     <TableHead class="text-right font-semibold text-slate-500 dark:text-slate-400">Action</TableHead>
@@ -163,8 +208,13 @@ const filteredGenerated = computed(() => {
                                     <TableCell>
                                         <div class="flex flex-col">
                                             <span class="font-medium text-slate-900 dark:text-slate-200">{{ tournament.name }}</span>
-                                            <span class="text-xs text-muted-foreground md:hidden dark:text-slate-500">
+                                            <span class="text-xs text-muted-foreground md:hidden dark:text-slate-500 flex items-center gap-1">
+                                                <Calendar class="h-3 w-3" />
                                                 {{ formatDate(tournament.tournament_date) }}
+                                            </span>
+                                            <span v-if="tournament.location" class="text-xs text-muted-foreground md:hidden dark:text-slate-500 flex items-center gap-1 mt-0.5">
+                                                <MapPin class="h-3 w-3" />
+                                                {{ tournament.location }}
                                             </span>
                                         </div>
                                     </TableCell>
@@ -172,6 +222,12 @@ const filteredGenerated = computed(() => {
                                         <div class="flex items-center gap-2 text-muted-foreground dark:text-slate-400">
                                             <Calendar class="h-3.5 w-3.5" />
                                             {{ formatDate(tournament.tournament_date) }}
+                                        </div>
+                                    </TableCell>
+                                    <TableCell class="hidden md:table-cell">
+                                        <div class="flex items-center gap-2 text-muted-foreground dark:text-slate-400">
+                                            <MapPin class="h-3.5 w-3.5" />
+                                            {{ tournament.location || '-' }}
                                         </div>
                                     </TableCell>
                                     <TableCell>
@@ -234,8 +290,9 @@ const filteredGenerated = computed(() => {
                         <Table>
                             <TableHeader class="bg-slate-50/50 dark:bg-slate-900/50 sticky top-0 z-10">
                                 <TableRow class="hover:bg-transparent dark:hover:bg-transparent border-b dark:border-slate-800">
-                                    <TableHead class="w-[40%] font-semibold text-slate-500 dark:text-slate-400">Tournament</TableHead>
+                                    <TableHead class="w-[30%] font-semibold text-slate-500 dark:text-slate-400">Tournament</TableHead>
                                     <TableHead class="hidden md:table-cell font-semibold text-slate-500 dark:text-slate-400">Date</TableHead>
+                                    <TableHead class="hidden md:table-cell font-semibold text-slate-500 dark:text-slate-400">Location</TableHead>
                                     <TableHead class="font-semibold text-slate-500 dark:text-slate-400">Status</TableHead>
                                     <TableHead class="text-center font-semibold text-slate-500 dark:text-slate-400">Registrations</TableHead>
                                     <TableHead class="text-right font-semibold text-slate-500 dark:text-slate-400">Action</TableHead>
@@ -250,8 +307,13 @@ const filteredGenerated = computed(() => {
                                     <TableCell>
                                         <div class="flex flex-col">
                                             <span class="font-medium text-slate-900 dark:text-slate-200">{{ tournament.name }}</span>
-                                            <span class="text-xs text-muted-foreground md:hidden dark:text-slate-500">
+                                            <span class="text-xs text-muted-foreground md:hidden dark:text-slate-500 flex items-center gap-1">
+                                                <Calendar class="h-3 w-3" />
                                                 {{ formatDate(tournament.tournament_date) }}
+                                            </span>
+                                            <span v-if="tournament.location" class="text-xs text-muted-foreground md:hidden dark:text-slate-500 flex items-center gap-1 mt-0.5">
+                                                <MapPin class="h-3 w-3" />
+                                                {{ tournament.location }}
                                             </span>
                                         </div>
                                     </TableCell>
@@ -259,6 +321,12 @@ const filteredGenerated = computed(() => {
                                         <div class="flex items-center gap-2 text-muted-foreground dark:text-slate-400">
                                             <Calendar class="h-3.5 w-3.5" />
                                             {{ formatDate(tournament.tournament_date) }}
+                                        </div>
+                                    </TableCell>
+                                    <TableCell class="hidden md:table-cell">
+                                        <div class="flex items-center gap-2 text-muted-foreground dark:text-slate-400">
+                                            <MapPin class="h-3.5 w-3.5" />
+                                            {{ tournament.location || '-' }}
                                         </div>
                                     </TableCell>
                                     <TableCell>

@@ -21,6 +21,7 @@ class Player extends Model
         'emergency_contact',
         'emergency_contact_number',
         'registered_at',
+        'membership_start_date',
         'membership_expires_at',
         'status',
     ];
@@ -28,6 +29,7 @@ class Player extends Model
     protected $casts = [
         'birthday' => 'date',
         'registered_at' => 'date',
+        'membership_start_date' => 'date',
         'membership_expires_at' => 'date',
     ];
 

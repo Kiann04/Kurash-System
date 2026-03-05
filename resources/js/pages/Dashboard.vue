@@ -120,9 +120,10 @@ const getInitials = (name: string) => {
                                     <TableRow class="bg-slate-50 dark:bg-slate-900">
                                         <TableHead class="px-6 py-4 dark:text-slate-400">Athlete</TableHead>
                                         <TableHead class="px-6 py-4 dark:text-slate-400">Club / Team</TableHead>
-                                        <TableHead class="px-6 py-4 dark:text-slate-400">Category</TableHead>
-                                        <TableHead class="px-6 py-4 dark:text-slate-400">Expiry Date</TableHead>
-                                        <TableHead class="px-6 py-4 text-center dark:text-slate-400">Status</TableHead>
+                                        <TableHead class="px-6 py-4 dark:text-slate-400">Age</TableHead>
+                                        <TableHead class="px-6 py-4 dark:text-slate-400">Gender</TableHead>
+                                        <TableHead class="px-6 py-4 dark:text-slate-400">Membership Date</TableHead>
+                                        <TableHead class="px-6 py-4 text-center dark:text-slate-400">Membership Status</TableHead>
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
@@ -146,10 +147,10 @@ const getInitials = (name: string) => {
                                             </div>
                                         </TableCell>
                                         <TableCell class="px-6 py-4">
-                                            <div class="flex flex-col">
-                                                <span class="font-medium text-slate-900 dark:text-slate-100">{{ player.age }} years</span>
-                                                <span class="text-xs text-slate-500 uppercase dark:text-slate-400">{{ player.gender }}</span>
-                                            </div>
+                                            <span class="font-medium text-slate-900 dark:text-slate-100">{{ player.age }} years</span>
+                                        </TableCell>
+                                        <TableCell class="px-6 py-4">
+                                            <span class="text-xs text-slate-500 uppercase dark:text-slate-400">{{ player.gender }}</span>
                                         </TableCell>
                                         <TableCell class="px-6 py-4">
                                             <div class="flex items-center gap-2 text-slate-600 dark:text-slate-400">

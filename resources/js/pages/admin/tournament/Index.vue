@@ -1,4 +1,10 @@
 <script setup lang="ts">
+/**
+ * Tournament Index Page
+ * 
+ * Displays a paginated list of tournaments with status indicators and management actions.
+ * Allows creating new tournaments and deleting existing ones.
+ */
 import { Head, Link, router } from '@inertiajs/vue3';
 import { 
     Trophy, 
@@ -15,6 +21,8 @@ import {
 } from 'lucide-vue-next';
 import { ref } from 'vue';
 import { route } from 'ziggy-js';
+
+// Components
 import Pagination from '@/components/Pagination.vue';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -49,17 +57,28 @@ import {
 import AppLayout from '@/layouts/AppLayout.vue';
 import { type BreadcrumbItem } from '@/types';
 
+/**
+ * Breadcrumbs configuration for the navigation bar
+ */
 const breadcrumbs: BreadcrumbItem[] = [
     { title: 'Tournaments', href: route('admin.tournaments.index') },
 ];
 
+/**
+ * Tournament interface matching the backend model
+ */
 interface Tournament {
     id: number;
     name: string;
+    location: string | null;
     tournament_date: string;
     status: string;
 }
 
+/**
+ * Props received from the Inertia controller
+ * @property tournaments Paginated tournament data
+ */
 const props = defineProps<{
     tournaments: {
         data: Tournament[];
@@ -67,18 +86,28 @@ const props = defineProps<{
     };
 }>();
 
+/**
+ * State for the Create Tournament Modal
+ */
 const isAddTournamentModalOpen = ref(false);
 const newTournament = ref({
     name: '',
+    location: '',
     tournament_date: '',
     status: 'draft',
 });
 
-// Delete Tournament State
+/**
+ * State for the Delete Confirmation Modal
+ */
 const isDeleteModalOpen = ref(false)
 const tournamentToDelete = ref<number | null>(null)
 const isDeleting = ref(false)
 
+/**
+ * Validates input and redirects to the Create Tournament page with pre-filled data.
+ * This initiates the multi-step creation process.
+ */
 const proceedToCreate = () => {
     if (!newTournament.value.name || !newTournament.value.tournament_date) {
         return;
@@ -89,16 +118,26 @@ const proceedToCreate = () => {
 
     router.get(route('admin.tournaments.create'), {
         name: newTournament.value.name,
+        location: newTournament.value.location,
         date: newTournament.value.tournament_date,
         status: newTournament.value.status,
     });
 };
 
+/**
+ * Opens the delete confirmation modal for a specific tournament.
+ * 
+ * @param id The ID of the tournament to delete
+ */
 const deleteTournament = (id: number) => {
     tournamentToDelete.value = id
     isDeleteModalOpen.value = true
 };
 
+/**
+ * Confirms and executes the tournament deletion via DELETE request.
+ * Handles loading state and modal closure on success.
+ */
 const confirmDelete = () => {
     if (!tournamentToDelete.value) return
 
@@ -116,6 +155,12 @@ const confirmDelete = () => {
     });
 };
 
+/**
+ * Formats a date string into a localized human-readable format.
+ * 
+ * @param date The ISO date string
+ * @returns Formatted date string (e.g., "January 1, 2024")
+ */
 const formatDate = (date: string) => {
     return new Date(date).toLocaleDateString('en-PH', {
         year: 'numeric',
@@ -124,6 +169,12 @@ const formatDate = (date: string) => {
     })
 }
 
+/**
+ * Returns the appropriate CSS classes for a tournament status badge.
+ * 
+ * @param status The tournament status (open, ongoing, completed, draft)
+ * @returns CSS class string
+ */
 const getStatusColor = (status: string) => {
     switch(status.toLowerCase()) {
         case 'open': return 'bg-green-100 text-green-700 hover:bg-green-200 dark:bg-green-900/30 dark:text-green-400 dark:hover:bg-green-900/50';
@@ -172,6 +223,10 @@ const getStatusColor = (status: string) => {
                             <div class="grid gap-2">
                                 <Label for="name" class="dark:text-slate-300">Tournament Name</Label>
                                 <Input id="name" v-model="newTournament.name" placeholder="e.g. National Kurash Championship 2024" class="dark:bg-slate-950 dark:border-slate-800 dark:text-slate-100" />
+                            </div>
+                            <div class="grid gap-2">
+                                <Label for="location" class="dark:text-slate-300">Location</Label>
+                                <Input id="location" v-model="newTournament.location" placeholder="e.g. Manila Sports Complex" class="dark:bg-slate-950 dark:border-slate-800 dark:text-slate-100" />
                             </div>
                             <div class="grid gap-2">
                                 <Label for="date" class="dark:text-slate-300">Tournament Date</Label>
@@ -242,6 +297,7 @@ const getStatusColor = (status: string) => {
                             <TableHeader class="bg-slate-50/50 dark:bg-slate-900/50 sticky top-0 z-10 backdrop-blur-sm">
                                 <TableRow class="hover:bg-transparent dark:hover:bg-transparent border-b dark:border-slate-800">
                                     <TableHead class="h-12 px-4 align-middle font-semibold text-slate-500 dark:text-slate-400">Tournament Name</TableHead>
+                                    <TableHead class="h-12 px-4 align-middle font-semibold text-slate-500 dark:text-slate-400">Location</TableHead>
                                     <TableHead class="h-12 px-4 align-middle font-semibold text-slate-500 dark:text-slate-400">Date</TableHead>
                                     <TableHead class="h-12 px-4 align-middle font-semibold text-center text-slate-500 dark:text-slate-400">Status</TableHead>
                                     <TableHead class="h-12 px-4 align-middle font-semibold text-right text-slate-500 dark:text-slate-400">Actions</TableHead>
@@ -263,6 +319,9 @@ const getStatusColor = (status: string) => {
                                                 <span class="text-xs text-slate-500 font-mono dark:text-slate-500">ID: #{{ t.id }}</span>
                                             </div>
                                         </div>
+                                    </TableCell>
+                                    <TableCell class="p-4 align-middle">
+                                        <span class="text-slate-600 dark:text-slate-400">{{ t.location || '-' }}</span>
                                     </TableCell>
                                     <TableCell class="p-4 align-middle">
                                         <div class="flex items-center gap-2 text-slate-600 dark:text-slate-400">
