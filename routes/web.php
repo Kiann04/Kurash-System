@@ -7,6 +7,7 @@ use App\Http\Controllers\Admin\PlayerController as AdminPlayerController;
 use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
 use App\Http\Controllers\Admin\BracketController as AdminBracketController;
 use App\Http\Controllers\Admin\TournamentController as AdminTournamentController;
+use App\Http\Controllers\Admin\EventController as AdminEventController;
 use App\Http\Controllers\Public\AthleteController as PublicAthleteController;
 use App\Http\Controllers\Public\HomeController as PublicHomeController;
 use App\Http\Controllers\Public\RankingController as PublicRankingController;
@@ -59,4 +60,6 @@ Route::prefix('admin')
             ->name('tournaments.matches.advance');
         Route::post('tournaments/{tournament}/matches/{match}/revert', [AdminBracketController::class, 'revert'])
             ->name('tournaments.matches.revert');
+
+        Route::resource('events', AdminEventController::class);
     });

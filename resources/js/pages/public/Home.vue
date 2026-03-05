@@ -21,9 +21,31 @@ import {
 } from 'lucide-vue-next';
 import { ref, computed } from 'vue';
 
+interface EventItem {
+    id: number;
+    title: string;
+    description: string | null;
+    location: string | null;
+    start_date: string;
+    end_date: string | null;
+    image_path: string | null;
+    status: string;
+}
+
 const props = defineProps<{
     players?: any[]
+    events?: EventItem[]
 }>();
+
+const selectedEvent = ref<EventItem | null>(null);
+
+const openEvent = (event: EventItem) => {
+    selectedEvent.value = event;
+};
+
+const closeEvent = () => {
+    selectedEvent.value = null;
+};
 
 const getRankColor = (rank: number) => {
     if (rank === 1) return 'text-yellow-400'
@@ -60,6 +82,25 @@ const rankings = computed(() => {
 
     return { male, female };
 });
+
+const formatEventDate = (date: string) => {
+    return new Date(date).toLocaleDateString('en-PH', {
+        month: 'short',
+        day: '2-digit',
+    });
+};
+
+const formatEventYear = (date: string) => {
+    return new Date(date).getFullYear();
+};
+
+const formatEventRange = (start: string, end: string | null) => {
+    if (!end || end === start) {
+        return `${formatEventDate(start)}, ${formatEventYear(start)}`;
+    }
+
+    return `${formatEventDate(start)} - ${formatEventDate(end)}, ${formatEventYear(end)}`;
+};
 
 const eventData = {
   'Kids': {
@@ -253,90 +294,134 @@ const navItems = [
           </div>
 
           <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-              <!-- Event Card 1 -->
-              <div class="group bg-[#0f172a] rounded-4xl border border-slate-800/50 overflow-hidden hover:border-yellow-500/50 transition-all duration-500 hover:shadow-[0_20px_50px_rgba(234,179,8,0.1)] flex flex-col">
+              <div
+                  v-for="event in (props.events || [])"
+                  :key="event.id"
+                  class="group bg-[#0f172a] rounded-4xl border border-slate-800/50 overflow-hidden hover:border-yellow-500/50 transition-all duration-500 hover:shadow-[0_20px_50px_rgba(234,179,8,0.1)] flex flex-col cursor-pointer"
+                  @click="openEvent(event)"
+              >
                   <div class="h-56 bg-slate-800 relative overflow-hidden">
-                      <div class="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1599058917233-3583e71f462c?q=80&w=600&auto=format&fit=crop')] bg-cover bg-center opacity-70 group-hover:scale-110 transition-transform duration-1000"></div>
+                      <div class="absolute inset-0 flex items-center justify-center bg-slate-950">
+                          <img
+                              v-if="event.image_path"
+                              :src="event.image_path"
+                              alt="Event image"
+                              class="max-h-full max-w-full object-contain transition-transform duration-1000 group-hover:scale-105"
+                          />
+                          <div
+                              v-else
+                              class="h-full w-full bg-linear-to-br from-slate-800 via-slate-900 to-slate-950"
+                          ></div>
+                      </div>
                       <div class="absolute top-6 right-6 bg-yellow-500 text-black font-black px-4 py-1 rounded-full text-[10px] uppercase tracking-widest">
-                          Label
+                          Event
                       </div>
                       <div class="absolute inset-0 bg-linear-to-t from-[#0f172a] to-transparent opacity-60"></div>
                   </div>
                   <div class="p-8 flex-1 flex flex-col">
-                      <div class="text-yellow-500 font-black text-[10px] uppercase tracking-[0.2em] mb-4">DD/MM - DD/MM, YYYY</div>
-                      <h3 class="text-2xl font-serif font-bold text-white mb-6 group-hover:text-yellow-500 transition-colors leading-tight">Event Name Placeholder</h3>
+                      <div class="text-yellow-500 font-black text-[10px] uppercase tracking-[0.2em] mb-4">
+                          {{ formatEventRange(event.start_date, event.end_date) }}
+                      </div>
+                      <h3 class="text-2xl font-serif font-bold text-white mb-6 group-hover:text-yellow-500 transition-colors leading-tight">
+                          {{ event.title }}
+                      </h3>
                       <div class="mt-auto flex items-center justify-between">
                           <div class="flex items-center gap-2 text-slate-400 text-xs font-bold uppercase tracking-widest">
                               <span class="w-2 h-2 rounded-full bg-blue-500 animate-pulse"></span>
-                              City, State
+                              {{ event.location || 'TBA' }}
                           </div>
                           <div class="text-white/20 group-hover:text-yellow-500 transition-colors text-2xl">→</div>
                       </div>
                   </div>
               </div>
 
-               <!-- Event Card 2 -->
-              <div class="group bg-[#0f172a] rounded-4xl border border-slate-800/50 overflow-hidden hover:border-yellow-500/50 transition-all duration-500 hover:shadow-[0_20px_50px_rgba(234,179,8,0.1)] flex flex-col">
-                  <div class="h-56 bg-slate-800 relative overflow-hidden">
-                      <div class="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?q=80&w=600&auto=format&fit=crop')] bg-cover bg-center opacity-70 group-hover:scale-110 transition-transform duration-1000"></div>
-                      <div class="absolute inset-0 bg-linear-to-t from-[#0f172a] to-transparent opacity-60"></div>
-                  </div>
-                  <div class="p-8 flex-1 flex flex-col">
-                      <div class="text-yellow-500 font-black text-[10px] uppercase tracking-[0.2em] mb-4">DD/MM - DD/MM, YYYY</div>
-                      <h3 class="text-2xl font-serif font-bold text-white mb-6 group-hover:text-yellow-500 transition-colors leading-tight">Event Name Placeholder</h3>
-                      <div class="mt-auto flex items-center justify-between">
-                          <div class="flex items-center gap-2 text-slate-400 text-xs font-bold uppercase tracking-widest">
-                              <span class="w-2 h-2 rounded-full bg-slate-600"></span>
-                              City, State
-                          </div>
-                          <div class="text-white/20 group-hover:text-yellow-500 transition-colors text-2xl">→</div>
-                      </div>
-                  </div>
-              </div>
-
-               <!-- Event Card 3 -->
-              <div class="group bg-[#0f172a] rounded-4xl border border-slate-800/50 overflow-hidden hover:border-yellow-500/50 transition-all duration-500 hover:shadow-[0_20px_50px_rgba(234,179,8,0.1)] flex flex-col">
-                  <div class="h-56 bg-slate-800 relative overflow-hidden">
-                      <div class="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1591117207239-788cd859dcb7?q=80&w=600&auto=format&fit=crop')] bg-cover bg-center opacity-70 group-hover:scale-110 transition-transform duration-1000"></div>
-                      <div class="absolute top-6 right-6 bg-yellow-500 text-black font-black px-4 py-1 rounded-full text-[10px] uppercase tracking-widest">
-                          Label
-                      </div>
-                      <div class="absolute inset-0 bg-linear-to-t from-[#0f172a] to-transparent opacity-60"></div>
-                  </div>
-                  <div class="p-8 flex-1 flex flex-col">
-                      <div class="text-yellow-500 font-black text-[10px] uppercase tracking-[0.2em] mb-4">DD/MM - DD/MM, YYYY</div>
-                      <h3 class="text-2xl font-serif font-bold text-white mb-6 group-hover:text-yellow-500 transition-colors leading-tight">Event Name Placeholder</h3>
-                      <div class="mt-auto flex items-center justify-between">
-                          <div class="flex items-center gap-2 text-slate-400 text-xs font-bold uppercase tracking-widest">
-                              <span class="w-2 h-2 rounded-full bg-slate-600"></span>
-                              City, State
-                          </div>
-                          <div class="text-white/20 group-hover:text-yellow-500 transition-colors text-2xl">→</div>
-                      </div>
-                  </div>
-              </div>
-
-              <!-- Event Card 4 -->
-              <div class="group bg-[#0f172a] rounded-4xl border border-slate-800/50 overflow-hidden hover:border-yellow-500/50 transition-all duration-500 hover:shadow-[0_20px_50px_rgba(234,179,8,0.1)] flex flex-col">
-                  <div class="h-56 bg-slate-800 relative overflow-hidden">
-                      <div class="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1508672019048-805c876b67e2?q=80&w=600&auto=format&fit=crop')] bg-cover bg-center opacity-70 group-hover:scale-110 transition-transform duration-1000"></div>
-                      <div class="absolute inset-0 bg-linear-to-t from-[#0f172a] to-transparent opacity-60"></div>
-                  </div>
-                  <div class="p-8 flex-1 flex flex-col">
-                      <div class="text-yellow-500 font-black text-[10px] uppercase tracking-[0.2em] mb-4">DD/MM - DD/MM, YYYY</div>
-                      <h3 class="text-2xl font-serif font-bold text-white mb-6 group-hover:text-yellow-500 transition-colors leading-tight">Event Name Placeholder</h3>
-                      <div class="mt-auto flex items-center justify-between">
-                          <div class="flex items-center gap-2 text-slate-400 text-xs font-bold uppercase tracking-widest">
-                              <span class="w-2 h-2 rounded-full bg-slate-600"></span>
-                              City, State
-                          </div>
-                          <div class="text-white/20 group-hover:text-yellow-500 transition-colors text-2xl">→</div>
-                      </div>
-                  </div>
+              <div
+                  v-if="(props.events || []).length === 0"
+                  class="col-span-full p-12 text-center text-slate-500 italic bg-[#0f172a]/30 rounded-3xl border border-dashed border-slate-800"
+              >
+                  No upcoming events yet.
               </div>
           </div>
       </div>
 
+      <!-- Event Modal -->
+      <div
+          v-if="selectedEvent"
+          class="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-6"
+          @click.self="closeEvent"
+      >
+          <div class="w-full max-w-6xl rounded-3xl overflow-hidden border border-slate-700 bg-[#0b1220] shadow-2xl">
+              <div class="relative flex flex-col md:flex-row min-h-[36rem]">
+                  <!-- Left: Image / Slogan -->
+                  <div class="relative md:w-3/5 h-72 md:h-auto bg-slate-900">
+                      <div class="absolute inset-0 flex items-center justify-center bg-slate-950">
+                          <img
+                              v-if="selectedEvent.image_path"
+                              :src="selectedEvent.image_path"
+                              alt="Event image"
+                              class="max-h-full max-w-full object-contain"
+                          />
+                          <div
+                              v-else
+                              class="h-full w-full bg-linear-to-br from-slate-900 via-slate-900/80 to-slate-950"
+                          ></div>
+                      </div>
+                      <div class="absolute inset-0 bg-linear-to-t from-black/70 via-black/30 to-transparent"></div>
+                      <div class="absolute bottom-6 left-6 right-6">
+                          <div class="text-yellow-500 font-black uppercase tracking-[0.3em] text-[10px]">
+                              Kurash Federation
+                          </div>
+                          <div class="text-white font-serif text-2xl md:text-3xl mt-2">
+                              {{ selectedEvent.title }}
+                          </div>
+                      </div>
+                  </div>
+
+                  <!-- Right: Info -->
+                  <div class="md:w-2/5 p-8 md:p-10 space-y-6">
+                      <div class="flex flex-wrap items-center gap-3">
+                          <div class="text-yellow-500 font-black text-[10px] uppercase tracking-[0.3em]">
+                              {{ formatEventRange(selectedEvent.start_date, selectedEvent.end_date) }}
+                          </div>
+                          <div class="text-slate-500 text-xs uppercase tracking-widest">
+                              {{ selectedEvent.status }}
+                          </div>
+                      </div>
+                      <h3 class="text-3xl md:text-4xl font-serif font-bold text-white">
+                          {{ selectedEvent.title }}
+                      </h3>
+                      <p class="text-slate-300 text-base leading-relaxed">
+                          {{ selectedEvent.description || 'No description available.' }}
+                      </p>
+                      <div class="text-slate-300 text-sm uppercase tracking-widest">
+                          Location: <span class="text-white">{{ selectedEvent.location || 'TBA' }}</span>
+                      </div>
+                      <div class="flex flex-wrap gap-4 pt-2">
+                          <a
+                              :href="route('public.tournaments.index')"
+                              class="bg-yellow-500 hover:bg-yellow-400 text-black font-black py-3 px-6 rounded-xl transition-all uppercase tracking-widest text-xs"
+                          >
+                              Register
+                          </a>
+                          <button
+                              class="bg-white/5 hover:bg-white/10 text-white border border-white/20 font-black py-3 px-6 rounded-xl transition-all uppercase tracking-widest text-xs"
+                              @click="closeEvent"
+                          >
+                              Close
+                          </button>
+                      </div>
+                  </div>
+
+                  <button
+                      class="absolute top-4 right-4 h-10 w-10 rounded-full bg-black/50 text-white hover:bg-black/70 transition-colors"
+                      @click="closeEvent"
+                      aria-label="Close event"
+                  >
+                      &times;
+                  </button>
+              </div>
+          </div>
+      </div>
       <!-- Latest News -->
       <div class="mb-24">
           <div class="flex items-end justify-between mb-12 border-b border-slate-800 pb-6">
@@ -624,3 +709,6 @@ const navItems = [
     font-family: 'Inter', sans-serif;
 }
 </style>
+
+
+
