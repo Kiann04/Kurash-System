@@ -9,7 +9,7 @@
 
 @theme inline {
     --font-sans:
-        Instrument Sans, ui-sans-serif, system-ui, sans-serif,
+        'Instrument Sans', ui-sans-serif, system-ui, sans-serif,
         'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol',
         'Noto Color Emoji';
 
@@ -63,6 +63,8 @@
     --spacing-150: 37.5rem;
     --spacing-88: 22rem;
     --spacing-25: 6.25rem;
+    --spacing-144: 36rem;
+    --spacing-360: 90rem;
 }
 
 /* 
@@ -108,16 +110,6 @@ body[style*="overflow: hidden"] {
   ::file-selector-button {
     border-color: var(--color-gray-200, currentColor);
   }
-}
-
-@layer utilities {
-    body,
-    html {
-        --font-sans:
-            'Instrument Sans', ui-sans-serif, system-ui, sans-serif,
-            'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol',
-            'Noto Color Emoji';
-    }
 }
 
 :root {
@@ -193,11 +185,4 @@ body[style*="overflow: hidden"] {
     --sidebar: hsl(240 5.9% 10%);
 }
 
-@layer base {
-    * {
-        @apply border-border outline-ring/50;
-    }
-    body {
-        @apply bg-background text-foreground;
-    }
-}
+

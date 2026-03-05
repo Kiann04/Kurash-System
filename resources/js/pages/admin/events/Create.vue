@@ -4,6 +4,7 @@ import { Calendar, Save } from 'lucide-vue-next';
 import { route } from 'ziggy-js';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
+import { DatePicker } from '@/components/ui/date-picker';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import AppLayout from '@/layouts/AppLayout.vue';
@@ -29,6 +30,10 @@ const onImageChange = (event: Event) => {
     form.image = target.files && target.files[0] ? target.files[0] : null;
 };
 
+const getImageUrl = (file: File) => {
+    return URL.createObjectURL(file);
+};
+
 const submit = () => {
     form.post(route('admin.events.store'), {
         forceFormData: true,
@@ -40,7 +45,7 @@ const submit = () => {
     <AppLayout :breadcrumbs="breadcrumbs">
         <Head title="Create Event" />
 
-        <div class="flex flex-col gap-6 p-6 max-w-5xl">
+        <div class="flex flex-col gap-6 p-6 lg:px-8">
             <div class="flex items-center justify-between">
                 <div class="flex items-center gap-3">
                     <div class="h-12 w-12 rounded-xl bg-amber-50 flex items-center justify-center border border-amber-100 dark:bg-amber-900/20 dark:border-amber-800">
@@ -70,7 +75,7 @@ const submit = () => {
             </div>
 
             <Card class="border shadow-sm bg-white dark:bg-slate-950 dark:border-slate-800">
-                <CardContent class="p-6 md:grid md:grid-cols-2 md:gap-8 space-y-6 md:space-y-0">
+                <CardContent class="p-6 grid grid-cols-1 xl:grid-cols-2 gap-8">
                     <div class="space-y-5">
                         <div class="space-y-1">
                             <h2 class="text-sm font-semibold uppercase tracking-widest text-slate-500 dark:text-slate-400">Details</h2>
@@ -109,12 +114,12 @@ const submit = () => {
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div class="grid gap-2">
                             <Label for="start_date" class="dark:text-slate-300">Start Date</Label>
-                            <Input id="start_date" type="date" v-model="form.start_date" class="dark:bg-slate-950 dark:border-slate-800 dark:text-slate-100" />
+                            <DatePicker id="start_date" v-model="form.start_date" class="dark:bg-slate-950 dark:border-slate-800 dark:text-slate-100" />
                             <p v-if="form.errors.start_date" class="text-xs text-red-500">{{ form.errors.start_date }}</p>
                         </div>
                         <div class="grid gap-2">
                             <Label for="end_date" class="dark:text-slate-300">End Date (optional)</Label>
-                            <Input id="end_date" type="date" v-model="form.end_date" class="dark:bg-slate-950 dark:border-slate-800 dark:text-slate-100" />
+                            <DatePicker id="end_date" v-model="form.end_date" class="dark:bg-slate-950 dark:border-slate-800 dark:text-slate-100" />
                             <p v-if="form.errors.end_date" class="text-xs text-red-500">{{ form.errors.end_date }}</p>
                         </div>
                     </div>
@@ -152,7 +157,7 @@ const submit = () => {
                     <div class="rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/40 h-64 flex items-center justify-center overflow-hidden">
                         <img
                             v-if="form.image"
-                            :src="URL.createObjectURL(form.image)"
+                            :src="getImageUrl(form.image)"
                             alt="Event image preview"
                             class="max-h-full max-w-full object-contain"
                         />

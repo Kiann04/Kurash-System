@@ -51,15 +51,7 @@ const emit = defineEmits<{
 const searchQuery = ref('')
 const genderFilter = ref<string>('all')
 
-// Sync gender filter when category gender changes; if cleared, allow 'all'
-watch(() => props.selectedCategory?.gender, (g) => {
-    if (g) {
-        const normalized = String(g).toLowerCase()
-        genderFilter.value = normalized === 'male' || normalized === 'm' ? 'male' : 'female'
-    } else {
-        genderFilter.value = 'all'
-    }
-})
+// Gender filter is user-controlled and remains clickable regardless of selected category.
 
 // Computed Property: Filters the list of players based on:
 // 1. Player status (must not be inactive/expired)
@@ -243,7 +235,7 @@ const getPlayerAssignment = (playerId: number) => {
                     </div>
                     <div class="w-28">
                         <Select v-model="genderFilter">
-                            <SelectTrigger class="h-9 dark:bg-slate-900 dark:border-slate-800" :disabled="!!props.selectedCategory && !!props.selectedCategory.gender">
+                            <SelectTrigger class="h-9 dark:bg-slate-900 dark:border-slate-800">
                                 <div class="flex items-center gap-2">
                                     <Filter class="w-3.5 h-3.5 text-slate-500" />
                                     <SelectValue placeholder="Gender" />

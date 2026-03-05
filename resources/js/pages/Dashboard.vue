@@ -29,8 +29,9 @@ interface Player {
     name: string;
     gender: string;
     age: number;
-    club: string;
-    expiry_date: string;
+    club_location: string;
+    membership_start: string;
+    membership_end: string;
     status: string;
 }
 
@@ -143,7 +144,7 @@ const getInitials = (name: string) => {
                                         <TableCell class="px-6 py-4">
                                             <div class="flex items-center gap-2 text-slate-600 dark:text-slate-400">
                                                 <Shield class="h-3.5 w-3.5 text-slate-400 dark:text-slate-500" />
-                                                <span>{{ player.club }}</span>
+                                                <span>{{ player.club_location }}</span>
                                             </div>
                                         </TableCell>
                                         <TableCell class="px-6 py-4">
@@ -153,9 +154,15 @@ const getInitials = (name: string) => {
                                             <span class="text-xs text-slate-500 uppercase dark:text-slate-400">{{ player.gender }}</span>
                                         </TableCell>
                                         <TableCell class="px-6 py-4">
-                                            <div class="flex items-center gap-2 text-slate-600 dark:text-slate-400">
-                                                <Calendar class="h-3.5 w-3.5 text-slate-400 dark:text-slate-500" />
-                                                <span>{{ player.expiry_date }}</span>
+                                            <div class="flex flex-col gap-1 text-sm text-slate-600 dark:text-slate-400">
+                                                <div class="flex items-center gap-2">
+                                                    <span class="text-xs w-8 text-slate-400">Start:</span>
+                                                    <span>{{ player.membership_start }}</span>
+                                                </div>
+                                                <div class="flex items-center gap-2">
+                                                    <span class="text-xs w-8 text-slate-400">End:</span>
+                                                    <span>{{ player.membership_end }}</span>
+                                                </div>
                                             </div>
                                         </TableCell>
                                         <TableCell class="px-6 py-4 text-center">

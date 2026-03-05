@@ -67,13 +67,20 @@ const renewPlayerId = ref<number | null>(null);
 function getUiStatus(player: Player) {
     try {
         const now = new Date();
+        now.setHours(0, 0, 0, 0); // Reset time to start of day for accurate date comparison
         const expiry = new Date(player.membership_expires_at);
+        expiry.setHours(0, 0, 0, 0); // Reset time to start of day
+        
+        // Calculate difference in days
         const diffMs = expiry.getTime() - now.getTime();
-        const diffDays = diffMs / (1000 * 60 * 60 * 24);
-        if (player.status === 'inactive' || expiry < now) {
+        const diffDays = Math.round(diffMs / (1000 * 60 * 60 * 24));
+        
+        if (player.status === 'inactive' || expiry.getTime() <= now.getTime()) {
             return 'inactive';
         }
-        if (diffDays >= 0 && diffDays <= 7) {
+        
+        // If diffDays is between 1 and 31 (inclusive), it's expiring soon
+        if (diffDays <= 31) {
             return 'expiring';
         }
         return 'active';

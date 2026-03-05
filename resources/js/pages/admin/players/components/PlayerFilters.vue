@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { Search, Filter, X } from 'lucide-vue-next';
 import { Button } from '@/components/ui/button';
+import { DatePicker } from '@/components/ui/date-picker';
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -39,12 +40,11 @@ defineEmits<{
         </div>
         
         <div class="relative w-full md:w-auto">
-            <Input
-                type="date"
+            <DatePicker
                 :model-value="membership_start"
                 @update:model-value="$emit('update:membership_start', $event as string)"
                 class="h-9 bg-background border-slate-200 dark:border-slate-800 dark:bg-slate-950 w-full md:w-40"
-                placeholder="Start Date"
+                placeholder="Search By Date"
             />
         </div>
 

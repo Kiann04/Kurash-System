@@ -5,7 +5,9 @@
  * Displays a chronological list of completed matches.
  * Allows administrators to review results and revert matches if necessary.
  */
+import { Trophy } from 'lucide-vue-next'
 import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/ui/card'
 import {
     Table,
@@ -25,6 +27,7 @@ import type { MatchItem, BracketItem } from '@/types/bracket'
 const props = defineProps<{
     matches: Array<MatchItem & { bracket: BracketItem }>
     isCompleted: boolean
+    tournamentDate?: string
 }>()
 
 /**
@@ -57,7 +60,12 @@ const revertMatch = (match: MatchItem) => {
                     <CardTitle class="text-base font-semibold uppercase tracking-wider text-slate-700 dark:text-slate-200">
                         Match History
                     </CardTitle>
-                    <CardDescription>Recently completed matches</CardDescription>
+                    <CardDescription>
+                        Recently completed matches
+                        <span v-if="tournamentDate" class="ml-2 text-xs text-muted-foreground">
+                            • {{ new Date(tournamentDate).toLocaleDateString() }}
+                        </span>
+                    </CardDescription>
                 </div>
                 <Badge variant="secondary" class="bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 shadow-sm">{{ matches.length }} Completed</Badge>
             </div>
@@ -106,7 +114,7 @@ const revertMatch = (match: MatchItem) => {
                                 <Button
                                     variant="outline"
                                     size="sm"
-                                    class="h-8 text-xs hover:bg-destructive hover:text-destructive-foreground dark:border-slate-700 dark:hover:bg-destructive/80"
+                                    class="h-8 text-xs transition-all duration-200 border-slate-300 dark:border-slate-700 hover:bg-red-50 hover:text-red-600 hover:border-red-300 dark:hover:bg-red-900/20 dark:hover:text-red-400 dark:hover:border-red-500 hover:shadow-sm rounded-md"
                                     :disabled="isCompleted"
                                     @click="revertMatch(m)"
                                 >

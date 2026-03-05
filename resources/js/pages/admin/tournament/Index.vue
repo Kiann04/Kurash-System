@@ -27,6 +27,7 @@ import Pagination from '@/components/Pagination.vue';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
+import { DatePicker } from '@/components/ui/date-picker';
 import {
     Dialog,
     DialogContent,
@@ -230,7 +231,7 @@ const getStatusColor = (status: string) => {
                             </div>
                             <div class="grid gap-2">
                                 <Label for="date" class="dark:text-slate-300">Tournament Date</Label>
-                                <Input id="date" type="date" v-model="newTournament.tournament_date" class="dark:bg-slate-950 dark:border-slate-800 dark:text-slate-100" />
+                                <DatePicker id="date" v-model="newTournament.tournament_date" class="dark:bg-slate-950 dark:border-slate-800 dark:text-slate-100" />
                             </div>
                             <div class="grid gap-2">
                                 <Label class="dark:text-slate-300">Initial Status</Label>

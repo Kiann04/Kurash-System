@@ -15,6 +15,7 @@ import {
 import { route } from 'ziggy-js';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardContent, CardFooter, CardDescription } from '@/components/ui/card';
+import { DatePicker } from '@/components/ui/date-picker';
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -24,6 +25,8 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
+import { watch } from 'vue';
+import { addYears, parseISO, format, isValid } from 'date-fns';
 
 const props = defineProps<{
   player?: {
@@ -38,6 +41,7 @@ const props = defineProps<{
     emergency_contact_number: string;
     registered_at: string;
     membership_start_date?: string;
+    membership_expires_at?: string;
   };
 }>();
 
@@ -51,6 +55,25 @@ const form = useForm({
   emergency_contact: props.player?.emergency_contact || '',
   emergency_contact_number: props.player?.emergency_contact_number || '',
   registered_at: props.player?.registered_at || new Date().toISOString().split('T')[0],
+  membership_start_date: props.player?.membership_start_date || props.player?.registered_at || new Date().toISOString().split('T')[0],
+  membership_expires_at: props.player?.membership_expires_at || '',
+});
+
+// Initialize expiry if missing
+if (!form.membership_expires_at && form.membership_start_date) {
+    const start = parseISO(form.membership_start_date);
+    if (isValid(start)) {
+        form.membership_expires_at = format(addYears(start, 1), 'yyyy-MM-dd');
+    }
+}
+
+// Auto-update expiry when start date changes
+watch(() => form.membership_start_date, (newStart) => {
+    if (!newStart) return;
+    const startDate = parseISO(newStart);
+    if (isValid(startDate)) {
+        form.membership_expires_at = format(addYears(startDate, 1), 'yyyy-MM-dd');
+    }
 });
 
 function submit() {
@@ -112,13 +135,10 @@ function submit() {
                 </div>
                     
                     <div class="space-y-2">
-                        <Label for="birthday" class="dark:text-slate-300">Birthday</Label>
-                        <div class="relative">
-                            <Calendar class="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                            <Input id="birthday" type="date" v-model="form.birthday" class="pl-9 dark:bg-slate-950 dark:border-slate-800 dark:text-slate-100" />
-                        </div>
-                        <p v-if="form.errors.birthday" class="text-sm text-destructive">{{ form.errors.birthday }}</p>
-                    </div>
+                    <Label for="birthday" class="dark:text-slate-300">Birthday</Label>
+                    <DatePicker id="birthday" v-model="form.birthday" class="dark:bg-slate-950 dark:border-slate-800 dark:text-slate-100" />
+                    <p v-if="form.errors.birthday" class="text-sm text-destructive">{{ form.errors.birthday }}</p>
+                </div>
                 </div>
 
                 <div class="space-y-2">
@@ -186,8 +206,29 @@ function submit() {
 
                 <div class="space-y-2 pt-2">
                     <Label for="registered_at" class="dark:text-slate-300">Registration Date</Label>
-                    <Input id="registered_at" type="date" v-model="form.registered_at" class="dark:bg-slate-950 dark:border-slate-800 dark:text-slate-100" />
+                    <DatePicker id="registered_at" v-model="form.registered_at" class="dark:bg-slate-950 dark:border-slate-800 dark:text-slate-100" />
                     <p v-if="form.errors.registered_at" class="text-sm text-destructive">{{ form.errors.registered_at }}</p>
+                </div>
+
+                <Separator class="my-2" />
+
+                <div class="space-y-2">
+                    <Label class="text-sm font-semibold flex items-center gap-1 dark:text-slate-300">
+                        <Calendar class="h-3 w-3 text-primary" />
+                        Membership Period
+                    </Label>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div class="space-y-2">
+                            <Label for="membership_start_date" class="text-xs text-muted-foreground">Start Date</Label>
+                            <DatePicker id="membership_start_date" v-model="form.membership_start_date" class="dark:bg-slate-950 dark:border-slate-800 dark:text-slate-100" />
+                            <p v-if="form.errors.membership_start_date" class="text-sm text-destructive">{{ form.errors.membership_start_date }}</p>
+                        </div>
+                        <div class="space-y-2">
+                            <Label for="membership_expires_at" class="text-xs text-muted-foreground">End Date</Label>
+                            <DatePicker id="membership_expires_at" v-model="form.membership_expires_at" class="dark:bg-slate-950 dark:border-slate-800 dark:text-slate-100" />
+                            <p v-if="form.errors.membership_expires_at" class="text-sm text-destructive">{{ form.errors.membership_expires_at }}</p>
+                        </div>
+                    </div>
                 </div>
             </CardContent>
             <CardFooter class="flex justify-end border-t pt-4">

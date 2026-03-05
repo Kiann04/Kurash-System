@@ -8,13 +8,15 @@ use Illuminate\Support\Facades\DB;
 return new class extends Migration {
     public function up(): void
     {
-        Schema::table('players', function (Blueprint $table) {
-            $table->date('membership_start_date')->nullable()->after('registered_at');
-        });
+        if (!Schema::hasColumn('players', 'membership_start_date')) {
+            Schema::table('players', function (Blueprint $table) {
+                $table->date('membership_start_date')->nullable()->after('registered_at');
+            });
 
-        DB::table('players')->update([
-            'membership_start_date' => DB::raw('registered_at'),
-        ]);
+            DB::table('players')->update([
+                'membership_start_date' => DB::raw('registered_at'),
+            ]);
+        }
     }
 
     public function down(): void

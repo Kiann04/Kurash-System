@@ -24,23 +24,32 @@ class PlayerController extends Controller
                 }
             })
             ->when($request->status, function ($query, $status) {
+                // Use a fixed date reference to avoid mutation issues within closures
+                $today = now()->timezone('Asia/Manila')->startOfDay();
+                $nextMonth = $today->copy()->addMonth();
+
                 if ($status === 'active') {
-                    $query->where(function ($q) {
-                        $q->where('membership_expires_at', '>=', now())
-                            ->where('status', 'active');
+                    $query->where(function ($q) use ($nextMonth) {
+                        $q->where(function ($sub) use ($nextMonth) {
+                            $sub->whereDate('membership_expires_at', '>', $nextMonth)
+                                ->orWhereNull('membership_expires_at');
+                        })->where('status', 'active');
                     });
                 }
 
                 if ($status === 'inactive') {
-                    $query->where(function ($q) {
-                        $q->where('membership_expires_at', '<', now())
+                    $query->where(function ($q) use ($today) {
+                        $q->whereDate('membership_expires_at', '<=', $today)
                             ->orWhere('status', 'inactive');
                     });
                 }
 
                 if ($status === 'expiring_soon') {
-                    $query->where('membership_expires_at', '>=', now())
-                        ->where('membership_expires_at', '<=', now()->addWeek());
+                    $query->where(function ($q) use ($today, $nextMonth) {
+                        $q->whereDate('membership_expires_at', '>', $today)
+                            ->whereDate('membership_expires_at', '<=', $nextMonth)
+                            ->where('status', 'active');
+                    });
                 }
             })
             ->when($request->membership_start, function ($query, $date) {
@@ -85,11 +94,16 @@ class PlayerController extends Controller
             'emergency_contact' => 'required|string|max:255',
             'emergency_contact_number' => 'required|string|max:20',
             'registered_at' => 'required|date',
+            'membership_start_date' => 'nullable|date',
+            'membership_expires_at' => 'nullable|date',
         ]);
 
-        // Set membership start date from registration and auto-calculate expiry (+1 year)
-        $validated['membership_start_date'] = $validated['registered_at'];
-        $validated['membership_expires_at'] = \Carbon\Carbon::parse($validated['registered_at'])->addYear();
+        // Set membership start date from input or fallback to registration
+        $validated['membership_start_date'] = $validated['membership_start_date'] ?? $validated['registered_at'];
+
+        // Set expiry from input or auto-calculate (+1 year from start)
+        $validated['membership_expires_at'] = $validated['membership_expires_at'] ?? \Carbon\Carbon::parse($validated['membership_start_date'])->addYear();
+
         $validated['status'] = 'active';
 
         Player::create($validated);
@@ -136,15 +150,15 @@ class PlayerController extends Controller
             'emergency_contact' => 'required|string|max:255',
             'emergency_contact_number' => 'required|string|max:20',
             'registered_at' => 'required|date',
+            'membership_start_date' => 'nullable|date',
+            'membership_expires_at' => 'nullable|date',
         ]);
 
-        // Keep membership start synced to registration date and update expiry when registration changes
-        if ($request->has('registered_at')) {
-            $validated['membership_start_date'] = $validated['registered_at'];
-            if ($request->registered_at !== $player->registered_at->format('Y-m-d')) {
-                $validated['membership_expires_at'] = \Carbon\Carbon::parse($validated['registered_at'])->addYear();
-            }
-        }
+        // Set membership start date from input or fallback to registration
+        $validated['membership_start_date'] = $validated['membership_start_date'] ?? $validated['registered_at'];
+
+        // Set expiry from input or auto-calculate (+1 year from start)
+        $validated['membership_expires_at'] = $validated['membership_expires_at'] ?? \Carbon\Carbon::parse($validated['membership_start_date'])->addYear();
 
         $player->update($validated);
 

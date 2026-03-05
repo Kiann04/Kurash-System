@@ -21,13 +21,12 @@ class DashboardController extends Controller
                     'name' => $player->full_name,
                     'gender' => $player->gender ?? 'N/A',
                     'age' => $player->age,
-                    'club' => $player->club ?? '-',
-                    'expiry_date' => $player->membership_expires_at ? $player->membership_expires_at->format('M d, Y') : 'N/A',
+                    'club_location' => trim(($player->club ?? '-') . ($player->address ? ' • ' . $player->address : '')),
+                    'membership_start' => $player->membership_start_date ? $player->membership_start_date->format('M d, Y') : 'N/A',
+                    'membership_end' => $player->membership_expires_at ? $player->membership_expires_at->format('M d, Y') : 'N/A',
                     'status' => $player->status,
                 ];
             }),
         ]);
     }
 }
-
-

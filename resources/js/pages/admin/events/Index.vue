@@ -2,9 +2,10 @@
 import { Head, Link, router } from '@inertiajs/vue3';
 import { Calendar, Edit, Eye, Plus, Trash2 } from 'lucide-vue-next';
 import { route } from 'ziggy-js';
+import Pagination from '@/components/Pagination.vue';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import {
     Table,
     TableBody,
@@ -13,7 +14,6 @@ import {
     TableHeader,
     TableRow,
 } from '@/components/ui/table';
-import Pagination from '@/components/Pagination.vue';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { type BreadcrumbItem } from '@/types';
 

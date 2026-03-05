@@ -254,7 +254,7 @@ const goBack = () => {
         <Head title="Bracket Management" />
 
         <div class="py-6" :class="{ 'fixed inset-0 z-50 bg-background overflow-auto p-4': fullscreenBracketId }">
-            <div :class="{ 'max-w-[90rem] mx-auto sm:px-4 lg:px-6': !fullscreenBracketId, 'h-full': fullscreenBracketId }">
+            <div :class="{ 'max-w-360 mx-auto sm:px-4 lg:px-6': !fullscreenBracketId, 'h-full': fullscreenBracketId }">
                 <!-- Header (Hidden in Fullscreen) -->
                 <div v-if="!fullscreenBracketId" class="mb-6">
                     <Button variant="ghost" class="mb-4 pl-0 hover:bg-transparent hover:text-primary" @click="goBack">
@@ -333,6 +333,7 @@ const goBack = () => {
                             <MatchHistory 
                                 :matches="globalMatchHistory"
                                 :is-completed="isCompleted"
+                                :tournament-date="tournament.tournament_date"
                                 @revertMatch="openRevertMatch"
                             />
                         </div>

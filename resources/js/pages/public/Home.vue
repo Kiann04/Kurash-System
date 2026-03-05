@@ -246,7 +246,7 @@ const navItems = [
       <!-- Home View Content -->
       <div class="space-y-24">
         <!-- Hero Section -->
-        <div class="relative w-full h-175 mb-12 rounded-4xl overflow-hidden group shadow-2xl">
+        <div class="relative w-full h-144 mb-12 rounded-4xl overflow-hidden group shadow-2xl">
            <!-- Background Image -->
            <div class="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1555597673-b21d5c935865?q=80&w=2000&auto=format&fit=crop')] bg-cover bg-center transition-transform duration-1000 group-hover:scale-105"></div>
            <div class="absolute inset-0 bg-linear-to-t from-[#050a14] via-[#050a14]/40 to-transparent"></div>
@@ -351,7 +351,7 @@ const navItems = [
           @click.self="closeEvent"
       >
           <div class="w-full max-w-6xl rounded-3xl overflow-hidden border border-slate-700 bg-[#0b1220] shadow-2xl">
-              <div class="relative flex flex-col md:flex-row min-h-[36rem]">
+              <div class="relative flex flex-col md:flex-row min-h-144">
                   <!-- Left: Image / Slogan -->
                   <div class="relative md:w-3/5 h-72 md:h-auto bg-slate-900">
                       <div class="absolute inset-0 flex items-center justify-center bg-slate-950">

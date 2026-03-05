@@ -10,6 +10,7 @@ import {
     CardHeader,
     CardTitle,
 } from '@/components/ui/card'
+import { DatePicker } from '@/components/ui/date-picker'
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -77,7 +78,7 @@ const localStatus = useVModel(props, 'status', emit)
                 <!-- Date Input -->
                 <div class="space-y-2">
                     <Label for="date" class="dark:text-slate-300">Date</Label>
-                    <Input id="date" type="date" v-model="localDate" class="dark:bg-slate-950 dark:border-slate-800" />
+                    <DatePicker id="date" v-model="localDate" class="dark:bg-slate-950 dark:border-slate-800" />
                     <p v-if="errors.tournament_date" class="text-sm text-destructive">{{ errors.tournament_date }}</p>
                 </div>
                 <!-- Status Dropdown -->
