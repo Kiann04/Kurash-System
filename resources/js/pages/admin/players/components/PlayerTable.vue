@@ -79,8 +79,8 @@ function getUiStatus(player: Player) {
             return 'inactive';
         }
         
-        // If diffDays is between 1 and 31 (inclusive), it's expiring soon
-        if (diffDays <= 31) {
+        // If diffDays is between 1 and 30 (inclusive), it's expiring soon
+        if (diffDays <= 30) {
             return 'expiring';
         }
         return 'active';
@@ -122,13 +122,13 @@ const getInitials = (name: string) => {
                 <Table>
                     <TableHeader>
                         <TableRow class="bg-slate-50 hover:bg-slate-50 dark:bg-slate-800/50 dark:hover:bg-slate-800/50">
-                            <TableHead class="h-12 px-4 align-middle font-medium dark:text-slate-400">Player</TableHead>
-                            <TableHead class="h-12 px-4 align-middle font-medium dark:text-slate-400">Age</TableHead>
-                            <TableHead class="h-12 px-4 align-middle font-medium dark:text-slate-400">Gender</TableHead>
-                            <TableHead class="h-12 px-4 align-middle font-medium dark:text-slate-400">Club / Address</TableHead>
-                            <TableHead class="h-12 px-4 align-middle font-medium dark:text-slate-400">Membership Date</TableHead>
-                            <TableHead class="h-12 px-4 align-middle font-medium text-center dark:text-slate-400">Membership Status</TableHead>
-                            <TableHead class="h-12 px-4 align-middle font-medium text-right dark:text-slate-400">Actions</TableHead>
+                            <TableHead class="h-12 px-4 align-middle font-medium dark:text-slate-400 w-64">Player</TableHead>
+                            <TableHead class="h-12 px-4 align-middle font-medium dark:text-slate-400 w-24">Age</TableHead>
+                            <TableHead class="h-12 px-4 align-middle font-medium dark:text-slate-400 w-24">Gender</TableHead>
+                            <TableHead class="h-12 px-4 align-middle font-medium dark:text-slate-400 w-48">Club / Address</TableHead>
+                            <TableHead class="h-12 px-4 align-middle font-medium dark:text-slate-400 w-48">Membership Date</TableHead>
+                            <TableHead class="h-12 px-4 align-middle font-medium text-center dark:text-slate-400 w-40">Membership Status</TableHead>
+                            <TableHead class="h-12 px-4 align-middle font-medium text-right dark:text-slate-400 w-20">Actions</TableHead>
                         </TableRow>
                     </TableHeader>
                     <TableBody>

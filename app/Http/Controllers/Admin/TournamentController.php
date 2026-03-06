@@ -134,7 +134,7 @@ class TournamentController extends Controller
                 $pg = strtolower($player->gender);
                 $cg = strtolower($category->gender);
                 return (($cg === 'male' || $cg === 'm') && !($pg === 'male' || $pg === 'm')) ||
-                       (($cg === 'female' || $cg === 'f') && !($pg === 'female' || $pg === 'f'));
+                    (($cg === 'female' || $cg === 'f') && !($pg === 'female' || $pg === 'f'));
             })->map(fn($reg) => $playersMap->get($reg['player_id'])?->full_name)->filter()->values();
 
             if ($genderMismatches->isNotEmpty()) {
@@ -191,16 +191,55 @@ class TournamentController extends Controller
     /**
      * Download the registration template file.
      *
+     * @param  \Illuminate\Http\Request  $request
      * @return \Symfony\Component\HttpFoundation\BinaryFileResponse
      */
-    public function downloadRegistrationTemplate()
+    public function downloadRegistrationTemplate(Request $request)
     {
+        $format = $request->query('format', 'csv');
+
+        if ($format === 'docx') {
+            $phpWord = new \PhpOffice\PhpWord\PhpWord();
+            $section = $phpWord->addSection();
+
+            $table = $section->addTable([
+                'borderSize' => 6,
+                'borderColor' => '999999',
+                'cellMargin' => 50
+            ]);
+
+            $table->addRow();
+            $table->addCell(500)->addText('No', ['bold' => true]);
+            $table->addCell(3000)->addText('Full Name', ['bold' => true]);
+            $table->addCell(1500)->addText('Gender', ['bold' => true]);
+            $table->addCell(2000)->addText('Age Category', ['bold' => true]);
+            $table->addCell(2000)->addText('Weight Category', ['bold' => true]);
+            $table->addCell(2000)->addText('Club', ['bold' => true]);
+
+            // Add an empty row for user to fill
+            $table->addRow();
+            $table->addCell(500)->addText('1');
+            $table->addCell(3000)->addText('');
+            $table->addCell(1500)->addText('');
+            $table->addCell(2000)->addText('');
+            $table->addCell(2000)->addText('');
+            $table->addCell(2000)->addText('');
+
+            $tempFile = tempnam(sys_get_temp_dir(), 'registration_template_docx');
+            $objWriter = \PhpOffice\PhpWord\IOFactory::createWriter($phpWord, 'Word2007');
+            $objWriter->save($tempFile);
+
+            return response()->download($tempFile, 'registration_template.docx', [
+                'Content-Type' => 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+            ])->deleteFileAfterSend(true);
+        }
+
         $tempFile = tempnam(sys_get_temp_dir(), 'registration_template_csv');
         $handle = fopen($tempFile, 'w');
         // Header row
-        fputcsv($handle, ['Full Name', 'Gender', 'Weight Category']);
+        fputcsv($handle, ['No', 'Full Name', 'Gender', 'Age Category', 'Weight Category', 'Club']);
         // Example row
-        fputcsv($handle, ['John Doe', 'Male', '-66kg']);
+        fputcsv($handle, ['1', 'John Doe', 'Male', 'Senior', '-66kg', 'Kurash Club']);
         fclose($handle);
 
         return response()->download($tempFile, 'registration_template.csv', [
@@ -325,7 +364,7 @@ class TournamentController extends Controller
                 $pg = strtolower($player->gender);
                 $cg = strtolower($category->gender);
                 return (($cg === 'male' || $cg === 'm') && !($pg === 'male' || $pg === 'm')) ||
-                       (($cg === 'female' || $cg === 'f') && !($pg === 'female' || $pg === 'f'));
+                    (($cg === 'female' || $cg === 'f') && !($pg === 'female' || $pg === 'f'));
             })->map(fn($reg) => $playersMap->get($reg['player_id'])?->full_name)->filter()->values();
 
             if ($genderMismatches->isNotEmpty()) {
@@ -464,10 +503,35 @@ class TournamentController extends Controller
      */
     private function mapPlayers()
     {
+        $today = now()->timezone('Asia/Manila')->startOfDay();
+        $nextMonth = $today->copy()->addDays(30);
+
         return Player::query()
             ->select('id', 'full_name', 'gender', 'club', 'status', 'membership_expires_at', 'birthday as dob')
             ->orderBy('full_name')
-            ->get();
+            ->get()
+            ->map(function ($player) use ($today, $nextMonth) {
+                // Calculate dynamic status to match Dashboard logic
+                $status = $player->status;
+                $expires = $player->membership_expires_at;
+
+                if ($status === 'inactive') {
+                    // Already inactive, keep it
+                } elseif ($expires) {
+                    $expiresDate = $expires->timezone('Asia/Manila')->format('Y-m-d');
+                    $todayDate = $today->format('Y-m-d');
+                    $nextMonthDate = $nextMonth->format('Y-m-d');
+
+                    if ($expiresDate <= $todayDate) {
+                        $status = 'inactive';
+                    } elseif ($expiresDate <= $nextMonthDate) {
+                        $status = 'expiring';
+                    }
+                }
+
+                $player->status = $status;
+                return $player;
+            });
     }
 
     /**

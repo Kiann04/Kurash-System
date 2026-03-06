@@ -25,8 +25,13 @@ const mainNavItems: NavItem[] = [
         icon: LayoutGrid,
     },
     {
-        title: 'Players',
+        title: 'Membership Registration',
         href: route('admin.players.index'),
+        icon: Users,
+    },
+    {
+        title: 'Player Details',
+        href: route('admin.player-details.index'),
         icon: Users,
     },
     {
@@ -35,14 +40,14 @@ const mainNavItems: NavItem[] = [
         icon: Trophy,
     },
     {
+        title: 'Brackets',
+        href: route('admin.brackets.index'),
+        icon: Brackets,
+    },
+    {
         title: 'Events',
         href: route('admin.events.index'),
         icon: Calendar,
-    },
-    {
-        title: 'Generate Bracket',
-        href: route('admin.brackets.index'),
-        icon: Brackets,
     },
 ];
 

@@ -204,12 +204,6 @@ function submit() {
                     </div>
                 </div>
 
-                <div class="space-y-2 pt-2">
-                    <Label for="registered_at" class="dark:text-slate-300">Registration Date</Label>
-                    <DatePicker id="registered_at" v-model="form.registered_at" class="dark:bg-slate-950 dark:border-slate-800 dark:text-slate-100" />
-                    <p v-if="form.errors.registered_at" class="text-sm text-destructive">{{ form.errors.registered_at }}</p>
-                </div>
-
                 <Separator class="my-2" />
 
                 <div class="space-y-2">

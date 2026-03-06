@@ -4,6 +4,7 @@ use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 use Laravel\Fortify\Features;
 use App\Http\Controllers\Admin\PlayerController as AdminPlayerController;
+use App\Http\Controllers\Admin\PlayerDetailsController as AdminPlayerDetailsController;
 use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
 use App\Http\Controllers\Admin\BracketController as AdminBracketController;
 use App\Http\Controllers\Admin\TournamentController as AdminTournamentController;
@@ -43,6 +44,8 @@ Route::prefix('admin')
         Route::put('players/{player}', [AdminPlayerController::class, 'update'])->name('players.update');
         Route::get('players/{player}', [AdminPlayerController::class, 'show'])->name('players.show');
         Route::post('players/{player}/renew', [AdminPlayerController::class, 'renew'])->name('players.renew');
+
+        Route::get('player-details', [AdminPlayerDetailsController::class, 'index'])->name('player-details.index');
 
         Route::resource('tournaments', AdminTournamentController::class);
         Route::get('tournaments/registration-template/download', [AdminTournamentController::class, 'downloadRegistrationTemplate'])->name('tournaments.download-template');

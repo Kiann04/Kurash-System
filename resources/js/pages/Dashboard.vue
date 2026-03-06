@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Link, Head } from '@inertiajs/vue3';
-import { Users, UserCheck, UserX, ArrowRight, Shield, Calendar } from 'lucide-vue-next';
+import { Users, UserCheck, UserX, ArrowRight, Shield, Calendar, Clock } from 'lucide-vue-next';
 import { route } from 'ziggy-js';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
@@ -38,6 +38,7 @@ interface Player {
 defineProps<{
     totalPlayers: number;
     activePlayers: number;
+    expiringPlayers: number;
     inactivePlayers: number;
     recentPlayers: Player[];
 }>();
@@ -58,7 +59,7 @@ const getInitials = (name: string) => {
     <AppLayout :breadcrumbs="breadcrumbs">
         <div class="flex flex-1 flex-col gap-8 p-6 dark:bg-slate-950">
             <!-- Stats Overview -->
-            <div class="grid gap-6 md:grid-cols-3">
+            <div class="grid gap-6 md:grid-cols-4">
                 <Card class="relative overflow-hidden border-l-4 border-l-blue-500 shadow-sm hover:shadow-md transition-all dark:bg-slate-950 dark:border-slate-800 dark:border-l-blue-500">
                     <CardHeader class="flex flex-row items-center justify-between space-y-0 pb-2">
                         <CardTitle class="text-sm font-medium text-muted-foreground">Total Players</CardTitle>
@@ -74,7 +75,7 @@ const getInitials = (name: string) => {
 
                 <Card class="relative overflow-hidden border-l-4 border-l-green-500 shadow-sm hover:shadow-md transition-all dark:bg-slate-950 dark:border-slate-800 dark:border-l-green-500">
                     <CardHeader class="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle class="text-sm font-medium text-muted-foreground">Active Players</CardTitle>
+                        <CardTitle class="text-sm font-medium text-muted-foreground">Active Member</CardTitle>
                         <div class="h-8 w-8 rounded-full bg-green-100 flex items-center justify-center dark:bg-green-900/30">
                             <UserCheck class="h-4 w-4 text-green-600 dark:text-green-400" />
                         </div>
@@ -85,9 +86,22 @@ const getInitials = (name: string) => {
                     </CardContent>
                 </Card>
 
+                <Card class="relative overflow-hidden border-l-4 border-l-amber-500 shadow-sm hover:shadow-md transition-all dark:bg-slate-950 dark:border-slate-800 dark:border-l-amber-500">
+                    <CardHeader class="flex flex-row items-center justify-between space-y-0 pb-2">
+                        <CardTitle class="text-sm font-medium text-muted-foreground">Expiring Member</CardTitle>
+                        <div class="h-8 w-8 rounded-full bg-amber-100 flex items-center justify-center dark:bg-amber-900/30">
+                            <Clock class="h-4 w-4 text-amber-600 dark:text-amber-400" />
+                        </div>
+                    </CardHeader>
+                    <CardContent>
+                        <div class="text-3xl font-bold text-slate-900 dark:text-slate-100">{{ expiringPlayers }}</div>
+                        <p class="text-xs text-muted-foreground mt-1">Expires within 30 days</p>
+                    </CardContent>
+                </Card>
+
                 <Card class="relative overflow-hidden border-l-4 border-l-red-500 shadow-sm hover:shadow-md transition-all dark:bg-slate-950 dark:border-slate-800 dark:border-l-red-500">
                     <CardHeader class="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle class="text-sm font-medium text-muted-foreground">Inactive Players</CardTitle>
+                        <CardTitle class="text-sm font-medium text-muted-foreground">Inactive Member</CardTitle>
                         <div class="h-8 w-8 rounded-full bg-red-100 flex items-center justify-center dark:bg-red-900/30">
                             <UserX class="h-4 w-4 text-red-600 dark:text-red-400" />
                         </div>
@@ -166,10 +180,14 @@ const getInitials = (name: string) => {
                                             </div>
                                         </TableCell>
                                         <TableCell class="px-6 py-4 text-center">
-                                            <Badge :variant="player.status === 'active' ? 'default' : 'destructive'" 
+                                            <Badge :variant="player.status === 'active' ? 'default' : (player.status === 'expiring' ? 'secondary' : 'destructive')" 
                                                 :class="[
                                                     'capitalize shadow-none font-normal',
-                                                    player.status === 'active' ? 'bg-green-100 text-green-700 hover:bg-green-200 dark:bg-green-900/30 dark:text-green-400 dark:hover:bg-green-900/50' : 'bg-red-100 text-red-700 hover:bg-red-200 dark:bg-red-900/30 dark:text-red-400 dark:hover:bg-red-900/50'
+                                                    player.status === 'active' 
+                                                        ? 'bg-green-100 text-green-700 hover:bg-green-200 dark:bg-green-900/30 dark:text-green-400 dark:hover:bg-green-900/50' 
+                                                        : (player.status === 'expiring'
+                                                            ? 'bg-amber-100 text-amber-700 hover:bg-amber-200 dark:bg-amber-900/30 dark:text-amber-400 dark:hover:bg-amber-900/50'
+                                                            : 'bg-red-100 text-red-700 hover:bg-red-200 dark:bg-red-900/30 dark:text-red-400 dark:hover:bg-red-900/50')
                                                 ]">
                                                 {{ player.status }}
                                             </Badge>

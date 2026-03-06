@@ -1,6 +1,17 @@
 <script setup lang="ts">
-import { Check, Search, Users, Filter, Plus, Trash2 } from 'lucide-vue-next'
+import { Check, Search, Users, Filter, Plus, Trash2, AlertTriangle } from 'lucide-vue-next'
 import { computed, ref, watch } from 'vue'
+import { toast } from 'vue-sonner'
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from '@/components/ui/alert-dialog'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import {
@@ -51,49 +62,41 @@ const emit = defineEmits<{
 const searchQuery = ref('')
 const genderFilter = ref<string>('all')
 
+// State for alerts
+const alertState = ref({
+    isOpen: false,
+    title: '',
+    description: '',
+    confirmAction: () => {},
+})
+
 // Gender filter is user-controlled and remains clickable regardless of selected category.
 
 // Computed Property: Filters the list of players based on:
-// 1. Player status (must not be inactive/expired)
-// 2. Search query (matches name or club)
-// 3. Gender filter (matches selected gender)
+// 1. Search query (matches name or club)
+// 2. Gender filter (matches selected gender)
 const filteredPlayers = computed(() => {
     const query = searchQuery.value.toLowerCase()
 
     return props.players.filter((player) => {
-        // 1. Status Check: Active or Expiring Soon (Not Inactive/Expired)
-        if (player.status.toLowerCase() === 'inactive') return false
-
-        // Check expiry date if present
-        if (player.membership_expires_at) {
-            const expiryDate = new Date(player.membership_expires_at)
-            const today = new Date()
-            today.setHours(0, 0, 0, 0)
-            // If expired, consider inactive
-            if (expiryDate < today) return false
-        }
-
-        // 2. Search Check
+        // 1. Search Check
         const matchesSearch =
             player.full_name.toLowerCase().includes(query) ||
             player.club.toLowerCase().includes(query)
         
-        // 3. Gender logic:
-        // If the selected category has a gender, enforce it; otherwise use the filter
+        // 2. Gender logic:
+        // Combine category requirement AND manual filter
         const playerGender = (player.gender || '').toLowerCase()
-        let matchesGender = true
-        const categoryGender = (props.selectedCategory?.gender || '').toLowerCase()
-        if (categoryGender) {
-            matchesGender =
-                ((categoryGender === 'male' || categoryGender === 'm') && (playerGender === 'male' || playerGender === 'm')) ||
-                ((categoryGender === 'female' || categoryGender === 'f') && (playerGender === 'female' || playerGender === 'f'))
-        } else if (genderFilter.value !== 'all') {
-            matchesGender =
+        
+        // Check Manual Filter
+        let matchesFilter = true
+        if (genderFilter.value !== 'all') {
+            matchesFilter =
                 (genderFilter.value === 'male' && (playerGender === 'male' || playerGender === 'm')) ||
                 (genderFilter.value === 'female' && (playerGender === 'female' || playerGender === 'f'))
         }
 
-        return matchesSearch && matchesGender
+        return matchesSearch && matchesFilter
     })
 })
 
@@ -108,14 +111,8 @@ const isPlayerRegisteredInCurrentCategory = (playerId: number) => {
 
 // Helper: Eligibility for current category by gender
 const isEligiblePlayer = (player: Player) => {
-    if (!props.selectedCategory) return false
-    const categoryGender = (props.selectedCategory.gender || '').toLowerCase()
-    if (!categoryGender) return true
-    const playerGender = (player.gender || '').toLowerCase()
-    return (
-        ((categoryGender === 'male' || categoryGender === 'm') && (playerGender === 'male' || playerGender === 'm')) ||
-        ((categoryGender === 'female' || categoryGender === 'f') && (playerGender === 'female' || playerGender === 'f'))
-    )
+    // Eligibility logic is now handled in togglePlayerRegistration with a warning
+    return true
 }
 
 // Helper: Gender letter styling (M blue, F pink)
@@ -133,15 +130,96 @@ const getPlayerRegistrationCategory = (playerId: number) => {
     return reg ? reg.tournament_weight_category_id : null
 }
 
+// Helper: Check if player's membership is expired
+const isMembershipExpired = (player: Player) => {
+    if (player.status.toLowerCase() === 'inactive') return true
+    if (player.membership_expires_at) {
+        const expiryDate = new Date(player.membership_expires_at)
+        const today = new Date()
+        today.setHours(0, 0, 0, 0)
+        return expiryDate < today
+    }
+    return false
+}
+
+// Helper: Get days left before expiration
+const getDaysLeft = (player: Player) => {
+    if (!player.membership_expires_at) return 0
+    const expiryDate = new Date(player.membership_expires_at)
+    const today = new Date()
+    today.setHours(0, 0, 0, 0)
+    const diffTime = expiryDate.getTime() - today.getTime()
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
+    return diffDays
+}
+
 // Action: Toggles a player's registration status.
-// If registered in current category -> Removes registration.
-// If not registered -> Adds registration to current category.
-// Note: Logic allows checking if player is already in another category (commented out single-category rule).
 const togglePlayerRegistration = (player: Player) => {
     if (!props.selectedCategory) return
 
-    if (!isEligiblePlayer(player)) return
+    // If registered, remove registration (always allowed)
+    if (isPlayerRegisteredInCurrentCategory(player.id)) {
+        performToggle(player)
+        return
+    }
 
+    // 1. Inactive/Expired Block
+    if (isMembershipExpired(player)) {
+        toast.error('Cannot add inactive or expired player to the tournament.')
+        return
+    }
+
+    // 2. Gender Mismatch Check
+    const categoryGender = (props.selectedCategory.gender || '').toLowerCase()
+    const playerGender = (player.gender || '').toLowerCase()
+    let isGenderMismatch = false
+    if (categoryGender) {
+        const isMatch = ((categoryGender === 'male' || categoryGender === 'm') && (playerGender === 'male' || playerGender === 'm')) ||
+                        ((categoryGender === 'female' || categoryGender === 'f') && (playerGender === 'female' || playerGender === 'f'))
+        if (!isMatch) isGenderMismatch = true
+    }
+
+    if (isGenderMismatch) {
+        alertState.value = {
+            isOpen: true,
+            title: 'Gender Mismatch Warning',
+            description: `You are assigning a ${player.gender} player to a ${props.selectedCategory.gender} category. Do you want to proceed?`,
+            confirmAction: () => {
+                alertState.value.isOpen = false
+                // Proceed to next check (Expiring)
+                checkExpiringAndProceed(player)
+            }
+        }
+        return
+    }
+
+    // 3. Expiring Check
+    checkExpiringAndProceed(player)
+}
+
+const checkExpiringAndProceed = (player: Player) => {
+    // Check if expiring (e.g., within 30 days)
+    // We check date calculation since status from backend might be 'active'
+    const days = getDaysLeft(player)
+    const isExpiringSoon = days > 0 && days <= 30
+    
+    if (player.status.toLowerCase() === 'expiring' || isExpiringSoon) {
+        alertState.value = {
+            isOpen: true,
+            title: 'Expiring Membership Warning',
+            description: `The player's membership is expiring in ${days} days. Do you want to proceed?`,
+            confirmAction: () => {
+                alertState.value.isOpen = false
+                performToggle(player)
+            }
+        }
+        return
+    }
+    
+    performToggle(player)
+}
+
+const performToggle = (player: Player) => {
     const isRegistered = isPlayerRegisteredInCurrentCategory(player.id)
     let newRegistrations = [...props.registrations]
 
@@ -150,13 +228,9 @@ const togglePlayerRegistration = (player: Player) => {
             (reg) => !(reg.player_id === player.id && reg.tournament_weight_category_id === props.selectedCategory?.id)
         )
     } else {
-        // Remove from other categories first (if single category per player rule applies)
-        // newRegistrations = newRegistrations.filter((reg) => reg.player_id !== player.id)
-        
-        // Add to current category
         newRegistrations.push({
             player_id: player.id,
-            tournament_weight_category_id: props.selectedCategory.id,
+            tournament_weight_category_id: props.selectedCategory!.id,
         })
     }
     
@@ -305,6 +379,9 @@ const getPlayerAssignment = (playerId: number) => {
                                     <Badge variant="outline" class="bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-900/20 dark:text-emerald-400 dark:border-emerald-800" v-if="player.status === 'active'">
                                         Active
                                     </Badge>
+                                    <Badge variant="outline" class="bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-900/20 dark:text-amber-400 dark:border-amber-800" v-else-if="player.status === 'expiring'">
+                                        Expiring
+                                    </Badge>
                                     <Badge variant="outline" class="bg-slate-100 text-slate-500 border-slate-200 dark:bg-slate-800 dark:text-slate-400 dark:border-slate-700" v-else>
                                         {{ player.status }}
                                     </Badge>
@@ -338,4 +415,25 @@ const getPlayerAssignment = (playerId: number) => {
             </ScrollArea>
         </CardContent>
     </Card>
+    <AlertDialog :open="alertState.isOpen" @update:open="alertState.isOpen = $event">
+        <AlertDialogContent class="dark:bg-slate-900 dark:border-slate-800">
+            <AlertDialogHeader>
+                <AlertDialogTitle class="flex items-center gap-2 dark:text-slate-100">
+                    <AlertTriangle class="h-5 w-5 text-amber-500" />
+                    {{ alertState.title }}
+                </AlertDialogTitle>
+                <AlertDialogDescription class="dark:text-slate-400">
+                    {{ alertState.description }}
+                </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+                <AlertDialogCancel @click="alertState.isOpen = false" class="dark:bg-slate-800 dark:text-slate-200 dark:border-slate-700 dark:hover:bg-slate-700">
+                    Cancel
+                </AlertDialogCancel>
+                <AlertDialogAction @click="alertState.confirmAction" class="bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-600 dark:hover:bg-indigo-700 dark:text-white">
+                    Proceed
+                </AlertDialogAction>
+            </AlertDialogFooter>
+        </AlertDialogContent>
+    </AlertDialog>
 </template>

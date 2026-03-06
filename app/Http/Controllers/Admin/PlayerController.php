@@ -26,7 +26,7 @@ class PlayerController extends Controller
             ->when($request->status, function ($query, $status) {
                 // Use a fixed date reference to avoid mutation issues within closures
                 $today = now()->timezone('Asia/Manila')->startOfDay();
-                $nextMonth = $today->copy()->addMonth();
+                $nextMonth = $today->copy()->addDays(30);
 
                 if ($status === 'active') {
                     $query->where(function ($q) use ($nextMonth) {

@@ -12,6 +12,12 @@ import {
     CardHeader,
     CardTitle,
 } from '@/components/ui/card'
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
 import { Label } from '@/components/ui/label'
 import {
     Table,
@@ -133,12 +139,26 @@ const getStatusBadgeVariant = (status: ImportRowResult['status']) => {
                     <CardTitle class="text-base font-semibold text-slate-900 dark:text-slate-100">Batch Import</CardTitle>
                     <CardDescription>Upload a CSV/Excel/DOCX file to register players in bulk.</CardDescription>
                 </div>
-                <Button variant="outline" size="sm" as-child>
-                    <a :href="route('admin.tournaments.download-template')">
-                        <FileText class="w-4 h-4 mr-2" />
-                        Download Template
-                    </a>
-                </Button>
+                <DropdownMenu>
+                    <DropdownMenuTrigger as-child>
+                        <Button variant="outline" size="sm">
+                            <FileText class="w-4 h-4 mr-2" />
+                            Download Template
+                        </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent>
+                        <DropdownMenuItem as-child>
+                            <a :href="route('admin.tournaments.download-template', { format: 'csv' })">
+                                Excel Template (.csv)
+                            </a>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem as-child>
+                            <a :href="route('admin.tournaments.download-template', { format: 'docx' })">
+                                Word Template (.docx)
+                            </a>
+                        </DropdownMenuItem>
+                    </DropdownMenuContent>
+                </DropdownMenu>
             </div>
         </CardHeader>
         <CardContent class="space-y-4 pt-6">
