@@ -102,25 +102,25 @@ const chooseWinner = (match: MatchItem, winnerId: number | null) => emit('choose
         </Alert>
 
         <!-- Brackets Summary Table -->
-        <Card v-if="brackets.length > 0 && !activeBracketId" class="overflow-hidden shadow-sm dark:bg-slate-950 dark:border-slate-800">
-            <CardHeader class="border-b bg-slate-50/50 dark:bg-slate-900/50 py-4 flex flex-row items-center justify-between space-y-0">
+        <Card v-if="brackets.length > 0 && !activeBracketId" class="overflow-hidden shadow-sm bg-card border-border">
+            <CardHeader class="border-b bg-muted/50 py-4 flex flex-row items-center justify-between space-y-0">
                 <div class="space-y-1">
-                    <CardTitle class="text-base font-semibold uppercase tracking-wider text-slate-700 dark:text-slate-200">
+                    <CardTitle class="text-base font-semibold uppercase tracking-wider text-foreground">
                         Tournament Brackets
                     </CardTitle>
                     <CardDescription>Select a category to view its bracket.</CardDescription>
                 </div>
-                <Badge variant="outline" class="bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 shadow-sm">{{ brackets.length }} Categories</Badge>
+                <Badge variant="outline" class="bg-background border-border shadow-sm">{{ brackets.length }} Categories</Badge>
             </CardHeader>
             <CardContent class="p-0">
                 <Table>
-                    <TableHeader class="bg-slate-50/50 dark:bg-slate-900/50 sticky top-0 z-10 backdrop-blur-sm">
-                        <TableRow class="hover:bg-transparent dark:hover:bg-transparent border-b dark:border-slate-800">
-                            <TableHead class="font-semibold text-slate-500 dark:text-slate-400">Category</TableHead>
-                            <TableHead class="text-center font-semibold text-slate-500 dark:text-slate-400">Format</TableHead>
-                            <TableHead class="text-center font-semibold text-slate-500 dark:text-slate-400">Entrants</TableHead>
-                            <TableHead class="font-semibold text-slate-500 dark:text-slate-400">Champion</TableHead>
-                            <TableHead class="text-right font-semibold text-slate-500 dark:text-slate-400">Action</TableHead>
+                    <TableHeader class="bg-muted/50 sticky top-0 z-10 backdrop-blur-sm">
+                        <TableRow class="hover:bg-transparent border-b border-border">
+                            <TableHead class="font-semibold text-muted-foreground">Category</TableHead>
+                            <TableHead class="text-center font-semibold text-muted-foreground">Format</TableHead>
+                            <TableHead class="text-center font-semibold text-muted-foreground">Entrants</TableHead>
+                            <TableHead class="font-semibold text-muted-foreground">Champion</TableHead>
+                            <TableHead class="text-right font-semibold text-muted-foreground">Action</TableHead>
                         </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -128,7 +128,7 @@ const chooseWinner = (match: MatchItem, winnerId: number | null) => emit('choose
                             v-for="bracket in brackets" 
                             :key="bracket.id" 
                             @click="selectBracket(bracket.id)"
-                            class="cursor-pointer hover:bg-slate-50/50 dark:hover:bg-slate-900/50 transition-colors border-b dark:border-slate-800"
+                            class="cursor-pointer hover:bg-muted/50 transition-colors border-b border-border"
                         >
                             <TableCell>
                                 <div class="flex flex-col">
@@ -145,8 +145,8 @@ const chooseWinner = (match: MatchItem, winnerId: number | null) => emit('choose
                                 {{ bracket.entrant_count ?? 0 }}
                             </TableCell>
                             <TableCell>
-                                <div v-if="bracket.champion" class="flex items-center gap-2 text-amber-600">
-                                    <Trophy class="h-4 w-4 text-amber-500" />
+                                <div v-if="bracket.champion" class="flex items-center gap-2 text-accent-foreground">
+                                    <Trophy class="h-4 w-4 text-accent" />
                                     <span class="font-medium text-sm">{{ bracket.champion }}</span>
                                 </div>
                                 <span v-else class="text-muted-foreground text-xs italic">TBD</span>
@@ -171,65 +171,65 @@ const chooseWinner = (match: MatchItem, winnerId: number | null) => emit('choose
                 :id="`bracket-section-${bracket.id}`"
                 class="space-y-4 bracket-section"
             >
-                <Card class="shadow-sm dark:bg-slate-950 dark:border-slate-800">
+                <Card class="shadow-sm bg-card border-border">
                     <CardContent class="p-4">
                         <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
                             <div class="flex items-center gap-2">
-                                <Button variant="outline" size="sm" @click="clearSelection" class="dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800">
+                                <Button variant="outline" size="sm" @click="clearSelection" class="border-border text-foreground hover:bg-muted">
                                     <ArrowLeft class="h-4 w-4 mr-2" />
                                     Back to List
                                 </Button>
                                 <div class="flex flex-wrap gap-2 items-center">
-                                    <Badge variant="default" class="bg-indigo-600 hover:bg-indigo-700">{{ (bracket.gender || 'unknown').toUpperCase() }}</Badge>
-                                    <Badge variant="secondary" class="bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300">{{ bracket.age_category || '-' }}</Badge>
-                                    <Badge variant="outline" class="dark:border-slate-700 dark:text-slate-300">{{ bracket.weight_category || '-' }}</Badge>
-                                    <Badge variant="outline" class="dark:border-slate-700 dark:text-slate-300">{{ formatLabel(bracket.format) }}</Badge>
+                                    <Badge variant="default" class="bg-primary hover:bg-primary/90">{{ (bracket.gender || 'unknown').toUpperCase() }}</Badge>
+                                    <Badge variant="secondary" class="bg-muted text-muted-foreground">{{ bracket.age_category || '-' }}</Badge>
+                                    <Badge variant="outline" class="border-border text-foreground">{{ bracket.weight_category || '-' }}</Badge>
+                                    <Badge variant="outline" class="border-border text-foreground">{{ formatLabel(bracket.format) }}</Badge>
                                     <span class="text-sm text-muted-foreground ml-2">{{ bracket.entrant_count ?? 0 }} Entrants</span>
                                 </div>
                             </div>
                             <div class="flex items-center gap-2">
-                                <div class="flex gap-4 mr-4 text-xs font-medium text-slate-600 dark:text-slate-400">
-                                    <span class="flex items-center gap-1.5"><span class="w-3 h-3 rounded-full bg-blue-500 block shadow-sm"></span> Blue (Upper)</span>
-                                    <span class="flex items-center gap-1.5"><span class="w-3 h-3 rounded-full bg-green-500 block shadow-sm"></span> Green (Lower)</span>
+                                <div class="flex gap-4 mr-4 text-xs font-medium text-muted-foreground">
+                                    <span class="flex items-center gap-1.5"><span class="w-3 h-3 rounded-full bg-secondary block shadow-sm"></span> Blue (Upper)</span>
+                                    <span class="flex items-center gap-1.5"><span class="w-3 h-3 rounded-full bg-primary block shadow-sm"></span> Green (Lower)</span>
                                 </div>
-                                <Button variant="ghost" size="icon" @click="toggleFullScreen(bracket.id)" title="Full Screen" class="text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200">
+                                <Button variant="ghost" size="icon" @click="toggleFullScreen(bracket.id)" title="Full Screen" class="text-muted-foreground hover:text-foreground">
                                     <component :is="fullscreenBracketId === bracket.id ? Minimize2 : Maximize2" class="h-4 w-4" />
                                 </Button>
                             </div>
                         </div>
 
                         <div class="mt-6 grid gap-4 md:grid-cols-3">
-                            <Card class="bg-amber-50/50 border-amber-200 dark:bg-amber-950/20 dark:border-amber-900/50">
+                            <Card class="bg-accent/10 border-accent/20">
                                 <CardContent class="p-3 flex items-center gap-3">
-                                    <div class="h-8 w-8 rounded-full bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center text-amber-600 dark:text-amber-500">
+                                    <div class="h-8 w-8 rounded-full bg-accent/20 flex items-center justify-center text-accent-foreground">
                                         <Medal class="h-5 w-5" />
                                     </div>
                                     <div class="flex flex-col">
-                                        <span class="text-xs uppercase font-bold text-amber-600 dark:text-amber-500 tracking-wider">Gold</span>
-                                        <span class="font-semibold text-slate-900 dark:text-slate-100">{{ safeAwards(bracket).gold || '-' }}</span>
+                                        <span class="text-xs uppercase font-bold text-accent-foreground/80 tracking-wider">Gold</span>
+                                        <span class="font-semibold text-foreground">{{ safeAwards(bracket).gold || '-' }}</span>
                                     </div>
                                 </CardContent>
                             </Card>
-                            <Card class="bg-slate-50/50 border-slate-200 dark:bg-slate-900/50 dark:border-slate-800">
+                            <Card class="bg-muted/50 border-border">
                                 <CardContent class="p-3 flex items-center gap-3">
-                                    <div class="h-8 w-8 rounded-full bg-slate-200 dark:bg-slate-800 flex items-center justify-center text-slate-600 dark:text-slate-400">
+                                    <div class="h-8 w-8 rounded-full bg-muted flex items-center justify-center text-muted-foreground">
                                         <Medal class="h-5 w-5" />
                                     </div>
                                     <div class="flex flex-col">
-                                        <span class="text-xs uppercase font-bold text-slate-600 dark:text-slate-400 tracking-wider">Silver</span>
-                                        <span class="font-semibold text-slate-900 dark:text-slate-100">{{ safeAwards(bracket).silver || '-' }}</span>
+                                        <span class="text-xs uppercase font-bold text-muted-foreground tracking-wider">Silver</span>
+                                        <span class="font-semibold text-foreground">{{ safeAwards(bracket).silver || '-' }}</span>
                                     </div>
                                 </CardContent>
                             </Card>
-                            <Card class="bg-orange-50/50 border-orange-200 dark:bg-orange-950/20 dark:border-orange-900/50">
+                            <Card class="bg-accent/5 border-accent/20">
                                 <CardContent class="p-3 flex items-center gap-3">
-                                    <div class="h-8 w-8 rounded-full bg-orange-100 dark:bg-orange-900/30 flex items-center justify-center text-orange-600 dark:text-orange-500">
+                                    <div class="h-8 w-8 rounded-full bg-accent/10 flex items-center justify-center text-accent-foreground">
                                         <Medal class="h-5 w-5" />
                                     </div>
                                     <div class="flex flex-col">
-                                        <span class="text-xs uppercase font-bold text-orange-600 dark:text-orange-500 tracking-wider">Bronze</span>
-                                        <span class="font-semibold text-slate-900 dark:text-slate-100" v-if="safeAwards(bracket).bronze.length">{{ safeAwards(bracket).bronze.join(', ') }}</span>
-                                        <span class="font-semibold text-slate-900 dark:text-slate-100" v-else>-</span>
+                                        <span class="text-xs uppercase font-bold text-accent-foreground/70 tracking-wider">Bronze</span>
+                                        <span class="font-semibold text-foreground" v-if="safeAwards(bracket).bronze.length">{{ safeAwards(bracket).bronze.join(', ') }}</span>
+                                        <span class="font-semibold text-foreground" v-else>-</span>
                                     </div>
                                 </CardContent>
                             </Card>
@@ -260,7 +260,7 @@ const chooseWinner = (match: MatchItem, winnerId: number | null) => emit('choose
                                         </div>
 
                                         <div class="se-match">
-                                            <div class="match-card-body flex flex-col border border-slate-200 dark:border-slate-700 rounded-md overflow-hidden shadow-sm relative">
+                                            <div class="match-card-body flex flex-col border border-border rounded-md overflow-hidden shadow-sm relative">
                                                 <!-- Fighter Blue (Upper) -->
                                                 <button
                                                      class="fighter fighter-blue"
@@ -272,18 +272,18 @@ const chooseWinner = (match: MatchItem, winnerId: number | null) => emit('choose
                                                      @click="chooseWinner(match, match.player_one_id)"
                                                  >
                                                     <div class="fighter-inner">
-                                                        <div class="fighter-color-indicator"></div>
+                                                        <div class="fighter-color-indicator bg-secondary!"></div>
                                                         <div class="fighter-name">
-                                                            <span v-if="match.player_one_seed" class="text-xs text-slate-400 mr-1.5 font-bold">#{{ match.player_one_seed }}</span>
+                                                            <span v-if="match.player_one_seed" class="text-xs text-muted-foreground mr-1.5 font-bold">#{{ match.player_one_seed }}</span>
                                                             <span class="truncate">{{ match.player_one || (match.round_number === 1 ? 'BYE' : 'TBD') }}</span>
-                                                            <Crown v-if="match.winner_id === match.player_one_id && match.player_one_id !== null" class="h-3 w-3 text-yellow-500 fill-yellow-500 ml-1" />
+                                                            <Crown v-if="match.winner_id === match.player_one_id && match.player_one_id !== null" class="h-3 w-3 text-accent fill-accent ml-1" />
                                                         </div>
                                                     </div>
                                                  </button>
 
                                                  <!-- Fighter Green (Lower) -->
-                                                 <button
-                                                     class="fighter fighter-green border-t border-slate-100 dark:border-slate-800"
+                                                <button
+                                                     class="fighter fighter-green border-t border-muted"
                                                      :class="{ 
                                                         'winner': match.winner_id === match.player_two_id && match.player_two_id !== null,
                                                         'opacity-50': match.status === 'completed' && match.winner_id !== match.player_two_id
@@ -292,11 +292,11 @@ const chooseWinner = (match: MatchItem, winnerId: number | null) => emit('choose
                                                      @click="chooseWinner(match, match.player_two_id)"
                                                  >
                                                     <div class="fighter-inner">
-                                                        <div class="fighter-color-indicator"></div>
+                                                        <div class="fighter-color-indicator bg-primary!"></div>
                                                         <div class="fighter-name">
-                                                            <span v-if="match.player_two_seed" class="text-xs text-slate-400 mr-1.5 font-bold">#{{ match.player_two_seed }}</span>
+                                                            <span v-if="match.player_two_seed" class="text-xs text-muted-foreground mr-1.5 font-bold">#{{ match.player_two_seed }}</span>
                                                             <span class="truncate">{{ match.player_two || (match.round_number === 1 ? 'BYE' : 'TBD') }}</span>
-                                                            <Crown v-if="match.winner_id === match.player_two_id && match.player_two_id !== null" class="h-3 w-3 text-yellow-500 fill-yellow-500 ml-1" />
+                                                            <Crown v-if="match.winner_id === match.player_two_id && match.player_two_id !== null" class="h-3 w-3 text-accent fill-accent ml-1" />
                                                         </div>
                                                     </div>
                                                 </button>
@@ -311,7 +311,7 @@ const chooseWinner = (match: MatchItem, winnerId: number | null) => emit('choose
                                 <div class="se-round-stack">
                                     <article class="se-match-container">
                                         <div class="se-match bronze-match">
-                                            <div class="match-card-body flex flex-col border border-slate-200 dark:border-slate-700 rounded-md overflow-hidden shadow-sm relative">
+                                            <div class="match-card-body flex flex-col border border-border rounded-md overflow-hidden shadow-sm relative">
                                                 <!-- Fighter Blue (Upper) -->
                                                 <button
                                                      class="fighter fighter-blue"
@@ -325,16 +325,16 @@ const chooseWinner = (match: MatchItem, winnerId: number | null) => emit('choose
                                                     <div class="fighter-inner">
                                                         <div class="fighter-color-indicator"></div>
                                                         <div class="fighter-name">
-                                                            <span v-if="bronzeMatchFor(bracket)?.player_one_seed" class="text-xs text-slate-400 mr-1.5 font-bold">#{{ bronzeMatchFor(bracket)?.player_one_seed }}</span>
+                                                            <span v-if="bronzeMatchFor(bracket)?.player_one_seed" class="text-xs text-muted-foreground mr-1.5 font-bold">#{{ bronzeMatchFor(bracket)?.player_one_seed }}</span>
                                                             <span class="truncate">{{ bronzeMatchFor(bracket)?.player_one || 'TBD' }}</span>
-                                                            <Crown v-if="bronzeMatchFor(bracket)?.winner_id === bronzeMatchFor(bracket)?.player_one_id && bronzeMatchFor(bracket)?.player_one_id !== null" class="h-3 w-3 text-yellow-500 fill-yellow-500 ml-1" />
+                                                            <Crown v-if="bronzeMatchFor(bracket)?.winner_id === bronzeMatchFor(bracket)?.player_one_id && bronzeMatchFor(bracket)?.player_one_id !== null" class="h-3 w-3 text-accent fill-accent ml-1" />
                                                         </div>
                                                     </div>
                                                  </button>
 
                                                  <!-- Fighter Green (Lower) -->
                                                  <button
-                                                     class="fighter fighter-green border-t border-slate-100 dark:border-slate-800"
+                                                     class="fighter fighter-green border-t border-muted"
                                                      :class="{ 
                                                         'winner': bronzeMatchFor(bracket)?.winner_id === bronzeMatchFor(bracket)?.player_two_id && bronzeMatchFor(bracket)?.player_two_id !== null,
                                                         'opacity-50': bronzeMatchFor(bracket)?.status === 'completed' && bronzeMatchFor(bracket)?.winner_id !== bronzeMatchFor(bracket)?.player_two_id
@@ -345,9 +345,9 @@ const chooseWinner = (match: MatchItem, winnerId: number | null) => emit('choose
                                                     <div class="fighter-inner">
                                                         <div class="fighter-color-indicator"></div>
                                                         <div class="fighter-name">
-                                                            <span v-if="bronzeMatchFor(bracket)?.player_two_seed" class="text-xs text-slate-400 mr-1.5 font-bold">#{{ bronzeMatchFor(bracket)?.player_two_seed }}</span>
+                                                            <span v-if="bronzeMatchFor(bracket)?.player_two_seed" class="text-xs text-muted-foreground mr-1.5 font-bold">#{{ bronzeMatchFor(bracket)?.player_two_seed }}</span>
                                                             <span class="truncate">{{ bronzeMatchFor(bracket)?.player_two || 'TBD' }}</span>
-                                                            <Crown v-if="bronzeMatchFor(bracket)?.winner_id === bronzeMatchFor(bracket)?.player_two_id && bronzeMatchFor(bracket)?.player_two_id !== null" class="h-3 w-3 text-yellow-500 fill-yellow-500 ml-1" />
+                                                            <Crown v-if="bronzeMatchFor(bracket)?.winner_id === bronzeMatchFor(bracket)?.player_two_id && bronzeMatchFor(bracket)?.player_two_id !== null" class="h-3 w-3 text-accent fill-accent ml-1" />
                                                         </div>
                                                     </div>
                                                 </button>
@@ -365,11 +365,11 @@ const chooseWinner = (match: MatchItem, winnerId: number | null) => emit('choose
                                 <div class="rr-grid">
                                     <article v-for="match in round.matches" :key="match.id" class="rr-match-container">
                                         <div class="flex items-center justify-between px-1 mb-1">
-                                            <span class="text-xs font-bold text-slate-500 uppercase tracking-wider dark:text-slate-400">Match {{ match.match_number }}</span>
-                                            <span class="text-xs font-medium text-slate-400 uppercase tracking-wider dark:text-slate-500">{{ match.status }}</span>
+                                            <span class="text-xs font-bold text-muted-foreground uppercase tracking-wider">Match {{ match.match_number }}</span>
+                                            <span class="text-xs font-medium text-muted-foreground uppercase tracking-wider">{{ match.status }}</span>
                                         </div>
 
-                                        <div class="match-card-body flex flex-col border border-slate-200 dark:border-slate-700 rounded-md overflow-hidden shadow-sm relative">
+                                        <div class="match-card-body flex flex-col border border-border rounded-md overflow-hidden shadow-sm relative">
                                              <button
                                                   class="fighter fighter-blue"
                                                   :class="{ 'winner': match.winner_id === match.player_one_id }"
@@ -379,14 +379,14 @@ const chooseWinner = (match: MatchItem, winnerId: number | null) => emit('choose
                                                  <div class="fighter-inner">
                                                      <div class="fighter-color-indicator"></div>
                                                      <div class="fighter-name">
-                                                         <span v-if="match.player_one_seed" class="text-xs text-slate-400 mr-1.5 font-bold">#{{ match.player_one_seed }}</span>
+                                                         <span v-if="match.player_one_seed" class="text-xs text-muted-foreground mr-1.5 font-bold">#{{ match.player_one_seed }}</span>
                                                          <span class="truncate">{{ match.player_one || 'BYE' }}</span>
-                                                         <Crown v-if="match.winner_id === match.player_one_id" class="h-3 w-3 text-yellow-500 fill-yellow-500 ml-1" />
+                                                         <Crown v-if="match.winner_id === match.player_one_id" class="h-3 w-3 text-accent fill-accent ml-1" />
                                                      </div>
                                                  </div>
                                               </button>
                                               <button
-                                                  class="fighter fighter-green border-t border-slate-100 dark:border-slate-800"
+                                                  class="fighter fighter-green border-t border-muted"
                                                   :class="{ 'winner': match.winner_id === match.player_two_id }"
                                                   :disabled="isCompleted || !matchReady(match) || (match.status === 'completed' && match.winner_id !== match.player_two_id)"
                                                   @click="chooseWinner(match, match.player_two_id)"
@@ -394,9 +394,9 @@ const chooseWinner = (match: MatchItem, winnerId: number | null) => emit('choose
                                                  <div class="fighter-inner">
                                                      <div class="fighter-color-indicator"></div>
                                                      <div class="fighter-name">
-                                                         <span v-if="match.player_two_seed" class="text-xs text-slate-400 mr-1.5 font-bold">#{{ match.player_two_seed }}</span>
+                                                         <span v-if="match.player_two_seed" class="text-xs text-muted-foreground mr-1.5 font-bold">#{{ match.player_two_seed }}</span>
                                                          <span class="truncate">{{ match.player_two || 'BYE' }}</span>
-                                                         <Crown v-if="match.winner_id === match.player_two_id" class="h-3 w-3 text-yellow-500 fill-yellow-500 ml-1" />
+                                                         <Crown v-if="match.winner_id === match.player_two_id" class="h-3 w-3 text-accent fill-accent ml-1" />
                                                      </div>
                                                  </div>
                                               </button>
@@ -418,14 +418,11 @@ const chooseWinner = (match: MatchItem, winnerId: number | null) => emit('choose
     font-size: 0.875rem;
     line-height: 1.25rem;
     font-weight: 700;
-    color: #64748b;
+    color: var(--muted-foreground);
     text-transform: uppercase;
     letter-spacing: 0.1em;
     margin-bottom: 1.5rem;
     text-align: center;
-}
-.dark .round-title {
-    color: #94a3b8;
 }
 
 /* Match card styling */
@@ -440,7 +437,7 @@ const chooseWinner = (match: MatchItem, winnerId: number | null) => emit('choose
     font-size: 0.75rem;
     line-height: 1rem;
     font-weight: 900;
-    color: #94a3b8;
+    color: var(--muted-foreground);
     width: 1.25rem;
     text-align: right;
 }
@@ -455,8 +452,8 @@ const chooseWinner = (match: MatchItem, winnerId: number | null) => emit('choose
 }
 
 .match-card-body {
-    background-color: white;
-    border: 1px solid #e2e8f0;
+    background-color: var(--card);
+    border: 1px solid var(--border);
     border-radius: 0.375rem;
     overflow: hidden;
     box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
@@ -465,12 +462,6 @@ const chooseWinner = (match: MatchItem, winnerId: number | null) => emit('choose
     transition-duration: 200ms;
     position: relative;
     height: 74px;
-}
-
-.dark .match-card-body {
-    background-color: #0f172a;
-    border-color: #1e293b;
-    box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
 }
 
 /* Fighter button styling */
@@ -498,11 +489,11 @@ const chooseWinner = (match: MatchItem, winnerId: number | null) => emit('choose
 }
 
 .fighter-blue .fighter-color-indicator {
-    background-color: #2563eb;
+    background-color: var(--secondary);
 }
 
 .fighter-green .fighter-color-indicator {
-    background-color: #059669;
+    background-color: var(--primary);
 }
 
 .fighter-name {
@@ -511,30 +502,18 @@ const chooseWinner = (match: MatchItem, winnerId: number | null) => emit('choose
     flex: 1 1 0%;
     padding-left: 0.75rem;
     padding-right: 0.75rem;
-    color: #334155;
+    color: var(--foreground);
     font-size: 0.75rem;
     line-height: 1rem;
     font-weight: 600;
 }
 
 .fighter-blue .fighter-name {
-    background-color: rgb(239 246 255 / 0.5);
+    background-color: color-mix(in srgb, var(--secondary), transparent 95%);
 }
 
 .fighter-green .fighter-name {
-    background-color: rgb(236 253 245 / 0.5);
-}
-
-.dark .fighter-name {
-    color: #cbd5e1;
-}
-
-.dark .fighter-blue .fighter-name {
-    background-color: rgb(30 58 138 / 0.1);
-}
-
-.dark .fighter-green .fighter-name {
-    background-color: rgb(6 78 59 / 0.1);
+    background-color: color-mix(in srgb, var(--primary), transparent 95%);
 }
 
 /* Winner state */
@@ -543,35 +522,21 @@ const chooseWinner = (match: MatchItem, winnerId: number | null) => emit('choose
 }
 
 .fighter-blue.winner .fighter-name {
-    background-color: #2563eb;
-    color: white;
-}
-.dark .fighter-blue.winner .fighter-name {
-    background-color: #2563eb;
-    color: white;
+    background-color: var(--secondary);
+    color: var(--secondary-foreground);
 }
 
 .fighter-green.winner .fighter-name {
-    background-color: #059669;
-    color: white;
-}
-.dark .fighter-green.winner .fighter-name {
-    background-color: #059669;
-    color: white;
+    background-color: var(--primary);
+    color: var(--primary-foreground);
 }
 
 .fighter-blue:not(.winner):not(:disabled):hover .fighter-name {
-    background-color: rgb(219 234 254 / 0.5);
-}
-.dark .fighter-blue:not(.winner):not(:disabled):hover .fighter-name {
-    background-color: rgb(30 58 138 / 0.3);
+    background-color: color-mix(in srgb, var(--secondary), transparent 85%);
 }
 
 .fighter-green:not(.winner):not(:disabled):hover .fighter-name {
-    background-color: rgb(209 250 229 / 0.5);
-}
-.dark .fighter-green:not(.winner):not(:disabled):hover .fighter-name {
-    background-color: rgb(6 78 59 / 0.3);
+    background-color: color-mix(in srgb, var(--primary), transparent 85%);
 }
 
 /* Bracket connection lines (Standard Fork Shape) */
@@ -583,10 +548,7 @@ const chooseWinner = (match: MatchItem, winnerId: number | null) => emit('choose
     width: 1.5rem;
     border-top-width: 2px;
     border-style: solid;
-    border-color: #cbd5e1;
-}
-.dark .standard-bracket .se-round:not(:last-child) .match-card-body::after {
-    border-color: #334155;
+    border-color: var(--border);
 }
 
 /* Connector Left for rounds after the first */
@@ -598,10 +560,7 @@ const chooseWinner = (match: MatchItem, winnerId: number | null) => emit('choose
     width: 1.5rem;
     border-top-width: 2px;
     border-style: solid;
-    border-color: #cbd5e1;
-}
-.dark .standard-bracket .se-round:not(:first-child) .match-card-body::before {
-    border-color: #334155;
+    border-color: var(--border);
 }
 
 /* Vertical line Down for Odd matches */
@@ -612,13 +571,10 @@ const chooseWinner = (match: MatchItem, winnerId: number | null) => emit('choose
     width: 0;
     border-right-width: 2px;
     border-style: solid;
-    border-color: #cbd5e1;
+    border-color: var(--border);
     top: 50%;
     height: calc(50% + (var(--row-gap) / 2));
     z-index: 0;
-}
-.dark .standard-bracket .se-round:not(:last-child) .se-match-container:nth-child(odd)::after {
-    border-color: #334155;
 }
 
 /* Vertical line Up for Even matches */
@@ -629,13 +585,10 @@ const chooseWinner = (match: MatchItem, winnerId: number | null) => emit('choose
     width: 0;
     border-right-width: 2px;
     border-style: solid;
-    border-color: #cbd5e1;
+    border-color: var(--border);
     bottom: 50%;
     height: calc(50% + (var(--row-gap) / 2));
     z-index: 0;
-}
-.dark .standard-bracket .se-round:not(:last-child) .se-match-container:nth-child(even)::after {
-    border-color: #334155;
 }
 
 /* Round title styling in full screen */
@@ -658,15 +611,11 @@ const chooseWinner = (match: MatchItem, winnerId: number | null) => emit('choose
 }
 
 .rr-round {
-    border: 1px solid #e2e8f0;
+    border: 1px solid var(--border);
     border-radius: 0.75rem;
-    background-color: white;
+    background-color: var(--card);
     padding: 1.5rem;
     box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
-}
-.dark .rr-round {
-    background-color: #0f172a;
-    border-color: #1e293b;
 }
 
 .rr-grid {

@@ -105,10 +105,10 @@ const getCsrfToken = () => {
             <!-- Header Section: Title and Actions (Cancel/Create) -->
             <div class="flex items-center justify-between">
                 <div>
-                    <h1 class="text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100">
+                    <h1 class="text-2xl font-bold tracking-tight text-foreground">
                         Create Tournament
                     </h1>
-                    <p class="text-sm text-slate-500 dark:text-slate-400">
+                    <p class="text-sm text-muted-foreground">
                         Set up a new tournament and register players.
                     </p>
                 </div>
@@ -117,11 +117,11 @@ const getCsrfToken = () => {
                         variant="outline"
                         :href="route('admin.tournaments.index')"
                         as="a"
-                        class="dark:bg-slate-950 dark:border-slate-800 dark:text-slate-300 dark:hover:bg-slate-800"
+                        class="bg-background hover:bg-muted text-foreground"
                     >
                         Cancel
                     </Button>
-                    <Button @click="submit" :disabled="form.processing" class="bg-indigo-600 hover:bg-indigo-700 text-white dark:bg-indigo-600 dark:hover:bg-indigo-700">
+                    <Button @click="submit" :disabled="form.processing" class="bg-primary hover:bg-primary/90 text-primary-foreground">
                         <Loader2 v-if="form.processing" class="mr-2 h-4 w-4 animate-spin" />
                         <Save v-else class="mr-2 h-4 w-4" />
                         Create Tournament

@@ -47,29 +47,29 @@ const localStatus = useVModel(props, 'status', emit)
 </script>
 
 <template>
-    <Card class="shadow-sm border-slate-200 dark:bg-slate-950 dark:border-slate-800">
-        <CardHeader class="border-b bg-slate-50/50 dark:bg-slate-900/50 dark:border-slate-800 pb-4">
-            <CardTitle class="text-base font-semibold text-slate-900 dark:text-slate-100">Tournament Details</CardTitle>
-            <CardDescription>Basic information about the tournament.</CardDescription>
+    <Card class="shadow-sm border-border bg-card text-card-foreground">
+        <CardHeader class="border-b bg-muted/50 pb-4">
+            <CardTitle class="text-base font-semibold text-foreground">Tournament Details</CardTitle>
+            <CardDescription class="text-muted-foreground">Basic information about the tournament.</CardDescription>
         </CardHeader>
         <CardContent class="space-y-4 pt-6">
             <!-- Tournament Name Input -->
             <div class="space-y-2">
-                <Label for="name" class="dark:text-slate-300">Tournament Name</Label>
-                <Input id="name" v-model="localName" placeholder="e.g. National Championship 2024" class="dark:bg-slate-950 dark:border-slate-800" />
+                <Label for="name">Tournament Name</Label>
+                <Input id="name" v-model="localName" placeholder="e.g. National Championship 2024" class="bg-background border-input" />
                 <p v-if="errors.name" class="text-sm text-destructive">{{ errors.name }}</p>
             </div>
             
             <!-- Location Input -->
             <div class="space-y-2">
-                <Label for="location" class="dark:text-slate-300">Location</Label>
+                <Label for="location">Location</Label>
                 <!-- Manually handling model-value update to ensure null/string compatibility -->
                 <Input 
                     id="location" 
                     :model-value="localLocation ?? ''"
                     @update:model-value="localLocation = $event as string || null"
                     placeholder="e.g. City Sports Complex" 
-                    class="dark:bg-slate-950 dark:border-slate-800" 
+                    class="bg-background border-input" 
                 />
                 <p v-if="errors.location" class="text-sm text-destructive">{{ errors.location }}</p>
             </div>
@@ -77,23 +77,23 @@ const localStatus = useVModel(props, 'status', emit)
             <div class="grid grid-cols-2 gap-4">
                 <!-- Date Input -->
                 <div class="space-y-2">
-                    <Label for="date" class="dark:text-slate-300">Date</Label>
-                    <DatePicker id="date" v-model="localDate" class="dark:bg-slate-950 dark:border-slate-800" />
+                    <Label for="date">Date</Label>
+                    <DatePicker id="date" v-model="localDate" class="bg-background border-input" />
                     <p v-if="errors.tournament_date" class="text-sm text-destructive">{{ errors.tournament_date }}</p>
                 </div>
                 <!-- Status Dropdown -->
                 <div class="space-y-2">
-                    <Label for="status" class="dark:text-slate-300">Status</Label>
+                    <Label for="status">Status</Label>
                     <DropdownMenu>
                         <DropdownMenuTrigger as-child>
-                            <Button variant="outline" class="w-full justify-between dark:bg-slate-950 dark:border-slate-800 dark:text-slate-100 capitalize font-normal">
+                            <Button variant="outline" class="w-full justify-between bg-background border-input text-foreground capitalize font-normal">
                                 {{ localStatus }}
                                 <ChevronDown class="ml-2 h-4 w-4 opacity-50" />
                             </Button>
                         </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" class="dark:bg-slate-950 dark:border-slate-800">
-                            <DropdownMenuItem @click="localStatus = 'draft'" class="capitalize dark:text-slate-200 dark:focus:bg-slate-800">Draft</DropdownMenuItem>
-                            <DropdownMenuItem @click="localStatus = 'open'" class="capitalize dark:text-slate-200 dark:focus:bg-slate-800">Open</DropdownMenuItem>
+                        <DropdownMenuContent align="end">
+                            <DropdownMenuItem @click="localStatus = 'draft'" class="capitalize">Draft</DropdownMenuItem>
+                            <DropdownMenuItem @click="localStatus = 'open'" class="capitalize">Open</DropdownMenuItem>
                         </DropdownMenuContent>
                     </DropdownMenu>
                     <p v-if="errors.status" class="text-sm text-destructive">{{ errors.status }}</p>

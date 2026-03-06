@@ -1,8 +1,7 @@
 <script setup lang="ts">
-import { Plus, Trash2, Loader2, Trophy, Users, Check } from 'lucide-vue-next'
+import { Plus, Trash2, Loader2 } from 'lucide-vue-next'
 import { computed, ref, watch } from 'vue'
 import { route } from 'ziggy-js'
-import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import {
     Card,
@@ -257,17 +256,17 @@ const submitDeleteWeightCategory = async () => {
 </script>
 
 <template>
-    <Card class="shadow-sm border-slate-200 dark:bg-slate-950 dark:border-slate-800 h-125 flex flex-col">
-        <CardHeader class="border-b bg-slate-50/50 dark:bg-slate-900/50 dark:border-slate-800 pb-4">
+    <Card class="shadow-sm border-border bg-card text-card-foreground h-125 flex flex-col">
+        <CardHeader class="border-b bg-muted/50 py-4">
             <div class="flex items-center justify-between">
                 <div>
-                    <CardTitle class="text-base font-semibold text-slate-900 dark:text-slate-100">Category Selection</CardTitle>
-                    <CardDescription>Select weight category to manage.</CardDescription>
+                    <CardTitle class="text-base font-semibold text-foreground">Category Selection</CardTitle>
+                    <CardDescription class="text-muted-foreground">Select weight category to manage.</CardDescription>
                 </div>
                 <Button
                     variant="ghost"
                     size="sm"
-                    class="h-7 text-xs text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800"
+                    class="h-7 text-xs text-muted-foreground hover:bg-muted"
                     @click="clearSelection"
                     title="Clear Gender, Age, and Weight Category"
                 >
@@ -278,17 +277,17 @@ const submitDeleteWeightCategory = async () => {
         <CardContent class="space-y-4 pt-6 flex-1 flex flex-col min-h-0">
             <!-- Gender Selection -->
             <div class="space-y-2">
-                <Label class="text-xs font-semibold uppercase text-slate-500 dark:text-slate-400">Gender</Label>
+                <Label class="text-xs font-semibold uppercase text-muted-foreground">Gender</Label>
                 <Select v-model="selectedGender">
-                    <SelectTrigger class="w-full dark:bg-slate-950 dark:border-slate-800 dark:text-slate-200 capitalize">
+                    <SelectTrigger class="w-full bg-background border-input capitalize">
                         <SelectValue placeholder="Select Gender" />
                     </SelectTrigger>
-                    <SelectContent class="dark:bg-slate-950 dark:border-slate-800">
+                    <SelectContent>
                         <SelectItem
                             v-for="gender in genderOptions"
                             :key="gender"
                             :value="gender"
-                            class="capitalize dark:text-slate-200 dark:focus:bg-slate-800"
+                            class="capitalize"
                         >
                             {{ gender }}
                         </SelectItem>
@@ -300,17 +299,16 @@ const submitDeleteWeightCategory = async () => {
 
             <!-- Age Category Selection -->
             <div class="space-y-2">
-                <Label class="text-xs font-semibold uppercase text-slate-500 dark:text-slate-400">Age Category</Label>
+                <Label class="text-xs font-semibold uppercase text-muted-foreground">Age Category</Label>
                 <Select v-model.number="selectedAgeCategoryId">
-                    <SelectTrigger class="w-full dark:bg-slate-950 dark:border-slate-800 dark:text-slate-200">
+                    <SelectTrigger class="w-full bg-background border-input">
                         <SelectValue placeholder="Select Age Category" />
                     </SelectTrigger>
-                    <SelectContent class="dark:bg-slate-950 dark:border-slate-800">
+                    <SelectContent>
                         <SelectItem
                             v-for="option in ageCategoryOptions"
                             :key="option.id"
                             :value="option.id"
-                            class="dark:text-slate-200 dark:focus:bg-slate-800"
                         >
                             {{ option.name }}
                         </SelectItem>
@@ -321,24 +319,23 @@ const submitDeleteWeightCategory = async () => {
             <!-- Weight Category Selection -->
             <div class="space-y-2">
                 <div class="flex items-center justify-between">
-                    <Label class="text-xs font-semibold uppercase text-slate-500 dark:text-slate-400">Weight Category</Label>
+                    <Label class="text-xs font-semibold uppercase text-muted-foreground">Weight Category</Label>
                 </div>
                 
                 <div class="flex gap-2">
                     <Select v-model="selectedCategoryId">
-                        <SelectTrigger class="w-full dark:bg-slate-950 dark:border-slate-800 dark:text-slate-200">
+                        <SelectTrigger class="w-full bg-background border-input">
                             <SelectValue placeholder="Select Weight Category" />
                         </SelectTrigger>
-                        <SelectContent class="dark:bg-slate-950 dark:border-slate-800">
+                        <SelectContent>
                             <SelectItem
                                 v-for="category in weightCategoryOptions"
                                 :key="category.id"
                                 :value="category.id"
-                                class="dark:text-slate-200 dark:focus:bg-slate-800"
                             >
                                 {{ category.name }}
                             </SelectItem>
-                            <div v-if="weightCategoryOptions.length === 0" class="p-2 text-xs text-slate-500 text-center">
+                            <div v-if="weightCategoryOptions.length === 0" class="p-2 text-xs text-muted-foreground text-center">
                                 No categories found
                             </div>
                         </SelectContent>
@@ -346,7 +343,7 @@ const submitDeleteWeightCategory = async () => {
                     
                     <Button
                         variant="outline"
-                        class="px-3 dark:bg-slate-950 dark:border-slate-800 dark:text-slate-200 dark:hover:bg-slate-800"
+                        class="px-3 bg-background border-input hover:bg-muted"
                         @click="openCreateCategoryModal"
                         :disabled="!selectedGender || !selectedAgeCategoryId"
                         title="Add New Category"
@@ -372,21 +369,21 @@ const submitDeleteWeightCategory = async () => {
 
     <!-- Create Category Dialog -->
     <Dialog :open="isCreateCategoryOpen" @update:open="isCreateCategoryOpen = $event">
-        <DialogContent class="sm:max-w-[425px] dark:bg-slate-950 dark:border-slate-800">
+        <DialogContent class="sm:max-w-106.25">
             <DialogHeader>
-                <DialogTitle class="dark:text-slate-100">Add Weight Category</DialogTitle>
-                <DialogDescription>
+                <DialogTitle>Add Weight Category</DialogTitle>
+                <DialogDescription class="text-muted-foreground">
                     Create a new weight category for {{ selectedGender }} - {{ ageCategoryOptions.find(o => o.id === selectedAgeCategoryId)?.name }}.
                 </DialogDescription>
             </DialogHeader>
             <div class="grid gap-4 py-4">
                 <div class="grid gap-2">
-                    <Label for="category-name" class="dark:text-slate-300">Category Name</Label>
+                    <Label for="category-name">Category Name</Label>
                     <Input
                         id="category-name"
                         v-model="createCategoryForm.name"
                         placeholder="e.g. -60kg, +100kg"
-                        class="dark:bg-slate-950 dark:border-slate-800"
+                        class="bg-background border-input"
                         @keyup.enter="submitCreateWeightCategory"
                     />
                     <p class="text-xs text-muted-foreground">
@@ -399,8 +396,8 @@ const submitDeleteWeightCategory = async () => {
                 </div>
             </div>
             <DialogFooter>
-                <Button variant="outline" @click="isCreateCategoryOpen = false" class="dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800">Cancel</Button>
-                <Button @click="submitCreateWeightCategory" :disabled="isCreateCategoryLoading" class="bg-indigo-600 hover:bg-indigo-700 text-white dark:bg-indigo-600 dark:hover:bg-indigo-700">
+                <Button variant="outline" @click="isCreateCategoryOpen = false">Cancel</Button>
+                <Button @click="submitCreateWeightCategory" :disabled="isCreateCategoryLoading" class="bg-primary hover:bg-primary/90 text-primary-foreground">
                     <Loader2 v-if="isCreateCategoryLoading" class="mr-2 h-4 w-4 animate-spin" />
                     Create Category
                 </Button>
@@ -410,10 +407,10 @@ const submitDeleteWeightCategory = async () => {
 
     <!-- Delete Category Confirmation -->
     <Dialog :open="isDeleteCategoryOpen" @update:open="isDeleteCategoryOpen = $event">
-        <DialogContent class="sm:max-w-[425px] dark:bg-slate-950 dark:border-slate-800">
+        <DialogContent class="sm:max-w-106.25">
             <DialogHeader>
-                <DialogTitle class="dark:text-slate-100">Delete Weight Category</DialogTitle>
-                <DialogDescription>
+                <DialogTitle>Delete Weight Category</DialogTitle>
+                <DialogDescription class="text-muted-foreground">
                     Are you sure you want to delete this weight category? This action cannot be undone.
                 </DialogDescription>
             </DialogHeader>
@@ -421,7 +418,7 @@ const submitDeleteWeightCategory = async () => {
                 {{ deleteCategoryError }}
             </div>
             <DialogFooter>
-                <Button variant="outline" @click="isDeleteCategoryOpen = false" class="dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800">Cancel</Button>
+                <Button variant="outline" @click="isDeleteCategoryOpen = false">Cancel</Button>
                 <Button variant="destructive" @click="submitDeleteWeightCategory" :disabled="isDeleteCategoryLoading">
                     <Loader2 v-if="isDeleteCategoryLoading" class="mr-2 h-4 w-4 animate-spin" />
                     Delete

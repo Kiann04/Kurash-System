@@ -10,7 +10,6 @@ import {
     Trophy, 
     Calendar, 
     Plus, 
-    MoreHorizontal, 
     Edit, 
     Trash2, 
     Eye,
@@ -41,8 +40,6 @@ import {
     DropdownMenu, 
     DropdownMenuContent, 
     DropdownMenuItem, 
-    DropdownMenuLabel, 
-    DropdownMenuSeparator, 
     DropdownMenuTrigger 
 } from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
@@ -178,10 +175,10 @@ const formatDate = (date: string) => {
  */
 const getStatusColor = (status: string) => {
     switch(status.toLowerCase()) {
-        case 'open': return 'bg-green-100 text-green-700 hover:bg-green-200 dark:bg-green-900/30 dark:text-green-400 dark:hover:bg-green-900/50';
-        case 'ongoing': return 'bg-blue-100 text-blue-700 hover:bg-blue-200 dark:bg-blue-900/30 dark:text-blue-400 dark:hover:bg-blue-900/50';
-        case 'completed': return 'bg-slate-100 text-slate-700 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700';
-        default: return 'bg-yellow-100 text-yellow-700 hover:bg-yellow-200 dark:bg-yellow-900/30 dark:text-yellow-400 dark:hover:bg-yellow-900/50'; // draft
+        case 'open': return 'bg-primary/15 text-primary hover:bg-primary/25 border-primary/20';
+        case 'ongoing': return 'bg-secondary/15 text-secondary hover:bg-secondary/25 border-secondary/20';
+        case 'completed': return 'bg-muted text-muted-foreground hover:bg-muted/80 border-border';
+        default: return 'bg-accent/15 text-accent-foreground hover:bg-accent/25 border-accent/20'; // draft
     }
 }
 </script>
@@ -195,11 +192,11 @@ const getStatusColor = (status: string) => {
             <!-- Header -->
             <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                 <div class="flex items-center gap-3">
-                    <div class="h-12 w-12 rounded-xl bg-indigo-50 flex items-center justify-center border border-indigo-100 dark:bg-indigo-900/20 dark:border-indigo-800">
-                        <Trophy class="h-6 w-6 text-indigo-600 dark:text-indigo-400" />
+                    <div class="h-12 w-12 rounded-xl bg-primary/10 flex items-center justify-center border border-primary/20">
+                        <Trophy class="h-6 w-6 text-primary" />
                     </div>
                     <div>
-                        <h1 class="text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100">Tournament Management</h1>
+                        <h1 class="text-2xl font-bold tracking-tight text-foreground">Tournament Management</h1>
                         <p class="text-sm text-muted-foreground">
                             Create and manage Kurash tournaments.
                         </p>
@@ -208,46 +205,46 @@ const getStatusColor = (status: string) => {
 
                 <Dialog v-model:open="isAddTournamentModalOpen">
                     <DialogTrigger as-child>
-                        <Button class="gap-2 shadow-sm bg-indigo-600 hover:bg-indigo-700 text-white dark:bg-indigo-600 dark:hover:bg-indigo-700">
+                        <Button class="gap-2 shadow-sm">
                             <Plus class="h-4 w-4" />
                             Create Tournament
                         </Button>
                     </DialogTrigger>
-                    <DialogContent class="sm:max-w-md dark:bg-slate-950 dark:border-slate-800">
+                    <DialogContent class="sm:max-w-md">
                         <DialogHeader>
-                            <DialogTitle class="dark:text-slate-100">Create New Tournament</DialogTitle>
-                            <DialogDescription class="dark:text-slate-400">
+                            <DialogTitle>Create New Tournament</DialogTitle>
+                            <DialogDescription>
                                 Enter the basic details to start setting up a new tournament.
                             </DialogDescription>
                         </DialogHeader>
                         <div class="grid gap-4 py-4">
                             <div class="grid gap-2">
-                                <Label for="name" class="dark:text-slate-300">Tournament Name</Label>
-                                <Input id="name" v-model="newTournament.name" placeholder="e.g. National Kurash Championship 2024" class="dark:bg-slate-950 dark:border-slate-800 dark:text-slate-100" />
+                                <Label for="name">Tournament Name</Label>
+                                <Input id="name" v-model="newTournament.name" placeholder="e.g. National Kurash Championship 2024" />
                             </div>
                             <div class="grid gap-2">
-                                <Label for="location" class="dark:text-slate-300">Location</Label>
-                                <Input id="location" v-model="newTournament.location" placeholder="e.g. Manila Sports Complex" class="dark:bg-slate-950 dark:border-slate-800 dark:text-slate-100" />
+                                <Label for="location">Location</Label>
+                                <Input id="location" v-model="newTournament.location" placeholder="e.g. Manila Sports Complex" />
                             </div>
                             <div class="grid gap-2">
-                                <Label for="date" class="dark:text-slate-300">Tournament Date</Label>
-                                <DatePicker id="date" v-model="newTournament.tournament_date" class="dark:bg-slate-950 dark:border-slate-800 dark:text-slate-100" />
+                                <Label for="date">Tournament Date</Label>
+                                <DatePicker id="date" v-model="newTournament.tournament_date" />
                             </div>
                             <div class="grid gap-2">
-                                <Label class="dark:text-slate-300">Initial Status</Label>
+                                <Label>Initial Status</Label>
                                 <DropdownMenu>
                                     <DropdownMenuTrigger as-child>
-                                        <Button variant="outline" class="w-full justify-between dark:bg-slate-950 dark:border-slate-800 dark:text-slate-100 font-normal">
+                                        <Button variant="outline" class="w-full justify-between font-normal">
                                             {{ newTournament.status === 'draft' ? 'Draft (Setup Mode)' : 'Open for Registration' }}
                                             <ChevronDown class="ml-2 h-4 w-4 opacity-50" />
                                         </Button>
                                     </DropdownMenuTrigger>
-                                    <DropdownMenuContent class="w-(--radix-dropdown-menu-trigger-width) dark:bg-slate-950 dark:border-slate-800">
-                                        <DropdownMenuItem @click="newTournament.status = 'draft'" class="dark:text-slate-100 cursor-pointer">
+                                    <DropdownMenuContent class="w-(--radix-dropdown-menu-trigger-width)">
+                                        <DropdownMenuItem @click="newTournament.status = 'draft'" class="cursor-pointer">
                                             Draft (Setup Mode)
                                             <Check v-if="newTournament.status === 'draft'" class="ml-auto h-4 w-4" />
                                         </DropdownMenuItem>
-                                        <DropdownMenuItem @click="newTournament.status = 'open'" class="dark:text-slate-100 cursor-pointer">
+                                        <DropdownMenuItem @click="newTournament.status = 'open'" class="cursor-pointer">
                                             Open for Registration
                                             <Check v-if="newTournament.status === 'open'" class="ml-auto h-4 w-4" />
                                         </DropdownMenuItem>
@@ -256,8 +253,8 @@ const getStatusColor = (status: string) => {
                             </div>
                         </div>
                         <DialogFooter>
-                            <Button variant="outline" @click="isAddTournamentModalOpen = false" class="dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800">Cancel</Button>
-                            <Button @click="proceedToCreate" :disabled="!newTournament.name || !newTournament.tournament_date" class="bg-indigo-600 hover:bg-indigo-700 text-white dark:bg-indigo-600 dark:hover:bg-indigo-700">
+                            <Button variant="outline" @click="isAddTournamentModalOpen = false">Cancel</Button>
+                            <Button @click="proceedToCreate" :disabled="!newTournament.name || !newTournament.tournament_date">
                                 Continue Setup
                             </Button>
                         </DialogFooter>
@@ -267,18 +264,18 @@ const getStatusColor = (status: string) => {
 
             <!-- Delete Confirmation Modal -->
             <Dialog :open="isDeleteModalOpen" @update:open="isDeleteModalOpen = $event">
-                <DialogContent class="sm:max-w-106.25 dark:bg-slate-950 dark:border-slate-800">
+                <DialogContent class="sm:max-w-106.25">
                     <DialogHeader>
-                        <DialogTitle class="flex items-center gap-2 text-destructive dark:text-red-500">
+                        <DialogTitle class="flex items-center gap-2 text-destructive">
                             <AlertCircle class="h-5 w-5" />
                             Delete Tournament
                         </DialogTitle>
-                        <DialogDescription class="dark:text-slate-400">
+                        <DialogDescription>
                             Are you sure you want to delete this tournament? This action cannot be undone and will remove all associated data including players, matches, and results.
                         </DialogDescription>
                     </DialogHeader>
                     <DialogFooter class="gap-2 sm:gap-0">
-                        <Button variant="outline" @click="isDeleteModalOpen = false" class="dark:border-slate-800 dark:text-slate-300">
+                        <Button variant="outline" @click="isDeleteModalOpen = false">
                             Cancel
                         </Button>
                         <Button variant="destructive" @click="confirmDelete" :disabled="isDeleting">
@@ -291,42 +288,42 @@ const getStatusColor = (status: string) => {
             </Dialog>
 
             <!-- Table -->
-            <Card class="border shadow-sm bg-white dark:bg-slate-950 dark:border-slate-800 overflow-hidden">
+            <Card class="border shadow-sm overflow-hidden">
                 <CardContent class="p-0">
                     <div class="rounded-none border-0">
                         <Table>
-                            <TableHeader class="bg-slate-50/50 dark:bg-slate-900/50 sticky top-0 z-10 backdrop-blur-sm">
-                                <TableRow class="hover:bg-transparent dark:hover:bg-transparent border-b dark:border-slate-800">
-                                    <TableHead class="h-12 px-4 align-middle font-semibold text-slate-500 dark:text-slate-400">Tournament Name</TableHead>
-                                    <TableHead class="h-12 px-4 align-middle font-semibold text-slate-500 dark:text-slate-400">Location</TableHead>
-                                    <TableHead class="h-12 px-4 align-middle font-semibold text-slate-500 dark:text-slate-400">Date</TableHead>
-                                    <TableHead class="h-12 px-4 align-middle font-semibold text-center text-slate-500 dark:text-slate-400">Status</TableHead>
-                                    <TableHead class="h-12 px-4 align-middle font-semibold text-right text-slate-500 dark:text-slate-400">Actions</TableHead>
+                            <TableHeader class="bg-muted/50 sticky top-0 z-10 backdrop-blur-sm">
+                                <TableRow class="hover:bg-transparent border-b">
+                                    <TableHead class="h-12 px-4 align-middle font-medium text-muted-foreground">Tournament Name</TableHead>
+                                    <TableHead class="h-12 px-4 align-middle font-medium text-muted-foreground">Location</TableHead>
+                                    <TableHead class="h-12 px-4 align-middle font-medium text-muted-foreground">Date</TableHead>
+                                    <TableHead class="h-12 px-4 align-middle font-medium text-center text-muted-foreground">Status</TableHead>
+                                    <TableHead class="h-12 px-4 align-middle font-medium text-right text-muted-foreground">Actions</TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
                                 <TableRow
                                     v-for="t in tournaments.data"
                                     :key="t.id"
-                                    class="hover:bg-slate-50/50 transition-colors dark:hover:bg-slate-900/50 dark:border-slate-800 border-b last:border-0"
+                                    class="hover:bg-muted/50 transition-colors border-b last:border-0"
                                 >
                                     <TableCell class="p-4 align-middle font-medium">
                                         <div class="flex items-center gap-3">
-                                            <div class="h-9 w-9 rounded-lg bg-slate-100 flex items-center justify-center text-slate-500 border border-slate-200 dark:bg-slate-800 dark:text-slate-400 dark:border-slate-700">
+                                            <div class="h-9 w-9 rounded-lg bg-muted flex items-center justify-center text-muted-foreground border border-border">
                                                 <Trophy class="h-4.5 w-4.5" />
                                             </div>
                                             <div class="flex flex-col">
-                                                <span class="text-slate-900 font-semibold dark:text-slate-100">{{ t.name }}</span>
-                                                <span class="text-xs text-slate-500 font-mono dark:text-slate-500">ID: #{{ t.id }}</span>
+                                                <span class="text-foreground font-medium">{{ t.name }}</span>
+                                                <span class="text-xs text-muted-foreground font-mono">ID: #{{ t.id }}</span>
                                             </div>
                                         </div>
                                     </TableCell>
                                     <TableCell class="p-4 align-middle">
-                                        <span class="text-slate-600 dark:text-slate-400">{{ t.location || '-' }}</span>
+                                        <span class="text-muted-foreground">{{ t.location || '-' }}</span>
                                     </TableCell>
                                     <TableCell class="p-4 align-middle">
-                                        <div class="flex items-center gap-2 text-slate-600 dark:text-slate-400">
-                                            <Calendar class="h-4 w-4 text-slate-400 dark:text-slate-500" />
+                                        <div class="flex items-center gap-2 text-muted-foreground">
+                                            <Calendar class="h-4 w-4 text-muted-foreground/70" />
                                             <span class="font-medium text-sm">{{ formatDate(t.tournament_date) }}</span>
                                         </div>
                                     </TableCell>
@@ -341,7 +338,7 @@ const getStatusColor = (status: string) => {
                                                 variant="ghost" 
                                                 size="sm" 
                                                 as-child
-                                                class="h-8 w-8 p-0 text-slate-500 hover:text-indigo-600 hover:bg-indigo-50 dark:text-slate-400 dark:hover:text-indigo-400 dark:hover:bg-indigo-900/30 rounded-full"
+                                                class="h-8 w-8 p-0 text-muted-foreground hover:text-primary hover:bg-primary/10 rounded-full"
                                                 title="Edit Details"
                                             >
                                                 <Link :href="route('admin.tournaments.edit', t.id)">
@@ -354,7 +351,7 @@ const getStatusColor = (status: string) => {
                                                 variant="ghost" 
                                                 size="sm" 
                                                 as-child
-                                                class="h-8 w-8 p-0 text-slate-500 hover:text-blue-600 hover:bg-blue-50 dark:text-slate-400 dark:hover:text-blue-400 dark:hover:bg-blue-900/30 rounded-full"
+                                                class="h-8 w-8 p-0 text-muted-foreground hover:text-secondary hover:bg-secondary/10 rounded-full"
                                                 title="View Dashboard"
                                             >
                                                 <Link :href="route('admin.tournaments.show', t.id)">
@@ -365,7 +362,7 @@ const getStatusColor = (status: string) => {
                                             <Button 
                                                 variant="ghost" 
                                                 size="sm" 
-                                                class="h-8 w-8 p-0 text-slate-500 hover:text-red-600 hover:bg-red-50 dark:text-slate-400 dark:hover:text-red-400 dark:hover:bg-red-900/30 rounded-full"
+                                                class="h-8 w-8 p-0 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-full"
                                                 @click="deleteTournament(t.id)"
                                                 title="Delete Tournament"
                                             >
@@ -376,9 +373,9 @@ const getStatusColor = (status: string) => {
                                 </TableRow>
 
                                 <TableRow v-if="tournaments.data.length === 0">
-                                    <TableCell colspan="4" class="p-8 text-center text-muted-foreground">
+                                    <TableCell colspan="5" class="p-8 text-center text-muted-foreground">
                                         <div class="flex flex-col items-center justify-center gap-2">
-                                            <Trophy class="h-8 w-8 text-slate-300 dark:text-slate-600" />
+                                            <Trophy class="h-8 w-8 text-muted-foreground/50" />
                                             <p>No tournaments found. Create one to get started.</p>
                                         </div>
                                     </TableCell>

@@ -56,8 +56,8 @@ const formatDateRange = (start: string, end: string | null) => {
 
 const getStatusColor = (status: string) => {
     return status === 'published'
-        ? 'bg-green-100 text-green-700 hover:bg-green-200 dark:bg-green-900/30 dark:text-green-400 dark:hover:bg-green-900/50'
-        : 'bg-yellow-100 text-yellow-700 hover:bg-yellow-200 dark:bg-yellow-900/30 dark:text-yellow-400 dark:hover:bg-yellow-900/50';
+        ? 'bg-primary/15 text-primary hover:bg-primary/25 border-primary/20'
+        : 'bg-muted text-muted-foreground hover:bg-muted/80 border-border';
 };
 
 const confirmDelete = (id: number) => {
@@ -76,18 +76,18 @@ const confirmDelete = (id: number) => {
         <div class="flex flex-col gap-6 p-6">
             <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                 <div class="flex items-center gap-3">
-                    <div class="h-12 w-12 rounded-xl bg-amber-50 flex items-center justify-center border border-amber-100 dark:bg-amber-900/20 dark:border-amber-800">
-                        <Calendar class="h-6 w-6 text-amber-600 dark:text-amber-400" />
+                    <div class="h-12 w-12 rounded-xl bg-primary/10 flex items-center justify-center border border-primary/20">
+                        <Calendar class="h-6 w-6 text-primary" />
                     </div>
                     <div>
-                        <h1 class="text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100">Event Management</h1>
+                        <h1 class="text-2xl font-bold tracking-tight text-foreground">Event Management</h1>
                         <p class="text-sm text-muted-foreground">
                             Create and manage public events.
                         </p>
                     </div>
                 </div>
 
-                <Button as-child class="gap-2 shadow-sm bg-amber-600 hover:bg-amber-700 text-white">
+                <Button as-child class="gap-2 shadow-sm bg-primary hover:bg-primary/90 text-primary-foreground">
                     <Link :href="route('admin.events.create')">
                         <Plus class="h-4 w-4" />
                         Create Event
@@ -95,40 +95,40 @@ const confirmDelete = (id: number) => {
                 </Button>
             </div>
 
-            <Card class="border shadow-sm bg-white dark:bg-slate-950 dark:border-slate-800 overflow-hidden">
+            <Card class="border shadow-sm bg-card text-card-foreground overflow-hidden">
                 <CardContent class="p-0">
                     <Table>
-                        <TableHeader class="bg-slate-50/50 dark:bg-slate-900/50 sticky top-0 z-10 backdrop-blur-sm">
-                            <TableRow class="hover:bg-transparent dark:hover:bg-transparent border-b dark:border-slate-800">
-                                <TableHead class="h-12 px-4 align-middle font-semibold text-slate-500 dark:text-slate-400">Event</TableHead>
-                                <TableHead class="h-12 px-4 align-middle font-semibold text-slate-500 dark:text-slate-400">Location</TableHead>
-                                <TableHead class="h-12 px-4 align-middle font-semibold text-slate-500 dark:text-slate-400">Dates</TableHead>
-                                <TableHead class="h-12 px-4 align-middle font-semibold text-center text-slate-500 dark:text-slate-400">Status</TableHead>
-                                <TableHead class="h-12 px-4 align-middle font-semibold text-right text-slate-500 dark:text-slate-400">Actions</TableHead>
+                        <TableHeader class="bg-muted/50 sticky top-0 z-10 backdrop-blur-sm">
+                            <TableRow class="hover:bg-transparent border-b border-border">
+                                <TableHead class="h-12 px-4 align-middle font-semibold text-muted-foreground">Event</TableHead>
+                                <TableHead class="h-12 px-4 align-middle font-semibold text-muted-foreground">Location</TableHead>
+                                <TableHead class="h-12 px-4 align-middle font-semibold text-muted-foreground">Dates</TableHead>
+                                <TableHead class="h-12 px-4 align-middle font-semibold text-center text-muted-foreground">Status</TableHead>
+                                <TableHead class="h-12 px-4 align-middle font-semibold text-right text-muted-foreground">Actions</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
                             <TableRow
                                 v-for="event in props.events.data"
                                 :key="event.id"
-                                class="hover:bg-slate-50/50 transition-colors dark:hover:bg-slate-900/50 dark:border-slate-800 border-b last:border-0"
+                                class="hover:bg-muted/50 transition-colors border-b border-border last:border-0"
                             >
                                 <TableCell class="p-4 align-middle font-medium">
                                     <div class="flex items-center gap-3">
-                                        <div class="h-9 w-9 rounded-lg bg-slate-100 flex items-center justify-center text-slate-500 border border-slate-200 dark:bg-slate-800 dark:text-slate-400 dark:border-slate-700">
+                                        <div class="h-9 w-9 rounded-lg bg-muted flex items-center justify-center text-muted-foreground border border-border">
                                             <Calendar class="h-4.5 w-4.5" />
                                         </div>
                                         <div class="flex flex-col">
-                                            <span class="text-slate-900 font-semibold dark:text-slate-100">{{ event.title }}</span>
-                                            <span class="text-xs text-slate-500 font-mono dark:text-slate-500">ID: #{{ event.id }}</span>
+                                            <span class="text-foreground font-semibold">{{ event.title }}</span>
+                                            <span class="text-xs text-muted-foreground font-mono">ID: #{{ event.id }}</span>
                                         </div>
                                     </div>
                                 </TableCell>
                                 <TableCell class="p-4 align-middle">
-                                    <span class="text-slate-600 dark:text-slate-400">{{ event.location || '-' }}</span>
+                                    <span class="text-muted-foreground">{{ event.location || '-' }}</span>
                                 </TableCell>
                                 <TableCell class="p-4 align-middle">
-                                    <span class="text-slate-600 dark:text-slate-400 font-medium text-sm">
+                                    <span class="text-muted-foreground font-medium text-sm">
                                         {{ formatDateRange(event.start_date, event.end_date) }}
                                     </span>
                                 </TableCell>
@@ -143,7 +143,7 @@ const confirmDelete = (id: number) => {
                                             variant="ghost"
                                             size="sm"
                                             as-child
-                                            class="h-8 w-8 p-0 text-slate-500 hover:text-amber-600 hover:bg-amber-50 dark:text-slate-400 dark:hover:text-amber-400 dark:hover:bg-amber-900/30 rounded-full"
+                                            class="h-8 w-8 p-0 text-muted-foreground hover:text-foreground hover:bg-muted rounded-full"
                                             title="Edit Event"
                                         >
                                             <Link :href="route('admin.events.edit', event.id)">
@@ -154,7 +154,7 @@ const confirmDelete = (id: number) => {
                                             variant="ghost"
                                             size="sm"
                                             as-child
-                                            class="h-8 w-8 p-0 text-slate-500 hover:text-blue-600 hover:bg-blue-50 dark:text-slate-400 dark:hover:text-blue-400 dark:hover:bg-blue-900/30 rounded-full"
+                                            class="h-8 w-8 p-0 text-muted-foreground hover:text-foreground hover:bg-muted rounded-full"
                                             title="View Event"
                                         >
                                             <Link :href="route('admin.events.show', event.id)">
@@ -164,7 +164,7 @@ const confirmDelete = (id: number) => {
                                         <Button
                                             variant="ghost"
                                             size="sm"
-                                            class="h-8 w-8 p-0 text-slate-500 hover:text-red-600 hover:bg-red-50 dark:text-slate-400 dark:hover:text-red-400 dark:hover:bg-red-900/30 rounded-full"
+                                            class="h-8 w-8 p-0 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-full"
                                             @click="confirmDelete(event.id)"
                                             title="Delete Event"
                                         >

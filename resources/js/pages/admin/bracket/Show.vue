@@ -264,8 +264,8 @@ const goBack = () => {
 
                     <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
                         <div>
-                            <h1 class="text-3xl font-bold tracking-tight text-slate-900 dark:text-slate-100 flex items-center gap-3">
-                                <Trophy class="h-8 w-8 text-indigo-600 dark:text-indigo-400" />
+                            <h1 class="text-3xl font-bold tracking-tight text-foreground flex items-center gap-3">
+                                <Trophy class="h-8 w-8 text-primary" />
                                 {{ tournament.name }}
                             </h1>
                             <div class="mt-2 flex items-center gap-4 text-sm text-muted-foreground">
@@ -291,7 +291,7 @@ const goBack = () => {
                                 :key="tab"
                                 :variant="activeTab === tab ? 'default' : 'ghost'"
                                 class="rounded-full px-4 h-9 font-medium transition-all"
-                                :class="activeTab === tab ? 'bg-indigo-600 text-white hover:bg-indigo-700 shadow-md' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'"
+                                :class="activeTab === tab ? 'bg-primary text-primary-foreground hover:bg-primary/90 shadow-md' : 'text-muted-foreground hover:bg-muted'"
                                 @click="activeTab = tab as TabType"
                             >
                                 <component
@@ -366,18 +366,18 @@ const goBack = () => {
                     </DialogDescription>
                 </DialogHeader>
                 <div class="py-4">
-                    <div class="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-900 rounded-lg border">
+                    <div class="flex items-center justify-between p-4 bg-muted/50 rounded-lg border border-border">
                         <div class="font-medium">
-                            <span v-if="confirmWinnerId === confirmWinnerMatch?.player_one_id" class="text-blue-600 font-bold">Blue: </span>
-                            <span v-else class="text-green-600 font-bold">Green: </span>
+                            <span v-if="confirmWinnerId === confirmWinnerMatch?.player_one_id" class="text-secondary font-bold">Blue: </span>
+                            <span v-else class="text-primary font-bold">Green: </span>
                             {{ confirmWinnerId === confirmWinnerMatch?.player_one_id ? confirmWinnerMatch?.player_one : confirmWinnerMatch?.player_two }}
                         </div>
-                        <Badge variant="outline" class="bg-yellow-50 text-yellow-700 border-yellow-200">Winner</Badge>
+                        <Badge variant="outline" class="bg-accent text-accent-foreground border-accent/50">Winner</Badge>
                     </div>
                 </div>
                 <DialogFooter>
                     <Button variant="outline" @click="closeConfirmWinner">Cancel</Button>
-                    <Button @click="confirmWinner" class="bg-indigo-600 hover:bg-indigo-700">Confirm Winner</Button>
+                    <Button @click="confirmWinner" class="bg-primary hover:bg-primary/90 text-primary-foreground">Confirm Winner</Button>
                 </DialogFooter>
             </DialogContent>
         </Dialog>

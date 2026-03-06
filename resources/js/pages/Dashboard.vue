@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Link, Head } from '@inertiajs/vue3';
-import { Users, UserCheck, UserX, ArrowRight, Shield, Calendar, Clock } from 'lucide-vue-next';
+import { Users, UserCheck, UserX, ArrowRight, Shield, Calendar, Clock, Trophy, Activity } from 'lucide-vue-next';
 import { route } from 'ziggy-js';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
@@ -57,155 +57,194 @@ const getInitials = (name: string) => {
     <Head title="Dashboard" />
 
     <AppLayout :breadcrumbs="breadcrumbs">
-        <div class="flex flex-1 flex-col gap-8 p-6 dark:bg-slate-950">
-            <!-- Stats Overview -->
-            <div class="grid gap-6 md:grid-cols-4">
-                <Card class="relative overflow-hidden border-l-4 border-l-blue-500 shadow-sm hover:shadow-md transition-all dark:bg-slate-950 dark:border-slate-800 dark:border-l-blue-500">
+        <div class="flex flex-1 flex-col gap-8 p-6">
+            <!-- Header Section -->
+            <div class="flex flex-col gap-2">
+                <h1 class="text-3xl font-bold tracking-tight text-foreground">Dashboard</h1>
+                <p class="text-muted-foreground">Overview of the Kurash Federation system status.</p>
+            </div>
+
+            <!-- Stats Grid -->
+            <div class="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+                <!-- Total Players -->
+                <Card class="relative overflow-hidden border-l-4 border-l-primary shadow-sm hover:shadow-md transition-all">
                     <CardHeader class="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle class="text-sm font-medium text-muted-foreground">Total Players</CardTitle>
-                        <div class="h-8 w-8 rounded-full bg-blue-100 flex items-center justify-center dark:bg-blue-900/30">
-                            <Users class="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                        <CardTitle class="text-sm font-medium text-muted-foreground">Total Athletes</CardTitle>
+                        <div class="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
+                            <Users class="h-4 w-4 text-primary" />
                         </div>
                     </CardHeader>
                     <CardContent>
-                        <div class="text-3xl font-bold text-slate-900 dark:text-slate-100">{{ totalPlayers }}</div>
-                        <p class="text-xs text-muted-foreground mt-1">Registered athletes</p>
+                        <div class="text-3xl font-bold text-foreground">{{ totalPlayers }}</div>
+                        <p class="text-xs text-muted-foreground mt-1">Registered in system</p>
                     </CardContent>
                 </Card>
 
-                <Card class="relative overflow-hidden border-l-4 border-l-green-500 shadow-sm hover:shadow-md transition-all dark:bg-slate-950 dark:border-slate-800 dark:border-l-green-500">
+                <!-- Active Members -->
+                <Card class="relative overflow-hidden border-l-4 border-l-secondary shadow-sm hover:shadow-md transition-all">
                     <CardHeader class="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle class="text-sm font-medium text-muted-foreground">Active Member</CardTitle>
-                        <div class="h-8 w-8 rounded-full bg-green-100 flex items-center justify-center dark:bg-green-900/30">
-                            <UserCheck class="h-4 w-4 text-green-600 dark:text-green-400" />
+                        <CardTitle class="text-sm font-medium text-muted-foreground">Active Members</CardTitle>
+                        <div class="h-8 w-8 rounded-full bg-secondary/10 flex items-center justify-center">
+                            <UserCheck class="h-4 w-4 text-secondary" />
                         </div>
                     </CardHeader>
                     <CardContent>
-                        <div class="text-3xl font-bold text-slate-900 dark:text-slate-100">{{ activePlayers }}</div>
+                        <div class="text-3xl font-bold text-foreground">{{ activePlayers }}</div>
                         <p class="text-xs text-muted-foreground mt-1">Currently eligible</p>
                     </CardContent>
                 </Card>
 
-                <Card class="relative overflow-hidden border-l-4 border-l-amber-500 shadow-sm hover:shadow-md transition-all dark:bg-slate-950 dark:border-slate-800 dark:border-l-amber-500">
+                <!-- Expiring Members -->
+                <Card class="relative overflow-hidden border-l-4 border-l-accent shadow-sm hover:shadow-md transition-all">
                     <CardHeader class="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle class="text-sm font-medium text-muted-foreground">Expiring Member</CardTitle>
-                        <div class="h-8 w-8 rounded-full bg-amber-100 flex items-center justify-center dark:bg-amber-900/30">
-                            <Clock class="h-4 w-4 text-amber-600 dark:text-amber-400" />
+                        <CardTitle class="text-sm font-medium text-muted-foreground">Expiring Soon</CardTitle>
+                        <div class="h-8 w-8 rounded-full bg-accent/20 flex items-center justify-center">
+                            <Clock class="h-4 w-4 text-accent" />
                         </div>
                     </CardHeader>
                     <CardContent>
-                        <div class="text-3xl font-bold text-slate-900 dark:text-slate-100">{{ expiringPlayers }}</div>
+                        <div class="text-3xl font-bold text-foreground">{{ expiringPlayers }}</div>
                         <p class="text-xs text-muted-foreground mt-1">Expires within 30 days</p>
                     </CardContent>
                 </Card>
 
-                <Card class="relative overflow-hidden border-l-4 border-l-red-500 shadow-sm hover:shadow-md transition-all dark:bg-slate-950 dark:border-slate-800 dark:border-l-red-500">
+                <!-- Inactive Members -->
+                <Card class="relative overflow-hidden border-l-4 border-l-destructive shadow-sm hover:shadow-md transition-all">
                     <CardHeader class="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle class="text-sm font-medium text-muted-foreground">Inactive Member</CardTitle>
-                        <div class="h-8 w-8 rounded-full bg-red-100 flex items-center justify-center dark:bg-red-900/30">
-                            <UserX class="h-4 w-4 text-red-600 dark:text-red-400" />
+                        <CardTitle class="text-sm font-medium text-muted-foreground">Inactive</CardTitle>
+                        <div class="h-8 w-8 rounded-full bg-destructive/10 flex items-center justify-center">
+                            <UserX class="h-4 w-4 text-destructive" />
                         </div>
                     </CardHeader>
                     <CardContent>
-                        <div class="text-3xl font-bold text-slate-900 dark:text-slate-100">{{ inactivePlayers }}</div>
+                        <div class="text-3xl font-bold text-foreground">{{ inactivePlayers }}</div>
                         <p class="text-xs text-muted-foreground mt-1">Expired or suspended</p>
                     </CardContent>
                 </Card>
             </div>
 
-            <!-- Recent Activity Section -->
-            <div class="grid gap-6">
-                <Card class="col-span-1 shadow-sm border-slate-200 dark:border-slate-800 dark:bg-slate-950">
-                    <CardHeader class="flex flex-row items-center justify-between border-b px-6 py-4 bg-slate-50/50 dark:bg-slate-900/50 dark:border-slate-800">
-                        <div class="space-y-1">
-                            <CardTitle class="text-lg font-semibold text-slate-900 dark:text-slate-100">Recent Registrations</CardTitle>
-                            <CardDescription>Latest athletes added to the system.</CardDescription>
+            <div class="grid gap-6 md:grid-cols-7">
+                <!-- Recent Registrations -->
+                <Card class="md:col-span-4 lg:col-span-5 shadow-sm">
+                    <CardHeader class="flex flex-row items-center justify-between">
+                        <div>
+                            <CardTitle>Recent Registrations</CardTitle>
+                            <CardDescription>
+                                Latest athletes added to the federation database.
+                            </CardDescription>
                         </div>
-                        <Link :href="route('admin.players.index')">
-                            <Button variant="ghost" size="sm" class="text-blue-600 hover:text-blue-700 hover:bg-blue-50 group dark:text-blue-400 dark:hover:text-blue-300 dark:hover:bg-blue-900/30">
-                                View All Players
-                                <ArrowRight class="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
-                            </Button>
-                        </Link>
+                        <Button variant="outline" size="sm" as-child>
+                            <Link :href="route('admin.players.index')">
+                                View All <ArrowRight class="ml-2 h-4 w-4" />
+                            </Link>
+                        </Button>
                     </CardHeader>
-                    <CardContent class="p-0">
-                        <div class="relative w-full overflow-auto">
-                            <Table>
-                                <TableHeader>
-                                    <TableRow class="bg-slate-50 dark:bg-slate-900">
-                                        <TableHead class="px-6 py-4 dark:text-slate-400">Athlete</TableHead>
-                                        <TableHead class="px-6 py-4 dark:text-slate-400">Club / Team</TableHead>
-                                        <TableHead class="px-6 py-4 dark:text-slate-400">Age</TableHead>
-                                        <TableHead class="px-6 py-4 dark:text-slate-400">Gender</TableHead>
-                                        <TableHead class="px-6 py-4 dark:text-slate-400">Membership Date</TableHead>
-                                        <TableHead class="px-6 py-4 text-center dark:text-slate-400">Membership Status</TableHead>
-                                    </TableRow>
-                                </TableHeader>
-                                <TableBody>
-                                    <TableRow v-for="player in recentPlayers" :key="player.id" class="hover:bg-slate-50/80 transition-colors dark:hover:bg-slate-900/80 dark:border-slate-800">
-                                        <TableCell class="px-6 py-4">
-                                            <div class="flex items-center gap-3">
-                                                <Avatar class="h-9 w-9 border border-slate-200 dark:border-slate-700">
-                                                    <AvatarImage :src="`https://ui-avatars.com/api/?name=${player.name}&background=random`" :alt="player.name" />
-                                                    <AvatarFallback class="bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400">{{ getInitials(player.name) }}</AvatarFallback>
-                                                </Avatar>
-                                                <div class="flex flex-col">
-                                                    <span class="font-medium text-slate-900 dark:text-slate-100">{{ player.name }}</span>
-                                                    <span class="text-xs text-slate-500 dark:text-slate-400">ID: #{{ player.id.toString().padStart(4, '0') }}</span>
-                                                </div>
+                    <CardContent>
+                        <Table>
+                            <TableHeader>
+                                <TableRow>
+                                    <TableHead>Athlete</TableHead>
+                                    <TableHead class="hidden sm:table-cell">Details</TableHead>
+                                    <TableHead class="hidden md:table-cell">Membership</TableHead>
+                                    <TableHead class="text-right">Status</TableHead>
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                                <TableRow v-for="player in recentPlayers" :key="player.id">
+                                    <TableCell class="font-medium">
+                                        <div class="flex items-center gap-3">
+                                            <Avatar class="h-9 w-9 border border-border">
+                                                <AvatarFallback :class="player.gender === 'Female' ? 'bg-primary/10 text-primary' : 'bg-secondary/10 text-secondary'">
+                                                    {{ getInitials(player.name) }}
+                                                </AvatarFallback>
+                                            </Avatar>
+                                            <div class="flex flex-col">
+                                                <span class="font-medium">{{ player.name }}</span>
+                                                <span class="text-xs text-muted-foreground sm:hidden">{{ player.club_location }}</span>
                                             </div>
-                                        </TableCell>
-                                        <TableCell class="px-6 py-4">
-                                            <div class="flex items-center gap-2 text-slate-600 dark:text-slate-400">
-                                                <Shield class="h-3.5 w-3.5 text-slate-400 dark:text-slate-500" />
-                                                <span>{{ player.club_location }}</span>
-                                            </div>
-                                        </TableCell>
-                                        <TableCell class="px-6 py-4">
-                                            <span class="font-medium text-slate-900 dark:text-slate-100">{{ player.age }} years</span>
-                                        </TableCell>
-                                        <TableCell class="px-6 py-4">
-                                            <span class="text-xs text-slate-500 uppercase dark:text-slate-400">{{ player.gender }}</span>
-                                        </TableCell>
-                                        <TableCell class="px-6 py-4">
-                                            <div class="flex flex-col gap-1 text-sm text-slate-600 dark:text-slate-400">
-                                                <div class="flex items-center gap-2">
-                                                    <span class="text-xs w-8 text-slate-400">Start:</span>
-                                                    <span>{{ player.membership_start }}</span>
-                                                </div>
-                                                <div class="flex items-center gap-2">
-                                                    <span class="text-xs w-8 text-slate-400">End:</span>
-                                                    <span>{{ player.membership_end }}</span>
-                                                </div>
-                                            </div>
-                                        </TableCell>
-                                        <TableCell class="px-6 py-4 text-center">
-                                            <Badge :variant="player.status === 'active' ? 'default' : (player.status === 'expiring' ? 'secondary' : 'destructive')" 
-                                                :class="[
-                                                    'capitalize shadow-none font-normal',
-                                                    player.status === 'active' 
-                                                        ? 'bg-green-100 text-green-700 hover:bg-green-200 dark:bg-green-900/30 dark:text-green-400 dark:hover:bg-green-900/50' 
-                                                        : (player.status === 'expiring'
-                                                            ? 'bg-amber-100 text-amber-700 hover:bg-amber-200 dark:bg-amber-900/30 dark:text-amber-400 dark:hover:bg-amber-900/50'
-                                                            : 'bg-red-100 text-red-700 hover:bg-red-200 dark:bg-red-900/30 dark:text-red-400 dark:hover:bg-red-900/50')
-                                                ]">
-                                                {{ player.status }}
-                                            </Badge>
-                                        </TableCell>
-                                    </TableRow>
-                                    <TableRow v-if="recentPlayers.length === 0">
-                                        <TableCell colspan="5" class="p-8 text-center text-muted-foreground">
-                                            <div class="flex flex-col items-center justify-center gap-2">
-                                                <Users class="h-8 w-8 text-slate-300 dark:text-slate-600" />
-                                                <p>No recent registrations found.</p>
-                                            </div>
-                                        </TableCell>
-                                    </TableRow>
-                                </TableBody>
-                            </Table>
-                        </div>
+                                        </div>
+                                    </TableCell>
+                                    <TableCell class="hidden sm:table-cell">
+                                        <div class="flex flex-col text-sm">
+                                            <span>{{ player.gender }}, {{ player.age }} yrs</span>
+                                            <span class="text-xs text-muted-foreground">{{ player.club_location }}</span>
+                                        </div>
+                                    </TableCell>
+                                    <TableCell class="hidden md:table-cell">
+                                        <div class="flex flex-col text-sm">
+                                            <span class="text-xs text-muted-foreground">Start: {{ player.membership_start }}</span>
+                                            <span class="text-xs text-muted-foreground">End: {{ player.membership_end }}</span>
+                                        </div>
+                                    </TableCell>
+                                    <TableCell class="text-right">
+                                        <Badge 
+                                            :variant="player.status === 'active' ? 'default' : (player.status === 'expiring' ? 'secondary' : 'outline')"
+                                            :class="{
+                                                'bg-primary/15 text-primary hover:bg-primary/25 border-primary/20': player.status === 'active',
+                                                'bg-accent/15 text-accent hover:bg-accent/25 border-accent/20': player.status === 'expiring',
+                                                'bg-muted text-muted-foreground hover:bg-muted/80': player.status === 'inactive'
+                                            }"
+                                        >
+                                            {{ player.status.charAt(0).toUpperCase() + player.status.slice(1) }}
+                                        </Badge>
+                                    </TableCell>
+                                </TableRow>
+                                <TableRow v-if="recentPlayers.length === 0">
+                                    <TableCell colspan="4" class="text-center py-8 text-muted-foreground">
+                                        No recent registrations found.
+                                    </TableCell>
+                                </TableRow>
+                            </TableBody>
+                        </Table>
                     </CardContent>
                 </Card>
+
+                <!-- Quick Actions / Mini Stats -->
+                <div class="md:col-span-3 lg:col-span-2 flex flex-col gap-6">
+                    <Card class="shadow-sm">
+                        <CardHeader>
+                            <CardTitle>Quick Actions</CardTitle>
+                        </CardHeader>
+                        <CardContent class="grid gap-4">
+                            <Button class="w-full justify-start" as-child>
+                                <Link :href="route('admin.players.index')">
+                                    <Users class="mr-2 h-4 w-4" />
+                                    Register New Athlete
+                                </Link>
+                            </Button>
+                            <Button variant="outline" class="w-full justify-start" as-child>
+                                <Link :href="route('admin.tournaments.index')">
+                                    <Trophy class="mr-2 h-4 w-4" />
+                                    Manage Tournaments
+                                </Link>
+                            </Button>
+                            <Button variant="ghost" class="w-full justify-start text-muted-foreground">
+                                <Activity class="mr-2 h-4 w-4" />
+                                System Health Check
+                            </Button>
+                        </CardContent>
+                    </Card>
+
+                    <Card class="bg-primary text-primary-foreground shadow-md">
+                        <CardHeader>
+                            <CardTitle class="text-primary-foreground">Upcoming Events</CardTitle>
+                            <CardDescription class="text-primary-foreground/80">Next 30 days</CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                            <div class="flex items-center justify-center py-4">
+                                <Calendar class="h-12 w-12 opacity-80" />
+                            </div>
+                            <p class="text-center text-sm opacity-90">
+                                No tournaments scheduled for the upcoming month.
+                            </p>
+                            <Button variant="secondary" class="w-full mt-4 text-primary font-semibold" as-child>
+                                <Link :href="route('admin.tournaments.index')">
+                                    Schedule Event
+                                </Link>
+                            </Button>
+                        </CardContent>
+                    </Card>
+                </div>
             </div>
         </div>
     </AppLayout>

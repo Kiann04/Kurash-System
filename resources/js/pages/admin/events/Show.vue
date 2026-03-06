@@ -40,54 +40,54 @@ const formatDate = (date: string) => {
 
         <div class="flex flex-col gap-6 p-6 max-w-4xl">
             <div class="flex items-center gap-3">
-                <div class="h-12 w-12 rounded-xl bg-amber-50 flex items-center justify-center border border-amber-100 dark:bg-amber-900/20 dark:border-amber-800">
-                    <Calendar class="h-6 w-6 text-amber-600 dark:text-amber-400" />
+                <div class="h-12 w-12 rounded-xl bg-accent/10 flex items-center justify-center border border-accent/20">
+                    <Calendar class="h-6 w-6 text-accent" />
                 </div>
                 <div>
-                    <h1 class="text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100">{{ props.event.title }}</h1>
+                    <h1 class="text-2xl font-bold tracking-tight text-foreground">{{ props.event.title }}</h1>
                     <p class="text-sm text-muted-foreground">
                         Event details preview.
                     </p>
                 </div>
             </div>
 
-            <div class="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 p-6 space-y-4">
+            <div class="rounded-xl border border-border bg-card p-6 space-y-4">
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
-                        <div class="text-xs uppercase tracking-widest text-slate-500">Dates</div>
-                        <div class="text-slate-900 dark:text-slate-100 font-semibold">
+                        <div class="text-xs uppercase tracking-widest text-muted-foreground">Dates</div>
+                        <div class="text-foreground font-semibold">
                             {{ formatDate(props.event.start_date) }}
                             <span v-if="props.event.end_date"> - {{ formatDate(props.event.end_date) }}</span>
                         </div>
                     </div>
                     <div>
-                        <div class="text-xs uppercase tracking-widest text-slate-500">Description</div>
-                        <div class="text-slate-900 dark:text-slate-100">
+                        <div class="text-xs uppercase tracking-widest text-muted-foreground">Description</div>
+                        <div class="text-foreground">
                             {{ props.event.description || 'No description' }}
                         </div>
                     </div>
                     <div>
-                        <div class="text-xs uppercase tracking-widest text-slate-500">Location</div>
-                        <div class="text-slate-900 dark:text-slate-100 font-semibold">
+                        <div class="text-xs uppercase tracking-widest text-muted-foreground">Location</div>
+                        <div class="text-foreground font-semibold">
                             {{ props.event.location || 'Not specified' }}
                         </div>
                     </div>
                     <div>
-                        <div class="text-xs uppercase tracking-widest text-slate-500">Status</div>
-                        <div class="text-slate-900 dark:text-slate-100 font-semibold capitalize">
+                        <div class="text-xs uppercase tracking-widest text-muted-foreground">Status</div>
+                        <div class="text-foreground font-semibold capitalize">
                             {{ props.event.status }}
                         </div>
                     </div>
                     <div>
-                        <div class="text-xs uppercase tracking-widest text-slate-500">Image</div>
-                        <div class="text-slate-600 dark:text-slate-400">
+                        <div class="text-xs uppercase tracking-widest text-muted-foreground">Image</div>
+                        <div class="text-muted-foreground">
                             {{ props.event.image_path || 'No image set' }}
                         </div>
                     </div>
                 </div>
 
                 <div v-if="props.event.image_path" class="pt-4">
-                    <img :src="props.event.image_path" alt="Event image" class="w-full max-h-80 object-cover rounded-lg border border-slate-200 dark:border-slate-800" />
+                    <img :src="props.event.image_path" alt="Event image" class="w-full max-h-80 object-cover rounded-lg border border-border" />
                 </div>
             </div>
         </div>

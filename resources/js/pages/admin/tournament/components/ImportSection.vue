@@ -132,12 +132,12 @@ const getStatusBadgeVariant = (status: ImportRowResult['status']) => {
 </script>
 
 <template>
-    <Card class="shadow-sm border-slate-200 dark:bg-slate-950 dark:border-slate-800">
-        <CardHeader class="border-b bg-slate-50/50 dark:bg-slate-900/50 dark:border-slate-800 pb-4">
+    <Card class="shadow-sm border-border bg-card text-card-foreground">
+        <CardHeader class="border-b bg-muted/50 pb-4">
             <div class="flex items-center justify-between">
                 <div>
-                    <CardTitle class="text-base font-semibold text-slate-900 dark:text-slate-100">Batch Import</CardTitle>
-                    <CardDescription>Upload a CSV/Excel/DOCX file to register players in bulk.</CardDescription>
+                    <CardTitle class="text-base font-semibold text-foreground">Batch Import</CardTitle>
+                    <CardDescription class="text-muted-foreground">Upload a CSV/Excel/DOCX file to register players in bulk.</CardDescription>
                 </div>
                 <DropdownMenu>
                     <DropdownMenuTrigger as-child>
@@ -164,7 +164,7 @@ const getStatusBadgeVariant = (status: ImportRowResult['status']) => {
         <CardContent class="space-y-4 pt-6">
             <div class="flex flex-col gap-4 sm:flex-row sm:items-end">
                 <div class="grid w-full max-w-sm items-center gap-1.5">
-                    <Label for="file" class="dark:text-slate-300">Registration File</Label>
+                    <Label for="file">Registration File</Label>
                     <div class="relative">
                         <input
                             id="file"
@@ -179,7 +179,7 @@ const getStatusBadgeVariant = (status: ImportRowResult['status']) => {
                             variant="outline"
                             @click="triggerFileInput"
                             class="w-full justify-start text-left font-normal"
-                            :class="{'text-slate-500 dark:text-slate-400': !importFile, 'text-slate-900 dark:text-slate-100': importFile}"
+                            :class="{'text-muted-foreground': !importFile, 'text-foreground': importFile}"
                         >
                             <FileText class="mr-2 h-4 w-4" />
                             <span class="truncate">{{ importFile ? importFile.name : 'Select File...' }}</span>
@@ -189,7 +189,7 @@ const getStatusBadgeVariant = (status: ImportRowResult['status']) => {
                 <Button
                     @click="analyzeAndImportFile"
                     :disabled="!importFile || importProcessing"
-                    class="w-full sm:w-auto dark:bg-indigo-600 dark:hover:bg-indigo-700 dark:text-white"
+                    class="w-full sm:w-auto bg-primary text-primary-foreground hover:bg-primary/90"
                 >
                     <Loader2 v-if="importProcessing" class="mr-2 h-4 w-4 animate-spin" />
                     <Upload v-else class="mr-2 h-4 w-4" />
@@ -203,50 +203,50 @@ const getStatusBadgeVariant = (status: ImportRowResult['status']) => {
                 <AlertDescription>{{ importError }}</AlertDescription>
             </Alert>
 
-            <div v-if="importAnalysis" class="space-y-4 border rounded-md p-4 bg-slate-50 dark:bg-slate-900/50 dark:border-slate-800">
+            <div v-if="importAnalysis" class="space-y-4 border border-border rounded-md p-4 bg-muted/30">
                 <div class="grid grid-cols-2 gap-4 sm:grid-cols-4">
-                    <div class="p-3 bg-white rounded shadow-sm border dark:bg-slate-950 dark:border-slate-800">
-                        <div class="text-xs text-slate-500 uppercase font-bold dark:text-slate-400">Total Rows</div>
-                        <div class="text-2xl font-bold text-slate-900 dark:text-slate-100">{{ importAnalysis.total_rows }}</div>
+                    <div class="p-3 bg-card rounded shadow-sm border border-border">
+                        <div class="text-xs text-muted-foreground uppercase font-bold">Total Rows</div>
+                        <div class="text-2xl font-bold text-foreground">{{ importAnalysis.total_rows }}</div>
                     </div>
-                    <div class="p-3 bg-white rounded shadow-sm border dark:bg-slate-950 dark:border-slate-800">
-                        <div class="text-xs text-emerald-600 uppercase font-bold dark:text-emerald-500">Matched</div>
-                        <div class="text-2xl font-bold text-emerald-600 dark:text-emerald-500">{{ importAnalysis.matched_count }}</div>
+                    <div class="p-3 bg-card rounded shadow-sm border border-border">
+                        <div class="text-xs text-primary uppercase font-bold">Matched</div>
+                        <div class="text-2xl font-bold text-primary">{{ importAnalysis.matched_count }}</div>
                     </div>
-                    <div class="p-3 bg-white rounded shadow-sm border dark:bg-slate-950 dark:border-slate-800">
-                        <div class="text-xs text-amber-600 uppercase font-bold dark:text-amber-500">Issues</div>
-                        <div class="text-2xl font-bold text-amber-600 dark:text-amber-500">
+                    <div class="p-3 bg-card rounded shadow-sm border border-border">
+                        <div class="text-xs text-destructive uppercase font-bold">Issues</div>
+                        <div class="text-2xl font-bold text-destructive">
                             {{ importAnalysis.unmatched_player_count + importAnalysis.unresolved_category_count }}
                         </div>
                     </div>
-                    <div class="p-3 bg-white rounded shadow-sm border dark:bg-slate-950 dark:border-slate-800">
-                        <div class="text-xs text-slate-500 uppercase font-bold dark:text-slate-400">Duplicates</div>
-                        <div class="text-2xl font-bold text-slate-700 dark:text-slate-300">{{ importAnalysis.duplicate_count }}</div>
+                    <div class="p-3 bg-card rounded shadow-sm border border-border">
+                        <div class="text-xs text-muted-foreground uppercase font-bold">Duplicates</div>
+                        <div class="text-2xl font-bold text-foreground">{{ importAnalysis.duplicate_count }}</div>
                     </div>
                 </div>
 
-                <div class="max-h-60 overflow-y-auto border rounded bg-white dark:bg-slate-950 dark:border-slate-800">
+                <div class="max-h-60 overflow-y-auto border border-border rounded bg-card">
                     <Table>
-                        <TableHeader class="bg-slate-50 sticky top-0 dark:bg-slate-900/80">
-                            <TableRow class="dark:border-slate-800">
-                                <TableHead class="w-20 dark:text-slate-400">Row</TableHead>
-                                <TableHead class="dark:text-slate-400">Status</TableHead>
-                                <TableHead class="dark:text-slate-400">Player</TableHead>
-                                <TableHead class="dark:text-slate-400">Category</TableHead>
-                                <TableHead class="dark:text-slate-400">Details</TableHead>
+                        <TableHeader class="bg-muted/50 sticky top-0">
+                            <TableRow class="border-border">
+                                <TableHead class="w-20">Row</TableHead>
+                                <TableHead>Status</TableHead>
+                                <TableHead>Player</TableHead>
+                                <TableHead>Category</TableHead>
+                                <TableHead>Details</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
-                            <TableRow v-for="row in importAnalysis.rows" :key="row.row" class="dark:border-slate-800">
-                                <TableCell class="font-mono text-xs dark:text-slate-400">#{{ row.row }}</TableCell>
+                            <TableRow v-for="row in importAnalysis.rows" :key="row.row" class="border-border">
+                                <TableCell class="font-mono text-xs text-muted-foreground">#{{ row.row }}</TableCell>
                                 <TableCell>
                                     <Badge :variant="getStatusBadgeVariant(row.status)" class="uppercase text-[10px]">
                                         {{ row.status.replace('_', ' ') }}
                                     </Badge>
                                 </TableCell>
-                                <TableCell class="dark:text-slate-300">{{ row.player }}</TableCell>
-                                <TableCell class="dark:text-slate-300">{{ row.category || '-' }}</TableCell>
-                                <TableCell class="text-xs text-slate-500 dark:text-slate-400">{{ row.reason }}</TableCell>
+                                <TableCell class="text-foreground">{{ row.player }}</TableCell>
+                                <TableCell class="text-foreground">{{ row.category || '-' }}</TableCell>
+                                <TableCell class="text-xs text-muted-foreground">{{ row.reason }}</TableCell>
                             </TableRow>
                         </TableBody>
                     </Table>
@@ -256,7 +256,7 @@ const getStatusBadgeVariant = (status: ImportRowResult['status']) => {
                     <Button 
                         @click="confirmImport" 
                         :disabled="importAnalysis.matched_count === 0"
-                        class="bg-emerald-600 hover:bg-emerald-700 text-white dark:bg-emerald-600 dark:hover:bg-emerald-700"
+                        class="bg-primary hover:bg-primary/90 text-primary-foreground"
                     >
                         <CheckCircle2 class="mr-2 h-4 w-4" />
                         Import {{ importAnalysis.matched_count }} Registrations

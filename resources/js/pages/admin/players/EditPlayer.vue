@@ -29,7 +29,7 @@ const breadcrumbs = [
 <template>
   <AppLayout :breadcrumbs="breadcrumbs">
     <div class="p-4">
-      <h1 class="text-2xl font-bold mb-6">{{ title }}</h1>
+      <h1 class="text-2xl font-bold mb-6 text-foreground">{{ title }}</h1>
       <PlayerForm :player="props.player" />
     </div>
   </AppLayout>

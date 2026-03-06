@@ -7,7 +7,6 @@
  */
 import { Head, Link, router } from '@inertiajs/vue3';
 import { 
-    Trophy, 
     Calendar, 
     Users, 
     MapPin, 
@@ -230,10 +229,10 @@ const formatDate = (date: string) => {
  */
 const getStatusColor = (status: string) => {
     switch(status.toLowerCase()) {
-        case 'open': return 'bg-green-100 text-green-700 hover:bg-green-200 dark:bg-green-500/10 dark:text-green-400 dark:hover:bg-green-500/20';
-        case 'ongoing': return 'bg-blue-100 text-blue-700 hover:bg-blue-200 dark:bg-blue-500/10 dark:text-blue-400 dark:hover:bg-blue-500/20';
-        case 'completed': return 'bg-slate-100 text-slate-700 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-400 dark:hover:bg-slate-700';
-        default: return 'bg-yellow-100 text-yellow-700 hover:bg-yellow-200 dark:bg-yellow-500/10 dark:text-yellow-400 dark:hover:bg-yellow-500/20'; // draft
+        case 'open': return 'bg-primary/15 text-primary hover:bg-primary/25 border-primary/20';
+        case 'ongoing': return 'bg-secondary/15 text-secondary hover:bg-secondary/25 border-secondary/20';
+        case 'completed': return 'bg-muted text-muted-foreground hover:bg-muted/80 border-border';
+        default: return 'bg-accent/15 text-accent-foreground hover:bg-accent/25 border-accent/20'; // draft
     }
 };
 
@@ -245,22 +244,22 @@ const stats = computed(() => [
         title: 'Total Players',
         value: props.players.length,
         icon: Users,
-        color: 'text-blue-600 dark:text-blue-400',
-        bg: 'bg-blue-50 dark:bg-blue-900/20'
+        color: 'text-primary',
+        bg: 'bg-primary/10'
     },
     {
         title: 'Clubs Participating',
         value: new Set(props.players.map(p => p.club).filter(Boolean)).size,
         icon: MapPin,
-        color: 'text-indigo-600 dark:text-indigo-400',
-        bg: 'bg-indigo-50 dark:bg-indigo-900/20'
+        color: 'text-secondary',
+        bg: 'bg-secondary/10'
     },
     {
         title: 'Weight Classes',
         value: props.weightCategories.length,
         icon: Dumbbell,
-        color: 'text-emerald-600 dark:text-emerald-400',
-        bg: 'bg-emerald-50 dark:bg-emerald-900/20'
+        color: 'text-accent-foreground',
+        bg: 'bg-accent/15'
     }
 ]);
 
@@ -293,7 +292,7 @@ const getInitials = (name: string) => {
                     </Link>
                     <div>
                         <div class="flex items-center gap-3">
-                            <h1 class="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">{{ props.tournament.name }}</h1>
+                            <h1 class="text-2xl font-bold tracking-tight text-foreground">{{ props.tournament.name }}</h1>
                             <Badge :class="['capitalize shadow-none font-normal', getStatusColor(props.tournament.status)]">
                                 {{ props.tournament.status }}
                             </Badge>
@@ -324,7 +323,7 @@ const getInitials = (name: string) => {
 
             <!-- Stats Grid -->
             <div class="grid gap-4 md:grid-cols-3">
-                <Card v-for="stat in stats" :key="stat.title" class="shadow-sm border-slate-200 dark:border-slate-800 dark:bg-slate-900">
+                <Card v-for="stat in stats" :key="stat.title" class="shadow-sm border-border bg-card">
                     <CardHeader class="flex flex-row items-center justify-between space-y-0 pb-2">
                         <CardTitle class="text-sm font-medium text-muted-foreground">
                             {{ stat.title }}
@@ -334,7 +333,7 @@ const getInitials = (name: string) => {
                         </div>
                     </CardHeader>
                     <CardContent>
-                        <div class="text-2xl font-bold dark:text-white">{{ stat.value }}</div>
+                        <div class="text-2xl font-bold text-foreground">{{ stat.value }}</div>
                     </CardContent>
                 </Card>
             </div>
@@ -343,7 +342,7 @@ const getInitials = (name: string) => {
             <Card class="border-none shadow-none bg-transparent">
                 <CardHeader class="px-0">
                     <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                        <CardTitle class="dark:text-white">Registered Players</CardTitle>
+                        <CardTitle class="text-foreground">Registered Players</CardTitle>
                         
                         <!-- Filters -->
                         <div class="flex flex-wrap items-center gap-2">
@@ -352,13 +351,13 @@ const getInitials = (name: string) => {
                                 <Input
                                     v-model="search"
                                     placeholder="Search player or club..."
-                                    class="pl-9 h-9 bg-background border-slate-200 dark:border-slate-800 dark:bg-slate-900"
+                                    class="pl-9 h-9 bg-background border-input"
                                 />
                             </div>
 
                             <DropdownMenu>
                                 <DropdownMenuTrigger as-child>
-                                    <Button variant="outline" size="sm" class="h-9 gap-2 border-slate-200 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100">
+                                    <Button variant="outline" size="sm" class="h-9 gap-2 border-input bg-background text-foreground">
                                         <Filter class="h-3.5 w-3.5 text-muted-foreground" />
                                         <span>Filters</span>
                                     </Button>
@@ -384,31 +383,31 @@ const getInitials = (name: string) => {
                     </div>
                 </CardHeader>
                 <CardContent class="p-0">
-                    <div class="rounded-md border border-slate-200 dark:border-slate-800 overflow-hidden">
+                    <div class="rounded-md border border-border overflow-hidden">
                         <Table>
-                            <TableHeader>
-                                <TableRow class="hover:bg-transparent">
-                                    <TableHead class="w-62.5">Player</TableHead>
-                                    <TableHead>Club</TableHead>
-                                    <TableHead class="text-center">Gender</TableHead>
-                                    <TableHead>Age Category</TableHead>
-                                    <TableHead>Assigned Class</TableHead>
+                            <TableHeader class="bg-muted/50">
+                                <TableRow class="hover:bg-transparent border-b border-border">
+                                    <TableHead class="w-62.5 text-muted-foreground">Player</TableHead>
+                                    <TableHead class="text-muted-foreground">Club</TableHead>
+                                    <TableHead class="text-center text-muted-foreground">Gender</TableHead>
+                                    <TableHead class="text-muted-foreground">Age Category</TableHead>
+                                    <TableHead class="text-muted-foreground">Assigned Class</TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
                                 <TableRow 
                                     v-for="player in paginatedPlayers" 
                                     :key="player.id"
-                                    class="hover:bg-muted/50"
+                                    class="hover:bg-muted/50 border-b border-border last:border-0"
                                 >
                                     <TableCell class="font-medium">
                                         <div class="flex items-center gap-3">
-                                            <Avatar class="h-8 w-8 border border-slate-200 dark:border-slate-700">
+                                            <Avatar class="h-8 w-8 border border-border">
                                                 <AvatarImage :src="`https://ui-avatars.com/api/?name=${player.full_name}&background=random`" />
                                                 <AvatarFallback>{{ getInitials(player.full_name) }}</AvatarFallback>
                                             </Avatar>
                                             <div class="flex flex-col">
-                                                <span class="text-sm font-medium text-foreground dark:text-slate-100">{{ player.full_name }}</span>
+                                                <span class="text-sm font-medium text-foreground">{{ player.full_name }}</span>
                                             </div>
                                         </div>
                                     </TableCell>
@@ -418,10 +417,10 @@ const getInitials = (name: string) => {
                                             {{ player.gender }}
                                         </Badge>
                                     </TableCell>
-                                    <TableCell>{{ player.age_category }}</TableCell>
+                                    <TableCell class="text-muted-foreground">{{ player.age_category }}</TableCell>
                                     <TableCell>
                                         <div class="flex items-center gap-2">
-                                            <span :class="{'text-muted-foreground': !player.weight_category_id, 'font-medium text-blue-600 dark:text-blue-400': player.weight_category_id}">
+                                            <span :class="{'text-muted-foreground': !player.weight_category_id, 'font-medium text-secondary': player.weight_category_id}">
                                                 {{ getWeightClass(player) }}
                                             </span>
                                         </div>
@@ -447,7 +446,6 @@ const getInitials = (name: string) => {
                                 size="sm" 
                                 :disabled="currentPage === 1"
                                 @click="currentPage--"
-                                class="dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100"
                             >
                                 Previous
                             </Button>
@@ -456,7 +454,6 @@ const getInitials = (name: string) => {
                                 size="sm" 
                                 :disabled="currentPage === totalPages || totalPages === 0"
                                 @click="currentPage++"
-                                class="dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100"
                             >
                                 Next
                             </Button>

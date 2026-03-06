@@ -121,15 +121,15 @@ const formatDate = (date: string) => {
 const getStatusClass = (status: string) => {
     switch (status) {
         case 'draft':
-            return 'bg-yellow-100 text-yellow-700 border-yellow-200 hover:bg-yellow-100/80 dark:bg-yellow-900/30 dark:text-yellow-400 dark:border-yellow-800'
+            return 'bg-accent/15 text-accent-foreground border-accent/20 hover:bg-accent/25'
         case 'open':
-            return 'bg-green-100 text-green-700 border-green-200 hover:bg-green-100/80 dark:bg-green-900/30 dark:text-green-400 dark:border-green-800'
+            return 'bg-primary/15 text-primary border-primary/20 hover:bg-primary/25'
         case 'ongoing':
-            return 'bg-blue-100 text-blue-700 border-blue-200 hover:bg-blue-100/80 dark:bg-blue-900/30 dark:text-blue-400 dark:border-blue-800'
+            return 'bg-secondary/15 text-secondary border-secondary/20 hover:bg-secondary/25'
         case 'completed':
-            return 'bg-slate-100 text-slate-700 border-slate-200 hover:bg-slate-100/80 dark:bg-slate-800 dark:text-slate-400 dark:border-slate-700'
+            return 'bg-muted text-muted-foreground border-border hover:bg-muted/80'
         default:
-            return 'bg-slate-100 text-slate-700 border-slate-200 hover:bg-slate-100/80 dark:bg-slate-800 dark:text-slate-400 dark:border-slate-700'
+            return 'bg-muted text-muted-foreground border-border hover:bg-muted/80'
     }
 }
 
@@ -158,11 +158,11 @@ const filteredGenerated = computed(() => {
     <Head title="Generate Brackets" />
 
     <AppLayout>
-        <div class="p-6 space-y-6 dark:bg-slate-950">
+        <div class="p-6 space-y-6">
             <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
-                    <h1 class="text-2xl font-bold tracking-tight dark:text-slate-100">Generate Brackets</h1>
-                    <p class="text-sm text-muted-foreground mt-1 dark:text-slate-400">
+                    <h1 class="text-2xl font-bold tracking-tight text-foreground">Generate Brackets</h1>
+                    <p class="text-sm text-muted-foreground mt-1">
                         Manage and generate brackets for your tournaments.
                     </p>
                 </div>
@@ -170,62 +170,62 @@ const filteredGenerated = computed(() => {
                     <Input 
                         v-model="search" 
                         placeholder="Search tournaments..." 
-                        class="bg-background dark:bg-slate-950 dark:border-slate-800 dark:text-slate-100 dark:placeholder:text-slate-500"
+                        class="bg-background border-input"
                     />
                 </div>
             </div>
 
             <div class="grid gap-6">
                 <!-- Pending Generation -->
-                <Card class="border-l-4 border-l-blue-500 shadow-sm dark:bg-slate-950 dark:border-slate-800">
-                    <CardHeader class="border-b bg-slate-50/50 dark:bg-slate-900/50 dark:border-slate-800">
-                        <CardTitle class="flex items-center gap-2 text-lg dark:text-slate-100">
-                            <ListTree class="h-5 w-5 text-blue-500" />
+                <Card class="border-l-4 border-l-secondary shadow-sm bg-card text-card-foreground">
+                    <CardHeader class="border-b bg-muted/50">
+                        <CardTitle class="flex items-center gap-2 text-lg text-foreground">
+                            <ListTree class="h-5 w-5 text-secondary" />
                             Pending Generation
                         </CardTitle>
-                        <CardDescription class="dark:text-slate-400">
+                        <CardDescription class="text-muted-foreground">
                             Tournaments that need brackets generated.
                         </CardDescription>
                     </CardHeader>
                     <CardContent class="p-0">
                         <Table>
-                            <TableHeader class="bg-slate-50/50 dark:bg-slate-900/50 sticky top-0 z-10">
-                                <TableRow class="hover:bg-transparent dark:hover:bg-transparent border-b dark:border-slate-800">
-                                    <TableHead class="w-[30%] font-semibold text-slate-500 dark:text-slate-400">Tournament</TableHead>
-                                    <TableHead class="hidden md:table-cell font-semibold text-slate-500 dark:text-slate-400">Date</TableHead>
-                                    <TableHead class="hidden md:table-cell font-semibold text-slate-500 dark:text-slate-400">Location</TableHead>
-                                    <TableHead class="font-semibold text-slate-500 dark:text-slate-400">Status</TableHead>
-                                    <TableHead class="text-center font-semibold text-slate-500 dark:text-slate-400">Registrations</TableHead>
-                                    <TableHead class="text-right font-semibold text-slate-500 dark:text-slate-400">Action</TableHead>
+                            <TableHeader class="bg-muted/50 sticky top-0 z-10">
+                                <TableRow class="hover:bg-transparent border-b border-border">
+                                    <TableHead class="w-[30%] font-semibold text-muted-foreground">Tournament</TableHead>
+                                    <TableHead class="hidden md:table-cell font-semibold text-muted-foreground">Date</TableHead>
+                                    <TableHead class="hidden md:table-cell font-semibold text-muted-foreground">Location</TableHead>
+                                    <TableHead class="font-semibold text-muted-foreground">Status</TableHead>
+                                    <TableHead class="text-center font-semibold text-muted-foreground">Registrations</TableHead>
+                                    <TableHead class="text-right font-semibold text-muted-foreground">Action</TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
                                 <TableRow 
                                     v-for="tournament in filteredNotGenerated" 
                                     :key="tournament.id"
-                                    class="hover:bg-slate-50/50 dark:hover:bg-slate-900/50 transition-colors border-b dark:border-slate-800"
+                                    class="hover:bg-muted/50 transition-colors border-b border-border"
                                 >
                                     <TableCell>
                                         <div class="flex flex-col">
-                                            <span class="font-medium text-slate-900 dark:text-slate-200">{{ tournament.name }}</span>
-                                            <span class="text-xs text-muted-foreground md:hidden dark:text-slate-500 flex items-center gap-1">
+                                            <span class="font-medium text-foreground">{{ tournament.name }}</span>
+                                            <span class="text-xs text-muted-foreground md:hidden flex items-center gap-1">
                                                 <Calendar class="h-3 w-3" />
                                                 {{ formatDate(tournament.tournament_date) }}
                                             </span>
-                                            <span v-if="tournament.location" class="text-xs text-muted-foreground md:hidden dark:text-slate-500 flex items-center gap-1 mt-0.5">
+                                            <span v-if="tournament.location" class="text-xs text-muted-foreground md:hidden flex items-center gap-1 mt-0.5">
                                                 <MapPin class="h-3 w-3" />
                                                 {{ tournament.location }}
                                             </span>
                                         </div>
                                     </TableCell>
                                     <TableCell class="hidden md:table-cell">
-                                        <div class="flex items-center gap-2 text-muted-foreground dark:text-slate-400">
+                                        <div class="flex items-center gap-2 text-muted-foreground">
                                             <Calendar class="h-3.5 w-3.5" />
                                             {{ formatDate(tournament.tournament_date) }}
                                         </div>
                                     </TableCell>
                                     <TableCell class="hidden md:table-cell">
-                                        <div class="flex items-center gap-2 text-muted-foreground dark:text-slate-400">
+                                        <div class="flex items-center gap-2 text-muted-foreground">
                                             <MapPin class="h-3.5 w-3.5" />
                                             {{ tournament.location || '-' }}
                                         </div>
@@ -237,8 +237,8 @@ const filteredGenerated = computed(() => {
                                     </TableCell>
                                     <TableCell class="text-center">
                                         <div class="flex items-center justify-center gap-1">
-                                            <Users class="h-3.5 w-3.5 text-muted-foreground dark:text-slate-400" />
-                                            <span class="dark:text-slate-200">{{ tournament.registrations_count }}</span>
+                                            <Users class="h-3.5 w-3.5 text-muted-foreground" />
+                                            <span class="text-foreground">{{ tournament.registrations_count }}</span>
                                         </div>
                                     </TableCell>
                                     <TableCell class="text-right">
@@ -247,7 +247,7 @@ const filteredGenerated = computed(() => {
                                                 size="sm" 
                                                 :disabled="tournament.registrations_count < 2"
                                                 @click="generate(tournament.id)"
-                                                class="bg-blue-600 hover:bg-blue-700 dark:bg-blue-600 dark:hover:bg-blue-700 dark:text-white shadow-sm transition-all"
+                                                class="bg-secondary hover:bg-secondary/90 text-secondary-foreground shadow-sm transition-all"
                                             >
                                                 <Play class="h-3.5 w-3.5 mr-1.5 fill-current" />
                                                 Generate
@@ -256,7 +256,7 @@ const filteredGenerated = computed(() => {
                                                 variant="ghost" 
                                                 size="sm" 
                                                 as-child
-                                                class="hover:bg-slate-100 dark:hover:bg-slate-800 dark:text-slate-300"
+                                                class="hover:bg-muted text-muted-foreground hover:text-foreground"
                                             >
                                                 <Link :href="route('admin.tournaments.brackets.show', tournament.id)">
                                                     View
@@ -266,7 +266,7 @@ const filteredGenerated = computed(() => {
                                     </TableCell>
                                 </TableRow>
                                 <TableRow v-if="filteredNotGenerated.length === 0">
-                                    <TableCell colspan="5" class="h-24 text-center text-muted-foreground dark:text-slate-500">
+                                    <TableCell colspan="5" class="h-24 text-center text-muted-foreground">
                                         No pending tournaments found.
                                     </TableCell>
                                 </TableRow>
@@ -276,55 +276,55 @@ const filteredGenerated = computed(() => {
                 </Card>
 
                 <!-- Generated Brackets -->
-                <Card class="shadow-sm dark:bg-slate-950 dark:border-slate-800">
-                    <CardHeader class="border-b bg-slate-50/50 dark:bg-slate-900/50 dark:border-slate-800">
-                        <CardTitle class="flex items-center gap-2 text-lg dark:text-slate-100">
-                            <CheckCircle2 class="h-5 w-5 text-green-500" />
+                <Card class="shadow-sm bg-card text-card-foreground border-border">
+                    <CardHeader class="border-b bg-muted/50">
+                        <CardTitle class="flex items-center gap-2 text-lg text-foreground">
+                            <CheckCircle2 class="h-5 w-5 text-primary" />
                             Generated Brackets
                         </CardTitle>
-                        <CardDescription class="dark:text-slate-400">
+                        <CardDescription class="text-muted-foreground">
                             Tournaments with active brackets.
                         </CardDescription>
                     </CardHeader>
                     <CardContent class="p-0">
                         <Table>
-                            <TableHeader class="bg-slate-50/50 dark:bg-slate-900/50 sticky top-0 z-10">
-                                <TableRow class="hover:bg-transparent dark:hover:bg-transparent border-b dark:border-slate-800">
-                                    <TableHead class="w-[30%] font-semibold text-slate-500 dark:text-slate-400">Tournament</TableHead>
-                                    <TableHead class="hidden md:table-cell font-semibold text-slate-500 dark:text-slate-400">Date</TableHead>
-                                    <TableHead class="hidden md:table-cell font-semibold text-slate-500 dark:text-slate-400">Location</TableHead>
-                                    <TableHead class="font-semibold text-slate-500 dark:text-slate-400">Status</TableHead>
-                                    <TableHead class="text-center font-semibold text-slate-500 dark:text-slate-400">Registrations</TableHead>
-                                    <TableHead class="text-right font-semibold text-slate-500 dark:text-slate-400">Action</TableHead>
+                            <TableHeader class="bg-muted/50 sticky top-0 z-10">
+                                <TableRow class="hover:bg-transparent border-b border-border">
+                                    <TableHead class="w-[30%] font-semibold text-muted-foreground">Tournament</TableHead>
+                                    <TableHead class="hidden md:table-cell font-semibold text-muted-foreground">Date</TableHead>
+                                    <TableHead class="hidden md:table-cell font-semibold text-muted-foreground">Location</TableHead>
+                                    <TableHead class="font-semibold text-muted-foreground">Status</TableHead>
+                                    <TableHead class="text-center font-semibold text-muted-foreground">Registrations</TableHead>
+                                    <TableHead class="text-right font-semibold text-muted-foreground">Action</TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
                                 <TableRow 
                                     v-for="tournament in filteredGenerated" 
                                     :key="tournament.id"
-                                    class="hover:bg-slate-50/50 dark:hover:bg-slate-900/50 transition-colors border-b dark:border-slate-800"
+                                    class="hover:bg-muted/50 transition-colors border-b border-border"
                                 >
                                     <TableCell>
                                         <div class="flex flex-col">
-                                            <span class="font-medium text-slate-900 dark:text-slate-200">{{ tournament.name }}</span>
-                                            <span class="text-xs text-muted-foreground md:hidden dark:text-slate-500 flex items-center gap-1">
+                                            <span class="font-medium text-foreground">{{ tournament.name }}</span>
+                                            <span class="text-xs text-muted-foreground md:hidden flex items-center gap-1">
                                                 <Calendar class="h-3 w-3" />
                                                 {{ formatDate(tournament.tournament_date) }}
                                             </span>
-                                            <span v-if="tournament.location" class="text-xs text-muted-foreground md:hidden dark:text-slate-500 flex items-center gap-1 mt-0.5">
+                                            <span v-if="tournament.location" class="text-xs text-muted-foreground md:hidden flex items-center gap-1 mt-0.5">
                                                 <MapPin class="h-3 w-3" />
                                                 {{ tournament.location }}
                                             </span>
                                         </div>
                                     </TableCell>
                                     <TableCell class="hidden md:table-cell">
-                                        <div class="flex items-center gap-2 text-muted-foreground dark:text-slate-400">
+                                        <div class="flex items-center gap-2 text-muted-foreground">
                                             <Calendar class="h-3.5 w-3.5" />
                                             {{ formatDate(tournament.tournament_date) }}
                                         </div>
                                     </TableCell>
                                     <TableCell class="hidden md:table-cell">
-                                        <div class="flex items-center gap-2 text-muted-foreground dark:text-slate-400">
+                                        <div class="flex items-center gap-2 text-muted-foreground">
                                             <MapPin class="h-3.5 w-3.5" />
                                             {{ tournament.location || '-' }}
                                         </div>
@@ -336,8 +336,8 @@ const filteredGenerated = computed(() => {
                                     </TableCell>
                                     <TableCell class="text-center">
                                         <div class="flex items-center justify-center gap-1">
-                                            <Users class="h-3.5 w-3.5 text-muted-foreground dark:text-slate-400" />
-                                            <span class="dark:text-slate-200">{{ tournament.registrations_count }}</span>
+                                            <Users class="h-3.5 w-3.5 text-muted-foreground" />
+                                            <span class="text-foreground">{{ tournament.registrations_count }}</span>
                                         </div>
                                     </TableCell>
                                     <TableCell class="text-right">
@@ -347,7 +347,7 @@ const filteredGenerated = computed(() => {
                                                 size="sm" 
                                                 :disabled="tournament.registrations_count < 2"
                                                 @click="confirmRegenerate(tournament)"
-                                                class="text-amber-600 hover:text-amber-700 hover:bg-amber-50 border-amber-200 dark:border-amber-900 dark:text-amber-500 dark:hover:bg-amber-900/20 shadow-sm transition-all"
+                                                class="text-accent-foreground hover:text-accent-foreground hover:bg-accent/20 border-accent/50 shadow-sm transition-all"
                                                 title="Regenerate Brackets"
                                             >
                                                 <RefreshCw class="h-3.5 w-3.5 mr-1.5" />
@@ -357,7 +357,7 @@ const filteredGenerated = computed(() => {
                                                 variant="secondary" 
                                                 size="sm" 
                                                 as-child
-                                                class="bg-slate-100 hover:bg-slate-200 text-slate-900 dark:bg-slate-800 dark:hover:bg-slate-700 dark:text-slate-200 shadow-sm transition-all"
+                                                class="shadow-sm transition-all"
                                             >
                                                 <Link :href="route('admin.tournaments.brackets.show', tournament.id)">
                                                     <Eye class="h-3.5 w-3.5 mr-1.5" />
@@ -368,7 +368,7 @@ const filteredGenerated = computed(() => {
                                     </TableCell>
                                 </TableRow>
                                 <TableRow v-if="filteredGenerated.length === 0">
-                                    <TableCell colspan="5" class="h-24 text-center text-muted-foreground dark:text-slate-500">
+                                    <TableCell colspan="5" class="h-24 text-center text-muted-foreground">
                                         No generated brackets found.
                                     </TableCell>
                                 </TableRow>
@@ -381,13 +381,13 @@ const filteredGenerated = computed(() => {
 
         <!-- Regenerate Dialog -->
         <Dialog v-model:open="isRegenerateDialogOpen">
-            <DialogContent class="sm:max-w-md dark:bg-slate-950 dark:border-slate-800">
+            <DialogContent class="sm:max-w-md bg-card border-border">
                 <DialogHeader>
-                    <DialogTitle class="flex items-center gap-2 dark:text-slate-100">
-                        <RefreshCw class="h-5 w-5 text-amber-500" />
+                    <DialogTitle class="flex items-center gap-2 text-foreground">
+                        <RefreshCw class="h-5 w-5 text-accent" />
                         Regenerate Brackets
                     </DialogTitle>
-                    <DialogDescription class="dark:text-slate-400">
+                    <DialogDescription class="text-muted-foreground">
                         Are you sure you want to regenerate the brackets for <strong>{{ tournamentToRegenerate?.name }}</strong>?
                         This will delete all current matches and scores. This action cannot be undone.
                     </DialogDescription>
@@ -396,14 +396,13 @@ const filteredGenerated = computed(() => {
                     <Button 
                         variant="outline" 
                         @click="isRegenerateDialogOpen = false"
-                        class="dark:border-slate-800 dark:text-slate-300 dark:hover:bg-slate-900"
+                        class="border-input hover:bg-accent hover:text-accent-foreground"
                     >
                         Cancel
                     </Button>
                     <Button 
                         variant="destructive" 
                         @click="handleRegenerate"
-                        class="bg-amber-600 hover:bg-amber-700 text-white"
                     >
                         Regenerate
                     </Button>

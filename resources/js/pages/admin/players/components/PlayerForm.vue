@@ -89,9 +89,9 @@ function submit() {
   <form @submit.prevent="submit" class="space-y-6">
     <div class="grid gap-6 md:grid-cols-2">
         <!-- Personal Information -->
-        <Card class="dark:bg-slate-950 dark:border-slate-800">
+        <Card>
             <CardHeader>
-                <CardTitle class="flex items-center gap-2 dark:text-slate-100">
+                <CardTitle class="flex items-center gap-2">
                     <User class="h-5 w-5 text-primary" />
                     Personal Information
                 </CardTitle>
@@ -99,33 +99,33 @@ function submit() {
             </CardHeader>
             <CardContent class="space-y-4">
                 <div class="space-y-2">
-                    <Label for="full_name" class="dark:text-slate-300">Full Name</Label>
+                    <Label for="full_name">Full Name</Label>
                     <div class="relative">
                         <User class="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                        <Input id="full_name" v-model="form.full_name" placeholder="John Doe" class="pl-9 dark:bg-slate-950 dark:border-slate-800 dark:text-slate-100" />
+                        <Input id="full_name" v-model="form.full_name" placeholder="John Doe" class="pl-9" />
                     </div>
                     <p v-if="form.errors.full_name" class="text-sm text-destructive">{{ form.errors.full_name }}</p>
                 </div>
 
                 <div class="grid grid-cols-2 gap-4">
                     <div class="space-y-2">
-                    <Label class="dark:text-slate-300">Gender</Label>
+                    <Label>Gender</Label>
                     <DropdownMenu>
                         <DropdownMenuTrigger as-child>
                             <Button 
                                 variant="outline" 
-                                class="w-full justify-between dark:bg-slate-950 dark:border-slate-800 dark:text-slate-100 font-normal"
+                                class="w-full justify-between font-normal"
                             >
                                 {{ form.gender || 'Select Gender' }}
                                 <ChevronDown class="ml-2 h-4 w-4 opacity-50" />
                             </Button>
                         </DropdownMenuTrigger>
-                        <DropdownMenuContent class="w-(--radix-dropdown-menu-trigger-width) dark:bg-slate-950 dark:border-slate-800">
-                            <DropdownMenuItem @click="form.gender = 'Male'" class="dark:text-slate-100 cursor-pointer">
+                        <DropdownMenuContent class="w-[--radix-dropdown-menu-trigger-width]">
+                            <DropdownMenuItem @click="form.gender = 'Male'" class="cursor-pointer">
                                 Male
                                 <Check v-if="form.gender === 'Male'" class="ml-auto h-4 w-4" />
                             </DropdownMenuItem>
-                            <DropdownMenuItem @click="form.gender = 'Female'" class="dark:text-slate-100 cursor-pointer">
+                            <DropdownMenuItem @click="form.gender = 'Female'" class="cursor-pointer">
                                 Female
                                 <Check v-if="form.gender === 'Female'" class="ml-auto h-4 w-4" />
                             </DropdownMenuItem>
@@ -135,17 +135,17 @@ function submit() {
                 </div>
                     
                     <div class="space-y-2">
-                    <Label for="birthday" class="dark:text-slate-300">Birthday</Label>
-                    <DatePicker id="birthday" v-model="form.birthday" class="dark:bg-slate-950 dark:border-slate-800 dark:text-slate-100" />
+                    <Label for="birthday">Birthday</Label>
+                    <DatePicker id="birthday" v-model="form.birthday" />
                     <p v-if="form.errors.birthday" class="text-sm text-destructive">{{ form.errors.birthday }}</p>
                 </div>
                 </div>
 
                 <div class="space-y-2">
-                    <Label for="club" class="dark:text-slate-300">Club / Affiliation</Label>
+                    <Label for="club">Club / Affiliation</Label>
                     <div class="relative">
                         <Users class="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                        <Input id="club" v-model="form.club" placeholder="Team Kurash" class="pl-9 dark:bg-slate-950 dark:border-slate-800 dark:text-slate-100" />
+                        <Input id="club" v-model="form.club" placeholder="Team Kurash" class="pl-9" />
                     </div>
                     <p v-if="form.errors.club" class="text-sm text-destructive">{{ form.errors.club }}</p>
                 </div>
@@ -153,9 +153,9 @@ function submit() {
         </Card>
 
         <!-- Contact Information -->
-        <Card class="dark:bg-slate-950 dark:border-slate-800">
+        <Card>
             <CardHeader>
-                <CardTitle class="flex items-center gap-2 dark:text-slate-100">
+                <CardTitle class="flex items-center gap-2">
                     <MapPin class="h-5 w-5 text-primary" />
                     Contact Details
                 </CardTitle>
@@ -163,19 +163,19 @@ function submit() {
             </CardHeader>
             <CardContent class="space-y-4">
                 <div class="space-y-2">
-                    <Label for="address" class="dark:text-slate-300">Address</Label>
+                    <Label for="address">Address</Label>
                     <div class="relative">
                         <MapPin class="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                        <Input id="address" v-model="form.address" placeholder="123 Main St, City" class="pl-9 dark:bg-slate-950 dark:border-slate-800 dark:text-slate-100" />
+                        <Input id="address" v-model="form.address" placeholder="123 Main St, City" class="pl-9" />
                     </div>
                     <p v-if="form.errors.address" class="text-sm text-destructive">{{ form.errors.address }}</p>
                 </div>
 
                 <div class="space-y-2">
-                    <Label for="email" class="dark:text-slate-300">Email Address</Label>
+                    <Label for="email">Email Address</Label>
                     <div class="relative">
                         <Mail class="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                        <Input id="email" type="email" v-model="form.email" placeholder="john.doe@example.com" class="pl-9 dark:bg-slate-950 dark:border-slate-800 dark:text-slate-100" />
+                        <Input id="email" type="email" v-model="form.email" placeholder="john.doe@example.com" class="pl-9" />
                     </div>
                     <p v-if="form.errors.email" class="text-sm text-destructive">{{ form.errors.email }}</p>
                 </div>
@@ -183,21 +183,21 @@ function submit() {
                 <Separator class="my-2" />
 
                 <div class="space-y-2">
-                    <Label class="text-sm font-semibold flex items-center gap-1 dark:text-slate-300">
-                        <AlertCircle class="h-3 w-3 text-amber-500" />
+                    <Label class="text-sm font-semibold flex items-center gap-1">
+                        <AlertCircle class="h-3 w-3 text-accent" />
                         Emergency Contact
                     </Label>
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div class="space-y-2">
                             <Label for="emergency_contact" class="text-xs text-muted-foreground">Name</Label>
-                            <Input id="emergency_contact" v-model="form.emergency_contact" placeholder="Contact Person" class="dark:bg-slate-950 dark:border-slate-800 dark:text-slate-100" />
+                            <Input id="emergency_contact" v-model="form.emergency_contact" placeholder="Contact Person" />
                             <p v-if="form.errors.emergency_contact" class="text-sm text-destructive">{{ form.errors.emergency_contact }}</p>
                         </div>
                         <div class="space-y-2">
                             <Label for="emergency_contact_number" class="text-xs text-muted-foreground">Phone Number</Label>
                             <div class="relative">
                                 <Phone class="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                                <Input id="emergency_contact_number" v-model="form.emergency_contact_number" placeholder="+123456789" class="pl-9 dark:bg-slate-950 dark:border-slate-800 dark:text-slate-100" />
+                                <Input id="emergency_contact_number" v-model="form.emergency_contact_number" placeholder="+123456789" class="pl-9" />
                             </div>
                             <p v-if="form.errors.emergency_contact_number" class="text-sm text-destructive">{{ form.errors.emergency_contact_number }}</p>
                         </div>
@@ -207,19 +207,19 @@ function submit() {
                 <Separator class="my-2" />
 
                 <div class="space-y-2">
-                    <Label class="text-sm font-semibold flex items-center gap-1 dark:text-slate-300">
+                    <Label class="text-sm font-semibold flex items-center gap-1">
                         <Calendar class="h-3 w-3 text-primary" />
                         Membership Period
                     </Label>
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div class="space-y-2">
                             <Label for="membership_start_date" class="text-xs text-muted-foreground">Start Date</Label>
-                            <DatePicker id="membership_start_date" v-model="form.membership_start_date" class="dark:bg-slate-950 dark:border-slate-800 dark:text-slate-100" />
+                            <DatePicker id="membership_start_date" v-model="form.membership_start_date" />
                             <p v-if="form.errors.membership_start_date" class="text-sm text-destructive">{{ form.errors.membership_start_date }}</p>
                         </div>
                         <div class="space-y-2">
                             <Label for="membership_expires_at" class="text-xs text-muted-foreground">End Date</Label>
-                            <DatePicker id="membership_expires_at" v-model="form.membership_expires_at" class="dark:bg-slate-950 dark:border-slate-800 dark:text-slate-100" />
+                            <DatePicker id="membership_expires_at" v-model="form.membership_expires_at" />
                             <p v-if="form.errors.membership_expires_at" class="text-sm text-destructive">{{ form.errors.membership_expires_at }}</p>
                         </div>
                     </div>

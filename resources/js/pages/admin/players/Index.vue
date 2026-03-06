@@ -72,11 +72,11 @@ watch([gender, status, membership_start], ([newGender, newStatus, newMembershipS
             <!-- Header Section -->
             <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                 <div class="flex items-center gap-3">
-                    <div class="h-12 w-12 rounded-xl bg-blue-50 flex items-center justify-center border border-blue-100 dark:bg-blue-900/20 dark:border-blue-800">
-                        <Users class="h-6 w-6 text-blue-600 dark:text-blue-400" />
+                    <div class="h-12 w-12 rounded-xl bg-primary/10 flex items-center justify-center border border-primary/20">
+                        <Users class="h-6 w-6 text-primary" />
                     </div>
                     <div>
-                        <h1 class="text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100">Player Management</h1>
+                        <h1 class="text-2xl font-bold tracking-tight text-foreground">Player Management</h1>
                         <p class="text-sm text-muted-foreground">Monitor athlete registrations and membership status.</p>
                     </div>
                 </div>
@@ -88,7 +88,7 @@ watch([gender, status, membership_start], ([newGender, newStatus, newMembershipS
                         class="flex-1 md:flex-none"
                     />
                     <Link :href="route('admin.players.create')">
-                        <Button class="gap-2 shadow-sm bg-blue-600 hover:bg-blue-700 text-white dark:bg-blue-600 dark:hover:bg-blue-700">
+                        <Button class="gap-2 shadow-sm">
                             <UserPlus class="h-4 w-4" />
                             Add Player
                         </Button>
@@ -97,7 +97,7 @@ watch([gender, status, membership_start], ([newGender, newStatus, newMembershipS
             </div>
 
             <!-- Status Tabs -->
-            <div class="w-full border-b border-slate-200 dark:border-slate-800">
+            <div class="w-full border-b border-border">
                 <div class="flex gap-6 overflow-x-auto">
                     <button 
                         v-for="tab in [
@@ -108,13 +108,13 @@ watch([gender, status, membership_start], ([newGender, newStatus, newMembershipS
                         ]"
                         :key="tab.id"
                         class="relative pb-3 text-sm font-medium transition-all whitespace-nowrap"
-                        :class="status === tab.id ? 'text-blue-600 dark:text-blue-400' : 'text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200'"
+                        :class="status === tab.id ? 'text-primary' : 'text-muted-foreground hover:text-foreground'"
                         @click="status = tab.id"
                     >
                         {{ tab.label }}
                         <span 
                             v-if="status === tab.id" 
-                            class="absolute bottom-0 left-0 h-0.5 w-full bg-blue-600 dark:bg-blue-400 rounded-t-full"
+                            class="absolute bottom-0 left-0 h-0.5 w-full bg-primary rounded-t-full"
                         ></span>
                     </button>
                 </div>

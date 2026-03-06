@@ -48,11 +48,11 @@ const submit = () => {
         <div class="flex flex-col gap-6 p-6 lg:px-8">
             <div class="flex items-center justify-between">
                 <div class="flex items-center gap-3">
-                    <div class="h-12 w-12 rounded-xl bg-amber-50 flex items-center justify-center border border-amber-100 dark:bg-amber-900/20 dark:border-amber-800">
-                        <Calendar class="h-6 w-6 text-amber-600 dark:text-amber-400" />
+                    <div class="h-12 w-12 rounded-xl bg-primary/10 flex items-center justify-center border border-primary/20">
+                        <Calendar class="h-6 w-6 text-primary" />
                     </div>
                     <div>
-                        <h1 class="text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100">Create Event</h1>
+                        <h1 class="text-2xl font-bold tracking-tight text-foreground">Create Event</h1>
                         <p class="text-sm text-muted-foreground">
                             Add a new public event for the homepage.
                         </p>
@@ -63,107 +63,107 @@ const submit = () => {
                         variant="outline"
                         :href="route('admin.events.index')"
                         as="a"
-                        class="dark:bg-slate-950 dark:border-slate-800 dark:text-slate-300 dark:hover:bg-slate-800"
+                        class="bg-background hover:bg-muted text-foreground"
                     >
                         Cancel
                     </Button>
-                    <Button @click="submit" :disabled="form.processing" class="bg-amber-600 hover:bg-amber-700 text-white">
+                    <Button @click="submit" :disabled="form.processing" class="bg-primary hover:bg-primary/90 text-primary-foreground">
                         <Save class="mr-2 h-4 w-4" />
                         Save Event
                     </Button>
                 </div>
             </div>
 
-            <Card class="border shadow-sm bg-white dark:bg-slate-950 dark:border-slate-800">
+            <Card class="border shadow-sm bg-card text-card-foreground">
                 <CardContent class="p-6 grid grid-cols-1 xl:grid-cols-2 gap-8">
                     <div class="space-y-5">
                         <div class="space-y-1">
-                            <h2 class="text-sm font-semibold uppercase tracking-widest text-slate-500 dark:text-slate-400">Details</h2>
-                            <p class="text-xs text-slate-500 dark:text-slate-400">Create a new event for the public homepage.</p>
+                            <h2 class="text-sm font-semibold uppercase tracking-widest text-muted-foreground">Details</h2>
+                            <p class="text-xs text-muted-foreground">Create a new event for the public homepage.</p>
                         </div>
                     <div class="grid gap-2">
-                        <Label for="title" class="dark:text-slate-300">Event Title</Label>
+                        <Label for="title">Event Title</Label>
                         <Input
                             id="title"
                             v-model="form.title"
                             placeholder="e.g. National Kurash Championship"
-                            class="dark:bg-slate-950 dark:border-slate-800 dark:text-slate-100"
+                            class="bg-background border-input"
                             @input="form.clearErrors('title')"
                         />
-                        <p v-if="form.errors.title" class="text-xs text-red-500">{{ form.errors.title }}</p>
+                        <p v-if="form.errors.title" class="text-xs text-destructive">{{ form.errors.title }}</p>
                     </div>
 
                     <div class="grid gap-2">
-                        <Label for="description" class="dark:text-slate-300">Description (optional)</Label>
+                        <Label for="description">Description (optional)</Label>
                         <textarea
                             id="description"
                             v-model="form.description"
                             rows="4"
                             placeholder="Short event summary or slogan."
-                            class="w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm dark:bg-slate-950 dark:border-slate-800 dark:text-slate-100"
+                            class="w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
                         ></textarea>
-                        <p v-if="form.errors.description" class="text-xs text-red-500">{{ form.errors.description }}</p>
+                        <p v-if="form.errors.description" class="text-xs text-destructive">{{ form.errors.description }}</p>
                     </div>
 
                     <div class="grid gap-2">
-                        <Label for="location" class="dark:text-slate-300">Location</Label>
-                        <Input id="location" v-model="form.location" placeholder="e.g. Manila Sports Complex" class="dark:bg-slate-950 dark:border-slate-800 dark:text-slate-100" />
-                        <p v-if="form.errors.location" class="text-xs text-red-500">{{ form.errors.location }}</p>
+                        <Label for="location">Location</Label>
+                        <Input id="location" v-model="form.location" placeholder="e.g. Manila Sports Complex" class="bg-background border-input" />
+                        <p v-if="form.errors.location" class="text-xs text-destructive">{{ form.errors.location }}</p>
                     </div>
 
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div class="grid gap-2">
-                            <Label for="start_date" class="dark:text-slate-300">Start Date</Label>
-                            <DatePicker id="start_date" v-model="form.start_date" class="dark:bg-slate-950 dark:border-slate-800 dark:text-slate-100" />
-                            <p v-if="form.errors.start_date" class="text-xs text-red-500">{{ form.errors.start_date }}</p>
+                            <Label for="start_date">Start Date</Label>
+                            <DatePicker id="start_date" v-model="form.start_date" class="bg-background border-input" />
+                            <p v-if="form.errors.start_date" class="text-xs text-destructive">{{ form.errors.start_date }}</p>
                         </div>
                         <div class="grid gap-2">
-                            <Label for="end_date" class="dark:text-slate-300">End Date (optional)</Label>
-                            <DatePicker id="end_date" v-model="form.end_date" class="dark:bg-slate-950 dark:border-slate-800 dark:text-slate-100" />
-                            <p v-if="form.errors.end_date" class="text-xs text-red-500">{{ form.errors.end_date }}</p>
+                            <Label for="end_date">End Date (optional)</Label>
+                            <DatePicker id="end_date" v-model="form.end_date" class="bg-background border-input" />
+                            <p v-if="form.errors.end_date" class="text-xs text-destructive">{{ form.errors.end_date }}</p>
                         </div>
                     </div>
 
                     <div class="grid gap-2">
-                        <Label for="status" class="dark:text-slate-300">Status</Label>
+                        <Label for="status">Status</Label>
                         <select
                             id="status"
                             v-model="form.status"
-                            class="h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm dark:bg-slate-950 dark:border-slate-800 dark:text-slate-100"
+                            class="h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
                         >
                             <option value="draft">Draft</option>
                             <option value="published">Published</option>
                         </select>
-                        <p v-if="form.errors.status" class="text-xs text-red-500">{{ form.errors.status }}</p>
+                        <p v-if="form.errors.status" class="text-xs text-destructive">{{ form.errors.status }}</p>
                     </div>
                     </div>
 
                     <div class="space-y-5">
                         <div class="space-y-1">
-                            <h2 class="text-sm font-semibold uppercase tracking-widest text-slate-500 dark:text-slate-400">Media</h2>
-                            <p class="text-xs text-slate-500 dark:text-slate-400">Upload a poster image for the homepage cards and modal.</p>
+                            <h2 class="text-sm font-semibold uppercase tracking-widest text-muted-foreground">Media</h2>
+                            <p class="text-xs text-muted-foreground">Upload a poster image for the homepage cards and modal.</p>
                         </div>
                     <div class="grid gap-2">
-                        <Label for="image" class="dark:text-slate-300">Event Image (optional)</Label>
+                        <Label for="image">Event Image (optional)</Label>
                         <input
                             id="image"
                             type="file"
                             accept="image/*"
                             @change="onImageChange"
-                            class="h-10 w-full rounded-md border border-input bg-slate-50 px-3 py-2 text-sm shadow-sm dark:bg-slate-950 dark:border-slate-800 dark:text-slate-100"
+                            class="h-10 w-full rounded-md border border-input bg-muted/30 px-3 py-2 text-sm shadow-sm text-foreground file:border-0 file:bg-transparent file:text-sm file:font-medium"
                         />
-                        <p v-if="form.errors.image" class="text-xs text-red-500">{{ form.errors.image }}</p>
+                        <p v-if="form.errors.image" class="text-xs text-destructive">{{ form.errors.image }}</p>
                     </div>
-                    <div class="rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/40 h-64 flex items-center justify-center overflow-hidden">
+                    <div class="rounded-lg border border-border bg-muted/30 h-64 flex items-center justify-center overflow-hidden">
                         <img
                             v-if="form.image"
                             :src="getImageUrl(form.image)"
                             alt="Event image preview"
                             class="max-h-full max-w-full object-contain"
                         />
-                        <div v-else class="text-xs text-slate-500 uppercase tracking-widest">No image</div>
+                        <div v-else class="text-xs text-muted-foreground uppercase tracking-widest">No image</div>
                     </div>
-                    <div class="text-xs text-slate-500 dark:text-slate-400">
+                    <div class="text-xs text-muted-foreground">
                         Recommended size: 1600×900 or larger. JPG/PNG, max 2MB.
                     </div>
                     </div>

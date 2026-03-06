@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Link } from '@inertiajs/vue3';
-import { BookOpen, Folder, LayoutGrid, Brackets, Users, Trophy, Calendar } from 'lucide-vue-next';
+import { BookOpen, LayoutGrid, Brackets, Users, Trophy, Calendar, Settings } from 'lucide-vue-next';
 import { route } from 'ziggy-js';
 import NavFooter from '@/components/NavFooter.vue';
 import NavMain from '@/components/NavMain.vue';
@@ -13,6 +13,7 @@ import {
     SidebarMenu,
     SidebarMenuButton,
     SidebarMenuItem,
+    SidebarRail,
 } from '@/components/ui/sidebar';
 import { dashboard } from '@/routes';
 import { type NavItem } from '@/types';
@@ -30,7 +31,7 @@ const mainNavItems: NavItem[] = [
         icon: Users,
     },
     {
-        title: 'Player Details',
+        title: 'Player Profiles',
         href: route('admin.player-details.index'),
         icon: Users,
     },
@@ -53,9 +54,9 @@ const mainNavItems: NavItem[] = [
 
 const footerNavItems: NavItem[] = [
     {
-        title: 'Github Repo',
-        href: 'https://github.com/laravel/vue-starter-kit',
-        icon: Folder,
+        title: 'System Settings',
+        href: '#', // Placeholder
+        icon: Settings,
     },
     {
         title: 'Documentation',
@@ -70,9 +71,15 @@ const footerNavItems: NavItem[] = [
         <SidebarHeader>
             <SidebarMenu>
                 <SidebarMenuItem>
-                    <SidebarMenuButton size="lg" as-child>
+                    <SidebarMenuButton size="lg" as-child class="md:h-16 md:py-2 group-data-[collapsible=icon]:p-2!">
                         <Link :href="dashboard()">
-                            <AppLogo />
+                            <div class="flex aspect-square size-10 items-center justify-center rounded-lg bg-primary text-primary-foreground">
+                                <AppLogo class="size-6 fill-current" />
+                            </div>
+                            <div class="grid flex-1 text-left text-sm leading-tight group-data-[collapsible=icon]:hidden">
+                                <span class="truncate font-bold text-primary">Kurash System</span>
+                                <span class="truncate text-xs text-muted-foreground">Admin Portal</span>
+                            </div>
                         </Link>
                     </SidebarMenuButton>
                 </SidebarMenuItem>
@@ -87,6 +94,7 @@ const footerNavItems: NavItem[] = [
             <NavFooter :items="footerNavItems" />
             <NavUser />
         </SidebarFooter>
+        <SidebarRail />
     </Sidebar>
     <slot />
 </template>

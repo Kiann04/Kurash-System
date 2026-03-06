@@ -180,10 +180,10 @@ const getCsrfToken = () => {
             <!-- Header Section: Title and Actions (Save/Delete) -->
             <div class="flex items-center justify-between">
                 <div>
-                    <h1 class="text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100">
+                    <h1 class="text-2xl font-bold tracking-tight text-foreground">
                         Edit Tournament
                     </h1>
-                    <p class="text-sm text-slate-500 dark:text-slate-400">
+                    <p class="text-sm text-muted-foreground">
                         Update tournament details and manage registrations.
                     </p>
                 </div>
@@ -196,16 +196,16 @@ const getCsrfToken = () => {
                                 Delete
                             </Button>
                         </AlertDialogTrigger>
-                        <AlertDialogContent class="dark:bg-slate-950 dark:border-slate-800">
+                        <AlertDialogContent>
                             <AlertDialogHeader>
-                                <AlertDialogTitle class="dark:text-slate-100">Are you sure?</AlertDialogTitle>
+                                <AlertDialogTitle>Are you sure?</AlertDialogTitle>
                                 <AlertDialogDescription>
                                     This action cannot be undone. This will permanently delete the tournament
                                     and all associated data.
                                 </AlertDialogDescription>
                             </AlertDialogHeader>
                             <AlertDialogFooter>
-                                <AlertDialogCancel class="dark:bg-slate-900 dark:text-slate-100 dark:hover:bg-slate-800">Cancel</AlertDialogCancel>
+                                <AlertDialogCancel>Cancel</AlertDialogCancel>
                                 <AlertDialogAction @click="deleteTournament" class="bg-destructive text-destructive-foreground hover:bg-destructive/90">
                                     Delete
                                 </AlertDialogAction>
@@ -217,11 +217,11 @@ const getCsrfToken = () => {
                         variant="outline"
                         :href="route('admin.tournaments.index')"
                         as="a"
-                        class="dark:bg-slate-950 dark:border-slate-800 dark:text-slate-300 dark:hover:bg-slate-800"
+                        class="bg-background hover:bg-muted text-foreground"
                     >
                         Cancel
                     </Button>
-                    <Button @click="submit" :disabled="form.processing" class="bg-indigo-600 hover:bg-indigo-700 text-white dark:bg-indigo-600 dark:hover:bg-indigo-700">
+                    <Button @click="submit" :disabled="form.processing" class="bg-primary hover:bg-primary/90 text-primary-foreground">
                         <Loader2 v-if="form.processing" class="mr-2 h-4 w-4 animate-spin" />
                         <Save v-else class="mr-2 h-4 w-4" />
                         Save Changes
@@ -248,24 +248,24 @@ const getCsrfToken = () => {
 
                 <!-- Stats Section: Dashboard Overview -->
                 <div>
-                    <h2 class="text-lg font-semibold mb-4 text-slate-900 dark:text-slate-100">Registration Manager</h2>
+                    <h2 class="text-lg font-semibold mb-4 text-foreground">Registration Manager</h2>
                     <div class="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-                        <Card v-for="stat in stats" :key="stat.label" class="dark:bg-slate-950 dark:border-slate-800">
+                        <Card v-for="stat in stats" :key="stat.label" class="bg-card border-border">
                             <CardContent class="p-6 flex items-center justify-between space-y-0">
                                 <div class="space-y-1">
-                                    <p class="text-sm font-medium text-slate-500 dark:text-slate-400">
+                                    <p class="text-sm font-medium text-muted-foreground">
                                         {{ stat.label }}
                                     </p>
                                     <div class="flex items-baseline gap-2">
-                                        <p class="text-2xl font-bold text-slate-900 dark:text-slate-100">
+                                        <p class="text-2xl font-bold text-foreground">
                                             {{ stat.value }}
                                         </p>
-                                        <p v-if="stat.subValue" class="text-xs text-slate-500">
+                                        <p v-if="stat.subValue" class="text-xs text-muted-foreground">
                                             {{ stat.subValue }}
                                         </p>
                                     </div>
                                 </div>
-                                <component :is="stat.icon" class="h-4 w-4 text-slate-400" />
+                                <component :is="stat.icon" class="h-4 w-4 text-muted-foreground" />
                             </CardContent>
                         </Card>
                     </div>

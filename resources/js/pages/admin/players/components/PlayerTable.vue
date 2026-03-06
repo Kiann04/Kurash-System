@@ -116,70 +116,73 @@ const getInitials = (name: string) => {
 </script>
 
 <template>
-    <Card class="border-none shadow-none dark:bg-transparent">
+    <Card class="border-none shadow-none bg-transparent">
         <CardContent class="p-0">
-            <div class="rounded-md border dark:border-slate-700">
+            <div class="rounded-md border border-border">
                 <Table>
                     <TableHeader>
-                        <TableRow class="bg-slate-50 hover:bg-slate-50 dark:bg-slate-800/50 dark:hover:bg-slate-800/50">
-                            <TableHead class="h-12 px-4 align-middle font-medium dark:text-slate-400 w-64">Player</TableHead>
-                            <TableHead class="h-12 px-4 align-middle font-medium dark:text-slate-400 w-24">Age</TableHead>
-                            <TableHead class="h-12 px-4 align-middle font-medium dark:text-slate-400 w-24">Gender</TableHead>
-                            <TableHead class="h-12 px-4 align-middle font-medium dark:text-slate-400 w-48">Club / Address</TableHead>
-                            <TableHead class="h-12 px-4 align-middle font-medium dark:text-slate-400 w-48">Membership Date</TableHead>
-                            <TableHead class="h-12 px-4 align-middle font-medium text-center dark:text-slate-400 w-40">Membership Status</TableHead>
-                            <TableHead class="h-12 px-4 align-middle font-medium text-right dark:text-slate-400 w-20">Actions</TableHead>
+                        <TableRow class="bg-muted/50 hover:bg-muted/50">
+                            <TableHead class="h-12 px-4 align-middle font-medium text-muted-foreground w-64">Player</TableHead>
+                            <TableHead class="h-12 px-4 align-middle font-medium text-muted-foreground w-24">Age</TableHead>
+                            <TableHead class="h-12 px-4 align-middle font-medium text-muted-foreground w-24">Gender</TableHead>
+                            <TableHead class="h-12 px-4 align-middle font-medium text-muted-foreground w-48">Club / Address</TableHead>
+                            <TableHead class="h-12 px-4 align-middle font-medium text-muted-foreground w-48">Membership Date</TableHead>
+                            <TableHead class="h-12 px-4 align-middle font-medium text-center text-muted-foreground w-40">Membership Status</TableHead>
+                            <TableHead class="h-12 px-4 align-middle font-medium text-right text-muted-foreground w-20">Actions</TableHead>
                         </TableRow>
                     </TableHeader>
                     <TableBody>
-                        <TableRow v-for="player in players.data" :key="player.id" class="hover:bg-slate-50/50 dark:hover:bg-slate-800/50 transition-colors border-b dark:border-slate-700">
+                        <TableRow v-for="player in players.data" :key="player.id" class="hover:bg-muted/50 transition-colors border-b border-border">
                             <TableCell class="p-4 align-middle">
                                 <div class="flex items-center gap-3">
-                                    <Avatar class="h-9 w-9 border border-slate-200 dark:border-slate-700">
+                                    <Avatar class="h-9 w-9 border border-border">
                                         <AvatarImage :src="`https://ui-avatars.com/api/?name=${player.full_name}&background=random`" :alt="player.full_name" />
-                                        <AvatarFallback class="bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300">{{ getInitials(player.full_name) }}</AvatarFallback>
+                                        <AvatarFallback :class="player.gender === 'Female' ? 'bg-primary/10 text-primary border-primary/20' : 'bg-secondary/10 text-secondary border-secondary/20'">
+                                            {{ getInitials(player.full_name) }}
+                                        </AvatarFallback>
                                     </Avatar>
                                     <div class="flex flex-col">
-                                        <span class="font-medium text-slate-900 dark:text-slate-100">{{ player.full_name }}</span>
-                                        <span class="text-xs text-slate-500 dark:text-slate-400">ID: #{{ player.id.toString().padStart(4, '0') }}</span>
+                                        <span class="font-medium text-foreground">{{ player.full_name }}</span>
+                                        <span class="text-xs text-muted-foreground">ID: #{{ player.id.toString().padStart(4, '0') }}</span>
                                     </div>
                                 </div>
                             </TableCell>
                             <TableCell class="p-4 align-middle">
-                                <div class="flex items-center gap-1 text-slate-600 dark:text-slate-400">
-                                    <span class="font-medium">{{ player.age }}</span> years old
+                                <div class="flex items-center gap-1 text-muted-foreground">
+                                    <span class="font-medium text-foreground">{{ player.age }}</span> years old
                                 </div>
                             </TableCell>
                             <TableCell class="p-4 align-middle">
-                                <Badge variant="outline" class="w-fit text-xs px-1.5 py-0 h-5 border-slate-200 text-slate-500 dark:border-slate-700 dark:text-slate-400">
+                                <Badge variant="outline" class="w-fit text-xs px-1.5 py-0 h-5 border-border text-muted-foreground">
                                     {{ player.gender }}
                                 </Badge>
                             </TableCell>
                             <TableCell class="p-4 align-middle">
                                 <div class="flex flex-col gap-1">
-                                    <div class="flex items-center gap-2 text-slate-700 font-medium text-xs dark:text-slate-300">
-                                        <Shield class="h-3 w-3 text-blue-500" />
+                                    <div class="flex items-center gap-2 text-foreground font-medium text-xs">
+                                        <Shield class="h-3 w-3 text-primary" />
                                         {{ player.club || '-' }}
                                     </div>
-                                    <div class="flex items-center gap-2 text-slate-500 text-xs truncate max-w-50 dark:text-slate-400" :title="player.address">
+                                    <div class="flex items-center gap-2 text-muted-foreground text-xs truncate max-w-50" :title="player.address">
                                         <MapPin class="h-3 w-3" />
                                         {{ player.address || '-' }}
                                     </div>
                                 </div>
                             </TableCell>
                             <TableCell class="p-4 align-middle">
-                                <div class="flex items-center gap-2 text-slate-600 text-xs dark:text-slate-400">
-                                    <Calendar class="h-3.5 w-3.5 text-slate-400" />
+                                <div class="flex items-center gap-2 text-muted-foreground text-xs">
+                                    <Calendar class="h-3.5 w-3.5 text-muted-foreground" />
                                     <span>{{ player.membership_start_date }} - {{ player.membership_expires_at }}</span>
                                 </div>
                             </TableCell>
                             <TableCell class="p-4 align-middle text-center">
                                 <Badge 
+                                    :variant="getUiStatus(player) === 'active' ? 'default' : (getUiStatus(player) === 'expiring' ? 'secondary' : 'destructive')"
                                     :class="[
-                                        'capitalize shadow-none font-normal',
-                                        getUiStatus(player) === 'active' && 'bg-green-100 text-green-700 hover:bg-green-200 dark:bg-green-900/30 dark:text-green-400 dark:hover:bg-green-900/50',
-                                        getUiStatus(player) === 'expiring' && 'bg-amber-100 text-amber-700 hover:bg-amber-200 dark:bg-amber-900/30 dark:text-amber-400 dark:hover:bg-amber-900/50',
-                                        getUiStatus(player) === 'inactive' && 'bg-red-100 text-red-700 hover:bg-red-200 dark:bg-red-900/30 dark:text-red-400 dark:hover:bg-red-900/50'
+                                        'capitalize shadow-none font-normal border',
+                                        getUiStatus(player) === 'active' && 'bg-primary/15 text-primary hover:bg-primary/25 border-primary/20',
+                                        getUiStatus(player) === 'expiring' && 'bg-accent/15 text-accent-foreground hover:bg-accent/25 border-accent/20',
+                                        getUiStatus(player) === 'inactive' && 'bg-muted text-muted-foreground hover:bg-muted/80 border-border'
                                     ]">
                                     {{ getUiStatus(player) === 'expiring' ? 'Expiring' : getUiStatus(player) }}
                                 </Badge>
@@ -192,25 +195,25 @@ const getInitials = (name: string) => {
                                             <MoreHorizontal class="h-4 w-4" />
                                         </Button>
                                     </DropdownMenuTrigger>
-                                    <DropdownMenuContent align="end" class="dark:bg-slate-950 dark:border-slate-800">
-                                        <DropdownMenuLabel class="dark:text-slate-200">Actions</DropdownMenuLabel>
+                                    <DropdownMenuContent align="end">
+                                        <DropdownMenuLabel>Actions</DropdownMenuLabel>
                                         <Link :href="route('admin.players.edit', player.id)">
-                                            <DropdownMenuItem class="dark:focus:bg-slate-800 dark:focus:text-slate-100">
+                                            <DropdownMenuItem>
                                                 <Edit class="mr-2 h-4 w-4" />
                                                 Edit Player
                                             </DropdownMenuItem>
                                         </Link>
                                         <Link :href="route('admin.players.show', player.id)" v-if="route().has('admin.players.show')">
-                                            <DropdownMenuItem class="dark:focus:bg-slate-800 dark:focus:text-slate-100">
+                                            <DropdownMenuItem>
                                                 <Eye class="mr-2 h-4 w-4" />
                                                 View Details
                                             </DropdownMenuItem>
                                         </Link>
-                                        <DropdownMenuSeparator class="dark:bg-slate-800" />
+                                        <DropdownMenuSeparator />
                                         <DropdownMenuItem 
                                             v-if="player.status === 'inactive'"
                                             @click="renewMembership(player.id)"
-                                            class="text-green-600 focus:text-green-700 focus:bg-green-50 dark:text-green-400 dark:focus:text-green-300 dark:focus:bg-green-900/20"
+                                            class="text-primary focus:text-primary focus:bg-primary/10"
                                         >
                                             <RefreshCw class="mr-2 h-4 w-4" />
                                             Renew Membership
@@ -222,7 +225,7 @@ const getInitials = (name: string) => {
                         <TableRow v-if="players.data.length === 0">
                             <TableCell colspan="6" class="p-8 text-center text-muted-foreground">
                                 <div class="flex flex-col items-center justify-center gap-2">
-                                    <Shield class="h-8 w-8 text-slate-300 dark:text-slate-600" />
+                                    <Shield class="h-8 w-8 text-muted-foreground/50" />
                                     <p>No players found matching your criteria.</p>
                                 </div>
                             </TableCell>
@@ -237,21 +240,21 @@ const getInitials = (name: string) => {
     </Card>
 
     <Dialog :open="isRenewDialogOpen" @update:open="isRenewDialogOpen = $event">
-        <DialogContent class="sm:max-w-md dark:bg-slate-950 dark:border-slate-800">
+        <DialogContent class="sm:max-w-md bg-card border-border">
             <DialogHeader>
-                <DialogTitle class="flex items-center gap-2 dark:text-slate-100">
-                    <RefreshCw class="h-5 w-5 text-green-600 dark:text-green-500" />
+                <DialogTitle class="flex items-center gap-2 text-foreground">
+                    <RefreshCw class="h-5 w-5 text-primary" />
                     Renew Membership
                 </DialogTitle>
-                <DialogDescription class="dark:text-slate-400">
+                <DialogDescription class="text-muted-foreground">
                     Are you sure you want to renew this player's membership for another year?
                 </DialogDescription>
             </DialogHeader>
             <div class="py-4" v-if="renewPlayerId">
-                <div class="rounded-md border p-4 bg-muted/20 dark:bg-slate-900/50 dark:border-slate-800 flex items-center gap-3">
-                    <Shield class="h-8 w-8 text-slate-400 dark:text-slate-500" />
+                <div class="rounded-md border p-4 bg-muted/20 border-border flex items-center gap-3">
+                    <Shield class="h-8 w-8 text-muted-foreground" />
                     <div class="flex flex-col">
-                        <span class="font-medium dark:text-slate-200">
+                        <span class="font-medium text-foreground">
                             {{ players.data.find(p => p.id === renewPlayerId)?.full_name }}
                         </span>
                         <span class="text-xs text-muted-foreground">
@@ -261,10 +264,10 @@ const getInitials = (name: string) => {
                 </div>
             </div>
             <DialogFooter>
-                <Button variant="outline" @click="isRenewDialogOpen = false" class="dark:border-slate-800 dark:text-slate-300">
+                <Button variant="outline" @click="isRenewDialogOpen = false">
                     Cancel
                 </Button>
-                <Button @click="submitRenewMembership" class="bg-green-600 hover:bg-green-700 text-white dark:bg-green-700 dark:hover:bg-green-600">
+                <Button @click="submitRenewMembership" class="bg-primary hover:bg-primary/90 text-primary-foreground">
                     Renew Membership
                 </Button>
             </DialogFooter>

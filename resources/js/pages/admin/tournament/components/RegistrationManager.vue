@@ -115,13 +115,13 @@ const isEligiblePlayer = (player: Player) => {
     return true
 }
 
-// Helper: Gender letter styling (M blue, F pink)
+// Helper: Gender letter styling (M blue, F green)
 const getGenderClass = (gender: string) => {
     const g = (gender || '').toLowerCase()
     if (g === 'male' || g === 'm') {
-        return 'text-blue-600 dark:text-blue-400'
+        return 'text-secondary'
     }
-    return 'text-pink-600 dark:text-pink-400'
+    return 'text-primary'
 }
 
 // Helper: Returns the ID of the weight category a player is registered in (if any).
@@ -262,60 +262,60 @@ const getPlayerAssignment = (playerId: number) => {
     if (isPlayerRegisteredInCurrentCategory(playerId)) {
         return { 
             text: props.selectedCategory?.name || 'Selected',
-            class: 'text-indigo-600 font-medium' 
+            class: 'text-primary font-medium' 
         }
     }
     const reg = props.registrations.find(r => r.player_id === playerId)
-    if (!reg) return { text: '-', class: 'text-slate-500' }
+    if (!reg) return { text: '-', class: 'text-muted-foreground' }
     
     const category = props.weightCategories.find(c => c.id === reg.tournament_weight_category_id)
     return { 
         text: category ? `${category.name}` : 'Registered',
-        class: 'text-slate-900 dark:text-slate-300'
+        class: 'text-foreground'
     }
 }
 </script>
 
 <template>
     <!-- Fixed height to prevent layout shifts when filtering -->
-    <Card class="w-full h-150 border-slate-200 shadow-sm dark:bg-slate-950 dark:border-slate-800 flex flex-col">
-        <CardHeader class="border-b bg-slate-50/50 dark:bg-slate-900/50 dark:border-slate-800 py-3">
+    <Card class="w-full h-150 border-border shadow-sm bg-card text-card-foreground flex flex-col">
+        <CardHeader class="border-b bg-muted/50 py-3">
             <div class="flex items-center justify-between">
                 <div class="space-y-0.5">
-                    <CardTitle class="text-base font-semibold text-slate-900 dark:text-slate-100 flex items-center gap-2">
-                        <Users class="w-4 h-4 text-indigo-500" />
+                    <CardTitle class="text-base font-semibold text-foreground flex items-center gap-2">
+                        <Users class="w-4 h-4 text-primary" />
                         Assign Players
                     </CardTitle>
-                    <CardDescription class="text-xs">
+                    <CardDescription class="text-xs text-muted-foreground">
                         Add eligible players to the selected category.
                     </CardDescription>
                 </div>
-                <Badge variant="outline" class="font-normal bg-white dark:bg-slate-900">
+                <Badge variant="outline" class="font-normal bg-background">
                     {{ filteredPlayers.length }} available
                 </Badge>
             </div>
         </CardHeader>
         <CardContent class="p-0 flex-1 flex flex-col min-h-0">
             <!-- Filter Controls: Search + Gender -->
-            <div class="p-3 border-b dark:border-slate-800 space-y-3 bg-white dark:bg-slate-950">
+            <div class="p-3 border-b border-border space-y-3 bg-background">
                 <div class="flex gap-2">
                     <div class="relative flex-1">
-                        <Search class="absolute left-2.5 top-2.5 h-4 w-4 text-slate-400" />
+                        <Search class="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                         <Input
                             v-model="searchQuery"
                             placeholder="Search players..."
-                            class="pl-9 bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-800 h-9"
+                            class="pl-9 bg-background border-input h-9"
                         />
                     </div>
                     <div class="w-28">
                         <Select v-model="genderFilter">
-                            <SelectTrigger class="h-9 dark:bg-slate-900 dark:border-slate-800">
+                            <SelectTrigger class="h-9 bg-background border-input">
                                 <div class="flex items-center gap-2">
-                                    <Filter class="w-3.5 h-3.5 text-slate-500" />
+                                    <Filter class="w-3.5 h-3.5 text-muted-foreground" />
                                     <SelectValue placeholder="Gender" />
                                 </div>
                             </SelectTrigger>
-                            <SelectContent class="dark:bg-slate-900 dark:border-slate-800">
+                            <SelectContent>
                                 <SelectItem value="all">All</SelectItem>
                                 <SelectItem value="male">Male</SelectItem>
                                 <SelectItem value="female">Female</SelectItem>
@@ -328,80 +328,82 @@ const getPlayerAssignment = (playerId: number) => {
             <ScrollArea class="flex-1">
                 <div class="relative w-full">
                     <table class="w-full caption-bottom text-sm table-fixed">
-                        <TableHeader class="sticky top-0 bg-slate-50 dark:bg-slate-900 z-10 shadow-sm">
-                            <TableRow class="hover:bg-transparent border-b border-slate-200 dark:border-slate-800">
+                        <TableHeader class="sticky top-0 bg-muted/50 z-10 shadow-sm">
+                            <TableRow class="hover:bg-transparent border-b border-border">
                                 <TableHead class="w-12"></TableHead>
-                                <TableHead class="w-1/4">Name</TableHead>
-                                <TableHead class="w-1/4">Club</TableHead>
-                                <TableHead class="w-24">Gender</TableHead>
-                                <TableHead class="w-16">Age</TableHead>
-                                <TableHead class="w-32">Assignment</TableHead>
-                                <TableHead class="w-24">Status</TableHead>
-                                <TableHead class="w-20 text-right">Action</TableHead>
+                                <TableHead class="w-1/4 text-muted-foreground">Name</TableHead>
+                                <TableHead class="w-1/4 text-muted-foreground">Club</TableHead>
+                                <TableHead class="w-24 text-muted-foreground">Gender</TableHead>
+                                <TableHead class="w-16 text-muted-foreground">Age</TableHead>
+                                <TableHead class="w-32 text-muted-foreground">Assignment</TableHead>
+                                <TableHead class="w-24 text-muted-foreground">Status</TableHead>
+                                <TableHead class="w-20 text-right text-muted-foreground">Action</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody class="min-h-64">
                             <TableRow
                                 v-for="player in filteredPlayers"
                                 :key="player.id"
-                                class="cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-900/50 transition-colors border-b border-slate-100 dark:border-slate-800"
-                                :class="{'bg-indigo-50/50 dark:bg-indigo-900/10': isPlayerRegisteredInCurrentCategory(player.id)}"
+                                class="cursor-pointer hover:bg-muted/50 transition-colors border-b border-border"
+                                :class="{'bg-primary/5': isPlayerRegisteredInCurrentCategory(player.id)}"
                                 @click="togglePlayerRegistration(player)"
                             >
                                 <TableCell>
                                     <div class="flex justify-center">
                                         <!-- Selection Indicator: Checkmark, Empty Circle, or Dot -->
-                                        <div v-if="isPlayerRegisteredInCurrentCategory(player.id)" class="h-5 w-5 rounded-full bg-indigo-600 flex items-center justify-center text-white shadow-sm">
+                                        <div v-if="isPlayerRegisteredInCurrentCategory(player.id)" class="h-5 w-5 rounded-full bg-primary flex items-center justify-center text-primary-foreground shadow-sm">
                                             <Check class="h-3 w-3" />
                                         </div>
-                                        <div v-else-if="!getPlayerRegistrationCategory(player.id)" class="h-5 w-5 rounded-full border-2 border-slate-300 dark:border-slate-700"></div>
+                                        <div v-else-if="!getPlayerRegistrationCategory(player.id)" class="h-5 w-5 rounded-full border-2 border-muted-foreground/30"></div>
                                         <div v-else class="h-5 w-5 flex items-center justify-center">
-                                            <div class="h-2 w-2 rounded-full bg-slate-300 dark:bg-slate-600"></div>
+                                            <div class="h-2 w-2 rounded-full bg-muted-foreground/50"></div>
                                         </div>
                                     </div>
                                 </TableCell>
-                                <TableCell class="font-medium text-slate-900 dark:text-slate-200">
+                                <TableCell class="font-medium text-foreground">
                                     {{ player.full_name }}
                                 </TableCell>
-                                <TableCell class="text-slate-600 dark:text-slate-400">{{ player.club }}</TableCell>
+                                <TableCell class="text-muted-foreground">{{ player.club }}</TableCell>
                                 <TableCell>
                                     <span :class="getGenderClass(player.gender)" class="font-medium">
                                         {{ (player.gender || '').charAt(0).toUpperCase() }}
                                     </span>
                                 </TableCell>
-                                <TableCell class="text-slate-600 dark:text-slate-400">{{ calculateAge(player.dob) }}</TableCell>
+                                <TableCell class="text-muted-foreground">{{ calculateAge(player.dob) }}</TableCell>
                                 <TableCell>
                                     <span :class="getPlayerAssignment(player.id).class" class="text-sm">
                                         {{ getPlayerAssignment(player.id).text }}
                                     </span>
                                 </TableCell>
                                 <TableCell>
-                                    <Badge variant="outline" class="bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-900/20 dark:text-emerald-400 dark:border-emerald-800" v-if="player.status === 'active'">
-                                        Active
-                                    </Badge>
-                                    <Badge variant="outline" class="bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-900/20 dark:text-amber-400 dark:border-amber-800" v-else-if="player.status === 'expiring'">
-                                        Expiring
-                                    </Badge>
-                                    <Badge variant="outline" class="bg-slate-100 text-slate-500 border-slate-200 dark:bg-slate-800 dark:text-slate-400 dark:border-slate-700" v-else>
-                                        {{ player.status }}
+                                    <Badge 
+                                        variant="outline" 
+                                        class="font-medium"
+                                        :class="{
+                                            'bg-primary/10 text-primary border-primary/20': player.status === 'active',
+                                            'bg-accent/15 text-accent-foreground border-accent/20': player.status === 'expiring',
+                                            'bg-muted text-muted-foreground border-border': player.status !== 'active' && player.status !== 'expiring'
+                                        }"
+                                    >
+                                        {{ player.status.charAt(0).toUpperCase() + player.status.slice(1) }}
                                     </Badge>
                                 </TableCell>
                                 <TableCell class="text-right">
-                                     <Button size="sm" variant="ghost" class="h-8 w-8 p-0 hover:bg-slate-200 dark:hover:bg-slate-800">
-                                        <Plus v-if="isEligiblePlayer(player) && !isPlayerRegisteredInCurrentCategory(player.id) && !getPlayerRegistrationCategory(player.id)" class="h-4 w-4 text-slate-500 hover:text-indigo-600" />
-                                        <Trash2 v-if="isPlayerRegisteredInCurrentCategory(player.id)" class="h-4 w-4 text-red-500" />
+                                     <Button size="sm" variant="ghost" class="h-8 w-8 p-0 hover:bg-muted">
+                                        <Plus v-if="isEligiblePlayer(player) && !isPlayerRegisteredInCurrentCategory(player.id) && !getPlayerRegistrationCategory(player.id)" class="h-4 w-4 text-muted-foreground hover:text-primary" />
+                                        <Trash2 v-if="isPlayerRegisteredInCurrentCategory(player.id)" class="h-4 w-4 text-destructive" />
                                      </Button>
                                 </TableCell>
                             </TableRow>
                             <TableRow v-if="filteredPlayers.length === 0">
                                 <TableCell colspan="8" class="p-8 text-center text-muted-foreground">
                                     <div class="flex flex-col items-center justify-center gap-2">
-                                        <Search class="h-8 w-8 text-slate-300 dark:text-slate-600" />
+                                        <Search class="h-8 w-8 text-muted-foreground/50" />
                                         <p>No players found matching your criteria.</p>
                                         <Button 
                                             v-if="searchQuery || (!props.selectedCategory?.gender && genderFilter !== 'all')"
                                             variant="link" 
-                                            class="mt-2 text-indigo-600 dark:text-indigo-400 h-auto p-0 text-xs"
+                                            class="mt-2 text-primary h-auto p-0 text-xs"
                                             @click="searchQuery = ''; genderFilter = 'all'"
                                         >
                                             Clear filters
@@ -416,21 +418,21 @@ const getPlayerAssignment = (playerId: number) => {
         </CardContent>
     </Card>
     <AlertDialog :open="alertState.isOpen" @update:open="alertState.isOpen = $event">
-        <AlertDialogContent class="dark:bg-slate-900 dark:border-slate-800">
+        <AlertDialogContent>
             <AlertDialogHeader>
-                <AlertDialogTitle class="flex items-center gap-2 dark:text-slate-100">
-                    <AlertTriangle class="h-5 w-5 text-amber-500" />
+                <AlertDialogTitle class="flex items-center gap-2">
+                    <AlertTriangle class="h-5 w-5 text-accent" />
                     {{ alertState.title }}
                 </AlertDialogTitle>
-                <AlertDialogDescription class="dark:text-slate-400">
+                <AlertDialogDescription class="text-muted-foreground">
                     {{ alertState.description }}
                 </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
-                <AlertDialogCancel @click="alertState.isOpen = false" class="dark:bg-slate-800 dark:text-slate-200 dark:border-slate-700 dark:hover:bg-slate-700">
+                <AlertDialogCancel @click="alertState.isOpen = false">
                     Cancel
                 </AlertDialogCancel>
-                <AlertDialogAction @click="alertState.confirmAction" class="bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-600 dark:hover:bg-indigo-700 dark:text-white">
+                <AlertDialogAction @click="alertState.confirmAction" class="bg-primary hover:bg-primary/90 text-primary-foreground">
                     Proceed
                 </AlertDialogAction>
             </AlertDialogFooter>

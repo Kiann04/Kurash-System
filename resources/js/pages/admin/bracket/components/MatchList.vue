@@ -66,63 +66,63 @@ const confirmAndChooseWinner = (match: MatchItem, winnerId: number | null) => {
         Shows a scrollable table of all scheduled matches.
         Allows confirming winners for ongoing matches.
     -->
-    <Card class="overflow-hidden shadow-sm dark:bg-slate-950 dark:border-slate-800">
-        <CardHeader class="border-b bg-slate-50/50 dark:bg-slate-900/50 py-4">
+    <Card class="overflow-hidden shadow-sm bg-card border-border">
+        <CardHeader class="border-b bg-muted/50 py-4">
             <div class="flex items-center justify-between">
                 <div class="space-y-1">
-                    <CardTitle class="text-base font-semibold uppercase tracking-wider text-slate-700 dark:text-slate-200">
+                    <CardTitle class="text-base font-semibold uppercase tracking-wider text-foreground">
                         Match List (All Brackets)
                     </CardTitle>
                     <CardDescription>Manage ongoing and upcoming matches</CardDescription>
                 </div>
-                <Badge variant="secondary" class="bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 shadow-sm">{{ matches.length }} Scheduled</Badge>
+                <Badge variant="secondary" class="bg-background border-border shadow-sm">{{ matches.length }} Scheduled</Badge>
             </div>
         </CardHeader>
         <CardContent class="p-0">
             <div class="max-h-150 overflow-auto">
                 <Table>
-                    <TableHeader class="bg-slate-50/50 dark:bg-slate-900/50 sticky top-0 z-10">
-                        <TableRow class="hover:bg-transparent dark:hover:bg-transparent border-b dark:border-slate-800">
-                            <TableHead class="w-16 font-semibold text-slate-500 dark:text-slate-400">ID</TableHead>
-                            <TableHead class="font-semibold text-slate-500 dark:text-slate-400">Category</TableHead>
-                            <TableHead class="text-center font-semibold text-slate-500 dark:text-slate-400">Round</TableHead>
-                            <TableHead class="text-center font-semibold text-slate-500 dark:text-slate-400">Match</TableHead>
-                            <TableHead class="font-semibold text-slate-500 dark:text-slate-400 w-1/4">Player One</TableHead>
-                            <TableHead class="font-semibold text-slate-500 dark:text-slate-400 w-1/4">Player Two</TableHead>
-                            <TableHead class="text-center font-semibold text-slate-500 dark:text-slate-400">Action</TableHead>
+                    <TableHeader class="bg-muted/50 sticky top-0 z-10">
+                        <TableRow class="hover:bg-transparent border-b border-border">
+                            <TableHead class="w-16 font-semibold text-muted-foreground">ID</TableHead>
+                            <TableHead class="font-semibold text-muted-foreground">Category</TableHead>
+                            <TableHead class="text-center font-semibold text-muted-foreground">Round</TableHead>
+                            <TableHead class="text-center font-semibold text-muted-foreground">Match</TableHead>
+                            <TableHead class="font-semibold text-muted-foreground w-1/4">Player One</TableHead>
+                            <TableHead class="font-semibold text-muted-foreground w-1/4">Player Two</TableHead>
+                            <TableHead class="text-center font-semibold text-muted-foreground">Action</TableHead>
                         </TableRow>
                     </TableHeader>
                     <TableBody>
                         <TableRow 
                             v-for="m in matches" 
                             :key="m.id"
-                            class="hover:bg-slate-50/50 dark:hover:bg-slate-900/50 transition-colors border-b dark:border-slate-800"
+                            class="hover:bg-muted/50 transition-colors border-b border-border"
                         >
                             <TableCell class="text-muted-foreground font-mono text-xs">{{ m.id }}</TableCell>
                             <TableCell>
                                 <div class="flex flex-col">
-                                    <span class="font-medium text-slate-900 dark:text-slate-100">{{ m.bracket.gender }}</span>
+                                    <span class="font-medium text-foreground">{{ m.bracket.gender }}</span>
                                     <span class="text-xs text-muted-foreground">{{ m.bracket.age_category }} · {{ m.bracket.weight_category }}</span>
                                 </div>
                             </TableCell>
                             <TableCell class="text-center">
-                                <Badge variant="outline" class="bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700 font-mono text-xs">
+                                <Badge variant="outline" class="bg-muted text-muted-foreground border-border font-mono text-xs">
                                     {{ m.round_number }}
                                 </Badge>
                             </TableCell>
                             <TableCell class="text-center">
-                                <Badge variant="secondary" class="font-normal text-xs bg-indigo-50 text-indigo-700 hover:bg-indigo-100 dark:bg-indigo-900/30 dark:text-indigo-300 dark:hover:bg-indigo-900/50 border-transparent">
+                                <Badge variant="secondary" class="font-normal text-xs bg-primary/10 text-primary hover:bg-primary/20 border-transparent">
                                     {{ roundLabel(finalRoundNumber(m.bracket), m.round_number, m.bracket.entrant_count, m.bracket.format) }}
                                 </Badge>
                             </TableCell>
                             <TableCell class="font-medium">
                                 <div class="flex items-center gap-3">
                                     <template v-if="m.player_one">
-                                        <Avatar class="h-8 w-8 border border-slate-200 dark:border-slate-700">
+                                        <Avatar class="h-8 w-8 border border-border">
                                             <AvatarImage :src="`https://ui-avatars.com/api/?name=${m.player_one}&background=random`" />
                                             <AvatarFallback>{{ getInitials(m.player_one) }}</AvatarFallback>
                                         </Avatar>
-                                        <span class="text-sm text-slate-900 dark:text-slate-100">{{ m.player_one }}</span>
+                                        <span class="text-sm text-foreground">{{ m.player_one }}</span>
                                     </template>
                                     <span v-else class="text-muted-foreground italic text-sm">BYE</span>
                                 </div>
@@ -130,11 +130,11 @@ const confirmAndChooseWinner = (match: MatchItem, winnerId: number | null) => {
                             <TableCell class="font-medium">
                                 <div class="flex items-center gap-3">
                                     <template v-if="m.player_two">
-                                        <Avatar class="h-8 w-8 border border-slate-200 dark:border-slate-700">
+                                        <Avatar class="h-8 w-8 border border-border">
                                             <AvatarImage :src="`https://ui-avatars.com/api/?name=${m.player_two}&background=random`" />
                                             <AvatarFallback>{{ getInitials(m.player_two) }}</AvatarFallback>
                                         </Avatar>
-                                        <span class="text-sm text-slate-900 dark:text-slate-100">{{ m.player_two }}</span>
+                                        <span class="text-sm text-foreground">{{ m.player_two }}</span>
                                     </template>
                                     <span v-else class="text-muted-foreground italic text-sm">BYE</span>
                                 </div>
@@ -143,8 +143,8 @@ const confirmAndChooseWinner = (match: MatchItem, winnerId: number | null) => {
                                 <div class="flex items-center justify-center gap-2">
                                     <Button
                                          size="sm"
-                                         :variant="'outline'"
-                                         class="w-full sm:w-auto h-8 text-xs border-blue-600 bg-blue-600 text-white hover:bg-white hover:text-blue-600 dark:border-blue-500 dark:bg-blue-600 dark:hover:bg-slate-900 dark:hover:text-blue-400"
+                                         variant="secondary"
+                                         class="w-full sm:w-auto h-8 text-xs"
                                          :disabled="m.player_one_id === null || isCompleted"
                                          @click="confirmAndChooseWinner(m, m.player_one_id)"
                                      >
@@ -155,8 +155,8 @@ const confirmAndChooseWinner = (match: MatchItem, winnerId: number | null) => {
                                      <span class="text-muted-foreground text-xs font-bold uppercase">vs</span>
                                      <Button
                                         size="sm"
-                                        :variant="'outline'"
-                                        class="w-full sm:w-auto h-8 text-xs border-green-600 bg-green-600 text-white hover:bg-white hover:text-green-600 dark:border-green-500 dark:bg-green-600 dark:hover:bg-slate-900 dark:hover:text-green-400"
+                                        variant="default"
+                                        class="w-full sm:w-auto h-8 text-xs"
                                          :disabled="m.player_two_id === null || isCompleted"
                                          @click="confirmAndChooseWinner(m, m.player_two_id)"
                                      >
