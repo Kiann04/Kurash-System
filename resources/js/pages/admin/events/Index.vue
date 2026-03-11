@@ -95,8 +95,9 @@ const confirmDelete = (id: number) => {
                 </Button>
             </div>
 
-            <Card class="border shadow-sm bg-card text-card-foreground overflow-hidden">
+            <Card class="border-none shadow-none bg-transparent">
                 <CardContent class="p-0">
+                    <div class="rounded-md border border-border">
                     <Table>
                         <TableHeader class="bg-muted/50 sticky top-0 z-10 backdrop-blur-sm">
                             <TableRow class="hover:bg-transparent border-b border-border">
@@ -181,6 +182,7 @@ const confirmDelete = (id: number) => {
                             </TableRow>
                         </TableBody>
                     </Table>
+                    </div>
                     <div class="mt-4">
                         <Pagination :links="props.events.links" />
                     </div>

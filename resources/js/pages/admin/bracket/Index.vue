@@ -44,6 +44,7 @@ import {
     TableRow,
 } from '@/components/ui/table'
 import AppLayout from '@/layouts/AppLayout.vue'
+import { type BreadcrumbItem } from '@/types'
 
 /**
  * Interface representing a tournament in the context of bracket generation
@@ -121,15 +122,15 @@ const formatDate = (date: string) => {
 const getStatusClass = (status: string) => {
     switch (status) {
         case 'draft':
-            return 'bg-accent/15 text-accent-foreground border-accent/20 hover:bg-accent/25'
+            return 'bg-accent text-accent-foreground border-accent hover:bg-accent/90'
         case 'open':
-            return 'bg-primary/15 text-primary border-primary/20 hover:bg-primary/25'
+            return 'bg-primary text-primary-foreground border-primary hover:bg-primary/90'
         case 'ongoing':
-            return 'bg-secondary/15 text-secondary border-secondary/20 hover:bg-secondary/25'
+            return 'bg-secondary text-secondary-foreground border-secondary hover:bg-secondary/90'
         case 'completed':
-            return 'bg-muted text-muted-foreground border-border hover:bg-muted/80'
+            return 'bg-muted text-muted-foreground border-border'
         default:
-            return 'bg-muted text-muted-foreground border-border hover:bg-muted/80'
+            return 'bg-muted text-muted-foreground border-border'
     }
 }
 
@@ -152,12 +153,19 @@ const filteredGenerated = computed(() => {
         t.name.toLowerCase().includes(search.value.toLowerCase())
     )
 })
+
+/**
+ * Breadcrumbs
+ */
+const breadcrumbs: BreadcrumbItem[] = [
+    { title: 'Brackets', href: route('admin.brackets.index') },
+]
 </script>
 
 <template>
     <Head title="Generate Brackets" />
 
-    <AppLayout>
+    <AppLayout :breadcrumbs="breadcrumbs">
         <div class="p-6 space-y-6">
             <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
@@ -177,7 +185,7 @@ const filteredGenerated = computed(() => {
 
             <div class="grid gap-6">
                 <!-- Pending Generation -->
-                <Card class="border-l-4 border-l-secondary shadow-sm bg-card text-card-foreground">
+                <Card class="border-none shadow-none bg-transparent">
                     <CardHeader class="border-b bg-muted/50">
                         <CardTitle class="flex items-center gap-2 text-lg text-foreground">
                             <ListTree class="h-5 w-5 text-secondary" />
@@ -188,6 +196,7 @@ const filteredGenerated = computed(() => {
                         </CardDescription>
                     </CardHeader>
                     <CardContent class="p-0">
+                        <div class="rounded-md border border-border">
                         <Table>
                             <TableHeader class="bg-muted/50 sticky top-0 z-10">
                                 <TableRow class="hover:bg-transparent border-b border-border">
@@ -231,7 +240,7 @@ const filteredGenerated = computed(() => {
                                         </div>
                                     </TableCell>
                                     <TableCell>
-                                        <Badge variant="outline" :class="['capitalize font-normal', getStatusClass(tournament.status)]">
+                                        <Badge :class="['capitalize font-normal border', getStatusClass(tournament.status)]">
                                             {{ tournament.status }}
                                         </Badge>
                                     </TableCell>
@@ -272,11 +281,12 @@ const filteredGenerated = computed(() => {
                                 </TableRow>
                             </TableBody>
                         </Table>
+                        </div>
                     </CardContent>
                 </Card>
 
                 <!-- Generated Brackets -->
-                <Card class="shadow-sm bg-card text-card-foreground border-border">
+                <Card class="border-none shadow-none bg-transparent">
                     <CardHeader class="border-b bg-muted/50">
                         <CardTitle class="flex items-center gap-2 text-lg text-foreground">
                             <CheckCircle2 class="h-5 w-5 text-primary" />
@@ -287,6 +297,7 @@ const filteredGenerated = computed(() => {
                         </CardDescription>
                     </CardHeader>
                     <CardContent class="p-0">
+                        <div class="rounded-md border border-border">
                         <Table>
                             <TableHeader class="bg-muted/50 sticky top-0 z-10">
                                 <TableRow class="hover:bg-transparent border-b border-border">
@@ -343,11 +354,11 @@ const filteredGenerated = computed(() => {
                                     <TableCell class="text-right">
                                         <div class="flex items-center justify-end gap-2">
                                             <Button 
-                                                variant="outline" 
+                                                variant="default" 
                                                 size="sm" 
                                                 :disabled="tournament.registrations_count < 2"
                                                 @click="confirmRegenerate(tournament)"
-                                                class="text-accent-foreground hover:text-accent-foreground hover:bg-accent/20 border-accent/50 shadow-sm transition-all"
+                                                class="bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm transition-all disabled:opacity-50"
                                                 title="Regenerate Brackets"
                                             >
                                                 <RefreshCw class="h-3.5 w-3.5 mr-1.5" />
@@ -374,6 +385,7 @@ const filteredGenerated = computed(() => {
                                 </TableRow>
                             </TableBody>
                         </Table>
+                        </div>
                     </CardContent>
                 </Card>
             </div>

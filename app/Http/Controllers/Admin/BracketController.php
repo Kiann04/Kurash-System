@@ -30,6 +30,10 @@ class BracketController extends Controller
             ->latest()
             ->get(['id', 'name', 'location', 'tournament_date', 'status']);
 
+        foreach ($all as $t) {
+            $this->updateTournamentStatus($t);
+        }
+
         $generated = $all->where('brackets_count', '>', 0)->values();
         $notGenerated = $all->where('brackets_count', 0)->values();
 
@@ -378,8 +382,20 @@ class BracketController extends Controller
             return;
         }
         $allComplete = $brackets->every(function (Bracket $bracket) {
+            if ($bracket->matches->isEmpty()) {
+                return false;
+            }
+
+            if ($bracket->format === 'round_robin') {
+                return $bracket->matches->every(fn ($m) => $m->status === 'completed');
+            }
+
             $final = $bracket->matches->firstWhere('round_number', $bracket->rounds);
-            return $final && $final->winner_id !== null;
+            if ($final && $final->winner_id !== null) {
+                return true;
+            }
+
+            return $bracket->matches->every(fn ($m) => $m->status === 'completed');
         });
         $newStatus = $allComplete ? 'completed' : 'ongoing';
         if ($tournament->status !== $newStatus) {

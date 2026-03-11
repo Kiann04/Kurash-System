@@ -7,6 +7,7 @@ use App\Models\Tournament;
 use App\Models\Player;
 use App\Models\WeightCategory;
 use App\Services\PlayerListImportService;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\DB;
@@ -197,6 +198,13 @@ class TournamentController extends Controller
     public function downloadRegistrationTemplate(Request $request)
     {
         $format = $request->query('format', 'csv');
+
+        if ($format === 'docx') {
+            if (!class_exists(\PhpOffice\PhpWord\PhpWord::class)) {
+                Log::warning('PHPWord not available. Falling back to CSV for registration template.');
+                $format = 'csv';
+            }
+        }
 
         if ($format === 'docx') {
             $phpWord = new \PhpOffice\PhpWord\PhpWord();

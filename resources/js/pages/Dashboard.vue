@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Link, Head } from '@inertiajs/vue3';
-import { Users, UserCheck, UserX, ArrowRight, Shield, Calendar, Clock, Trophy, Activity } from 'lucide-vue-next';
+import { Users, UserCheck, UserX, ArrowRight, Shield, Calendar, Clock, Trophy } from 'lucide-vue-next';
 import { route } from 'ziggy-js';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
@@ -125,7 +125,7 @@ const getInitials = (name: string) => {
 
             <div class="grid gap-6 md:grid-cols-7">
                 <!-- Recent Registrations -->
-                <Card class="md:col-span-4 lg:col-span-5 shadow-sm">
+                <Card class="md:col-span-4 lg:col-span-5 border-none shadow-none bg-transparent">
                     <CardHeader class="flex flex-row items-center justify-between">
                         <div>
                             <CardTitle>Recent Registrations</CardTitle>
@@ -139,7 +139,8 @@ const getInitials = (name: string) => {
                             </Link>
                         </Button>
                     </CardHeader>
-                    <CardContent>
+                    <CardContent class="p-0">
+                        <div class="rounded-md border border-border">
                         <Table>
                             <TableHeader>
                                 <TableRow>
@@ -180,10 +181,11 @@ const getInitials = (name: string) => {
                                         <Badge 
                                             :variant="player.status === 'active' ? 'default' : (player.status === 'expiring' ? 'secondary' : 'outline')"
                                             :class="{
-                                                'bg-primary/15 text-primary hover:bg-primary/25 border-primary/20': player.status === 'active',
-                                                'bg-accent/15 text-accent hover:bg-accent/25 border-accent/20': player.status === 'expiring',
-                                                'bg-muted text-muted-foreground hover:bg-muted/80': player.status === 'inactive'
-                                            }"
+                                                'bg-primary text-primary-foreground hover:bg-primary/90 border-primary': player.status === 'active',
+                                                'bg-accent text-accent-foreground hover:bg-accent/90 border-accent': player.status === 'expiring',
+                                                'bg-destructive text-destructive-foreground hover:bg-destructive/90 border-destructive': player.status === 'inactive'
+                                             }"
+                                             class="min-w-21 justify-center"
                                         >
                                             {{ player.status.charAt(0).toUpperCase() + player.status.slice(1) }}
                                         </Badge>
@@ -196,6 +198,7 @@ const getInitials = (name: string) => {
                                 </TableRow>
                             </TableBody>
                         </Table>
+                        </div>
                     </CardContent>
                 </Card>
 
@@ -206,38 +209,34 @@ const getInitials = (name: string) => {
                             <CardTitle>Quick Actions</CardTitle>
                         </CardHeader>
                         <CardContent class="grid gap-4">
-                            <Button class="w-full justify-start" as-child>
+                            <Button variant="outline" class="w-full justify-start" as-child>
                                 <Link :href="route('admin.players.index')">
-                                    <Users class="mr-2 h-4 w-4" />
+                                    <Users class="mr-2 h-4 w-4 text-primary" />
                                     Register New Athlete
                                 </Link>
                             </Button>
                             <Button variant="outline" class="w-full justify-start" as-child>
                                 <Link :href="route('admin.tournaments.index')">
-                                    <Trophy class="mr-2 h-4 w-4" />
+                                    <Trophy class="mr-2 h-4 w-4 text-accent" />
                                     Manage Tournaments
                                 </Link>
-                            </Button>
-                            <Button variant="ghost" class="w-full justify-start text-muted-foreground">
-                                <Activity class="mr-2 h-4 w-4" />
-                                System Health Check
                             </Button>
                         </CardContent>
                     </Card>
 
-                    <Card class="bg-primary text-primary-foreground shadow-md">
+                    <Card class="shadow-sm">
                         <CardHeader>
-                            <CardTitle class="text-primary-foreground">Upcoming Events</CardTitle>
-                            <CardDescription class="text-primary-foreground/80">Next 30 days</CardDescription>
+                            <CardTitle>Upcoming Events</CardTitle>
+                            <CardDescription>Next 30 days</CardDescription>
                         </CardHeader>
                         <CardContent>
                             <div class="flex items-center justify-center py-4">
-                                <Calendar class="h-12 w-12 opacity-80" />
+                                <Calendar class="h-12 w-12 opacity-80 text-muted-foreground" />
                             </div>
-                            <p class="text-center text-sm opacity-90">
+                            <p class="text-center text-sm text-muted-foreground">
                                 No tournaments scheduled for the upcoming month.
                             </p>
-                            <Button variant="secondary" class="w-full mt-4 text-primary font-semibold" as-child>
+                            <Button variant="secondary" class="w-full mt-4 text-white font-semibold" as-child>
                                 <Link :href="route('admin.tournaments.index')">
                                     Schedule Event
                                 </Link>

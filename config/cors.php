@@ -17,18 +17,24 @@ return [
 
     'paths' => ['api/*', 'sanctum/csrf-cookie'],
 
-    'allowed_methods' => ['*'],
+    'allowed_methods' => ['GET', 'POST'],
 
-    'allowed_origins' => ['http://127.0.0.1:8001'], // Allowed origin for Scoreboard
+    'allowed_origins' => array_filter(array_map('trim', explode(',', env('CORS_ALLOWED_ORIGINS', 'http://127.0.0.1:18000,http://localhost:18000')))),
 
-    'allowed_origins_patterns' => [],
+    'allowed_origins_patterns' => [
+        '^http:\/\/localhost(:\d+)?$',
+        '^http:\/\/127\.0\.0\.1(:\d+)?$',
+        '^http:\/\/192\.168\.\d{1,3}\.\d{1,3}(:\d+)?$',
+        '^http:\/\/10\.\d{1,3}\.\d{1,3}\.\d{1,3}(:\d+)?$',
+        '^http:\/\/172\.(1[6-9]|2[0-9]|3[0-1])\.\d{1,3}\.\d{1,3}(:\d+)?$',
+    ],
 
-    'allowed_headers' => ['*'],
+    'allowed_headers' => ['X-API-KEY', 'Content-Type', 'Accept', 'Origin'],
 
     'exposed_headers' => [],
 
     'max_age' => 0,
 
-    'supports_credentials' => true,
+    'supports_credentials' => false,
 
 ];

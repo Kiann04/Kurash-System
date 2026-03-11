@@ -175,10 +175,10 @@ const formatDate = (date: string) => {
  */
 const getStatusColor = (status: string) => {
     switch(status.toLowerCase()) {
-        case 'open': return 'bg-primary/15 text-primary hover:bg-primary/25 border-primary/20';
-        case 'ongoing': return 'bg-secondary/15 text-secondary hover:bg-secondary/25 border-secondary/20';
-        case 'completed': return 'bg-muted text-muted-foreground hover:bg-muted/80 border-border';
-        default: return 'bg-accent/15 text-accent-foreground hover:bg-accent/25 border-accent/20'; // draft
+        case 'open': return 'bg-primary text-primary-foreground hover:bg-primary/90 border-primary';
+        case 'ongoing': return 'bg-secondary text-secondary-foreground hover:bg-secondary/90 border-secondary';
+        case 'completed': return 'bg-muted text-muted-foreground border-border';
+        default: return 'bg-accent text-accent-foreground hover:bg-accent/90 border-accent'; // draft
     }
 }
 </script>
@@ -288,9 +288,9 @@ const getStatusColor = (status: string) => {
             </Dialog>
 
             <!-- Table -->
-            <Card class="border shadow-sm overflow-hidden">
+            <Card class="border-none shadow-none bg-transparent">
                 <CardContent class="p-0">
-                    <div class="rounded-none border-0">
+                    <div class="rounded-md border border-border">
                         <Table>
                             <TableHeader class="bg-muted/50 sticky top-0 z-10 backdrop-blur-sm">
                                 <TableRow class="hover:bg-transparent border-b">
@@ -328,7 +328,7 @@ const getStatusColor = (status: string) => {
                                         </div>
                                     </TableCell>
                                     <TableCell class="p-4 align-middle text-center">
-                                        <Badge :class="['capitalize shadow-sm font-medium border-transparent', getStatusColor(t.status)]">
+                                        <Badge :class="['capitalize shadow-sm font-medium border', getStatusColor(t.status)]">
                                             {{ t.status }}
                                         </Badge>
                                     </TableCell>

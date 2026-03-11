@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { Head, router } from '@inertiajs/vue3';
+import { debounce } from 'lodash';
 import {
-    ListFilter,
     Search,
     Users,
     Mail,
@@ -12,17 +12,10 @@ import {
 } from 'lucide-vue-next';
 import { ref, watch } from 'vue';
 import { route } from 'ziggy-js';
-import AppLayout from '@/layouts/AppLayout.vue';
+import Pagination from '@/components/Pagination.vue';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import {
-    DropdownMenu,
-    DropdownMenuCheckboxItem,
-    DropdownMenuContent,
-    DropdownMenuLabel,
-    DropdownMenuSeparator,
-    DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
 import {
     Table,
@@ -32,8 +25,7 @@ import {
     TableHeader,
     TableRow,
 } from '@/components/ui/table';
-import Pagination from '@/components/Pagination.vue';
-import { debounce } from 'lodash';
+import AppLayout from '@/layouts/AppLayout.vue';
 
 const props = defineProps<{
     players: {
@@ -48,13 +40,12 @@ const props = defineProps<{
 }>();
 
 const search = ref(props.filters.search || '');
-const genderFilter = ref(props.filters.gender || 'all');
 
 // Debounce search to avoid too many requests
 const updateSearch = debounce((value: string) => {
     router.get(
         route('admin.player-details.index'),
-        { search: value, gender: genderFilter.value },
+        { search: value },
         { preserveState: true, replace: true, preserveScroll: true }
     );
 }, 300);
@@ -62,15 +53,6 @@ const updateSearch = debounce((value: string) => {
 watch(search, (value) => {
     updateSearch(value);
 });
-
-const setGenderFilter = (gender: string) => {
-    genderFilter.value = gender;
-    router.get(
-        route('admin.player-details.index'),
-        { search: search.value, gender: gender },
-        { preserveState: true, replace: true, preserveScroll: true }
-    );
-};
 
 const breadcrumbs = [
     { title: 'Player Details', href: route('admin.player-details.index') },
@@ -84,6 +66,15 @@ const formatDate = (dateString: string) => {
         day: 'numeric'
     });
 };
+
+const getInitials = (name: string) => {
+    return (name || '')
+        .split(' ')
+        .map((n) => n[0])
+        .join('')
+        .toUpperCase()
+        .slice(0, 2);
+};
 </script>
 
 <template>
@@ -95,7 +86,7 @@ const formatDate = (dateString: string) => {
                 <h2 class="text-3xl font-bold tracking-tight">Player Details</h2>
             </div>
             
-            <Card class="border-border bg-card">
+            <Card class="border-none shadow-none bg-transparent">
                 <CardHeader class="p-4 sm:p-6">
                     <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                         <div class="space-y-1">
@@ -112,106 +103,74 @@ const formatDate = (dateString: string) => {
                                     class="pl-9 h-9 w-full bg-background border-border"
                                 />
                             </div>
-                            <DropdownMenu>
-                                <DropdownMenuTrigger as-child>
-                                    <Button variant="outline" size="sm" class="h-9 gap-2 border-border bg-background text-foreground">
-                                        <ListFilter class="h-3.5 w-3.5" />
-                                        <span class="sr-only sm:not-sr-only">Filter</span>
-                                    </Button>
-                                </DropdownMenuTrigger>
-                                <DropdownMenuContent align="end" class="bg-popover border-border">
-                                    <DropdownMenuLabel class="text-popover-foreground">Filter by Gender</DropdownMenuLabel>
-                                    <DropdownMenuSeparator class="bg-border" />
-                                    <DropdownMenuCheckboxItem 
-                                        :checked="genderFilter === 'all'"
-                                        @click="setGenderFilter('all')"
-                                        class="focus:bg-accent focus:text-accent-foreground"
-                                    >
-                                        All
-                                    </DropdownMenuCheckboxItem>
-                                    <DropdownMenuCheckboxItem 
-                                        :checked="genderFilter === 'Male'"
-                                        @click="setGenderFilter('Male')"
-                                        class="focus:bg-accent focus:text-accent-foreground"
-                                    >
-                                        Male
-                                    </DropdownMenuCheckboxItem>
-                                    <DropdownMenuCheckboxItem 
-                                        :checked="genderFilter === 'Female'"
-                                        @click="setGenderFilter('Female')"
-                                        class="focus:bg-accent focus:text-accent-foreground"
-                                    >
-                                        Female
-                                    </DropdownMenuCheckboxItem>
-                                </DropdownMenuContent>
-                            </DropdownMenu>
                         </div>
                     </div>
                 </CardHeader>
                 <CardContent class="p-0">
-                    <div class="relative w-full overflow-auto">
-                        <Table>
+                <div class="relative w-full overflow-auto rounded-md border border-border">
+                    <Table>
                             <TableHeader>
-                                <TableRow class="bg-muted border-b border-border hover:bg-muted">
-                                    <TableHead class="pl-6 h-12 text-muted-foreground font-medium">Player</TableHead>
-                                    <TableHead class="h-12 text-muted-foreground font-medium">Address</TableHead>
-                                    <TableHead class="h-12 text-muted-foreground font-medium">Email Address</TableHead>
-                                    <TableHead class="h-12 text-muted-foreground font-medium">Contact Person</TableHead>
-                                    <TableHead class="h-12 text-muted-foreground font-medium">Phone Number</TableHead>
-                                    <TableHead class="h-12 text-muted-foreground font-medium">Birthday</TableHead>
+                            <TableRow class="bg-muted/50 hover:bg-muted/50">
+                                <TableHead class="h-12 px-4 align-middle font-medium text-muted-foreground w-64">Player</TableHead>
+                                <TableHead class="h-12 px-4 align-middle font-medium text-muted-foreground w-48">Address</TableHead>
+                                <TableHead class="h-12 px-4 align-middle font-medium text-muted-foreground w-56">Email Address</TableHead>
+                                <TableHead class="h-12 px-4 align-middle font-medium text-muted-foreground w-48">Contact Person</TableHead>
+                                <TableHead class="h-12 px-4 align-middle font-medium text-muted-foreground w-40">Phone Number</TableHead>
+                                <TableHead class="h-12 px-4 align-middle font-medium text-muted-foreground w-40">Birthday</TableHead>
                                 </TableRow>
                             </TableHeader>
-                            <TableBody>
-                                <TableRow 
-                                    v-for="player in players.data" 
-                                    :key="player.id"
-                                    class="border-b border-border hover:bg-muted/50 transition-colors"
-                                >
-                                    <TableCell class="pl-6 py-4 font-medium text-foreground">
+                        <TableBody>
+                            <TableRow 
+                                v-for="player in players.data" 
+                                :key="player.id"
+                                class="hover:bg-muted/50 transition-colors border-b border-border"
+                            >
+                                <TableCell class="p-4 align-middle">
                                         <div class="flex items-center gap-3">
-                                            <div class="h-9 w-9 rounded-full bg-muted flex items-center justify-center overflow-hidden border border-border">
-                                                <img 
-                                                    v-if="player.profile_image" 
-                                                    :src="`/storage/${player.profile_image}`" 
-                                                    :alt="player.full_name"
-                                                    class="h-full w-full object-cover" 
-                                                />
-                                                <User v-else class="h-4 w-4 text-muted-foreground" />
-                                            </div>
+                                        <Avatar class="h-9 w-9 border border-border">
+                                            <AvatarImage 
+                                                v-if="player.profile_image"
+                                                :src="`/storage/${player.profile_image}`" 
+                                                :alt="player.full_name"
+                                            />
+                                            <AvatarFallback :class="player.gender === 'Female' ? 'bg-primary/10 text-primary' : 'bg-secondary/10 text-secondary'">
+                                                {{ getInitials(player.full_name) }}
+                                            </AvatarFallback>
+                                        </Avatar>
                                             <div class="flex flex-col">
-                                                <span class="font-medium">{{ player.full_name }}</span>
+                                            <span class="font-medium text-foreground">{{ player.full_name }}</span>
                                                 <span class="text-xs text-muted-foreground">{{ player.club || 'No Club' }}</span>
                                             </div>
                                         </div>
                                     </TableCell>
-                                    <TableCell class="py-4">
-                                        <div class="flex items-center gap-2 text-sm text-muted-foreground">
-                                            <MapPin class="h-3.5 w-3.5 text-muted-foreground/70" />
-                                            <span class="truncate max-w-50" :title="player.address">{{ player.address || '-' }}</span>
+                                <TableCell class="p-4 align-middle">
+                                    <div class="flex items-center gap-2 text-sm text-muted-foreground truncate max-w-64" :title="player.address">
+                                        <MapPin class="h-3.5 w-3.5 text-foreground" />
+                                        <span class="truncate">{{ player.address || '-' }}</span>
                                         </div>
                                     </TableCell>
-                                    <TableCell class="py-4">
-                                        <div class="flex items-center gap-2 text-sm text-muted-foreground">
-                                            <Mail class="h-3.5 w-3.5 text-muted-foreground/70" />
-                                            <span class="truncate max-w-50" :title="player.email">{{ player.email || '-' }}</span>
+                                <TableCell class="p-4 align-middle">
+                                    <div class="flex items-center gap-2 text-sm text-muted-foreground truncate max-w-64" :title="player.email">
+                                        <Mail class="h-3.5 w-3.5 text-foreground" />
+                                        <span class="truncate">{{ player.email || '-' }}</span>
                                         </div>
                                     </TableCell>
-                                    <TableCell class="py-4">
-                                        <div class="flex items-center gap-2 text-sm text-muted-foreground">
-                                            <User class="h-3.5 w-3.5 text-muted-foreground/70" />
-                                            <span>{{ player.emergency_contact || '-' }}</span>
+                                <TableCell class="p-4 align-middle">
+                                    <div class="flex items-center gap-2 text-sm text-muted-foreground">
+                                        <User class="h-3.5 w-3.5 text-primary" />
+                                        <span>{{ player.emergency_contact || '-' }}</span>
                                         </div>
                                     </TableCell>
-                                    <TableCell class="py-4">
-                                        <div class="flex items-center gap-2 text-sm text-muted-foreground">
-                                            <Phone class="h-3.5 w-3.5 text-muted-foreground/70" />
-                                            <span>{{ player.emergency_contact_number || '-' }}</span>
+                                <TableCell class="p-4 align-middle">
+                                    <div class="flex items-center gap-2 text-sm text-muted-foreground">
+                                        <Phone class="h-3.5 w-3.5 text-foreground" />
+                                        <span>{{ player.emergency_contact_number || '-' }}</span>
                                         </div>
                                     </TableCell>
-                                    <TableCell class="py-4">
-                                        <div class="flex items-center gap-2 text-sm text-muted-foreground">
-                                            <Calendar class="h-3.5 w-3.5 text-muted-foreground/70" />
-                                            <span>{{ formatDate(player.birthday) }}</span>
+                                <TableCell class="p-4 align-middle">
+                                    <div class="flex items-center gap-2 text-sm text-muted-foreground">
+                                        <Calendar class="h-3.5 w-3.5 text-foreground" />
+                                        <span>{{ formatDate(player.birthday) }}</span>
                                         </div>
                                     </TableCell>
                                 </TableRow>

@@ -115,9 +115,9 @@ const getStatusColor = (status: string) => {
 
 <template>
 <Head :title="`${props.tournament.name} | Kurash Federation`" />
-<div class="min-h-screen bg-background text-foreground font-sans selection:bg-accent selection:text-accent-foreground">
+<div class="min-h-screen bg-black text-foreground font-sans selection:bg-accent selection:text-accent-foreground">
     <!-- Navbar (Consistent across public pages) -->
-    <header class="border-b border-border bg-background/95 backdrop-blur-sm relative z-50">
+    <header class="border-b border-border bg-black/95 backdrop-blur-sm relative z-50">
       <div class="max-w-360 mx-auto px-8 h-20 flex items-center justify-between">
         <a :href="route('public.home')" class="flex items-center gap-3">
           <img src="/images/ksf-logo.png" alt="KSF Logo" class="h-12 w-auto" />
