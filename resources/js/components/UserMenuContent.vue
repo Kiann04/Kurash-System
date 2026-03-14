@@ -8,7 +8,7 @@ import {
     DropdownMenuSeparator,
 } from '@/components/ui/dropdown-menu';
 import UserInfo from '@/components/UserInfo.vue';
-import { logout } from '@/routes';
+import { route } from 'ziggy-js';
 import { edit } from '@/routes/profile';
 import type { User } from '@/types';
 
@@ -42,9 +42,10 @@ defineProps<Props>();
     <DropdownMenuItem :as-child="true">
         <Link
             class="block w-full cursor-pointer"
-            :href="logout()"
+            :href="route('logout')"
             @click="handleLogout"
             as="button"
+            method="post"
             data-test="logout-button"
         >
             <LogOut class="mr-2 h-4 w-4" />

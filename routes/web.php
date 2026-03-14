@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 use Laravel\Fortify\Features;
 use App\Http\Controllers\Admin\PlayerController as AdminPlayerController;
@@ -27,6 +28,13 @@ Route::get('public/brackets', [PublicTournamentController::class, 'bracketsIndex
 Route::get('public/brackets/{tournament}', [PublicTournamentController::class, 'tournamentBrackets'])->name('public.brackets.show');
 Route::get('public/athletes', [PublicAthleteController::class, 'index'])->name('public.athletes.index');
 Route::get('public/rankings', [PublicRankingController::class, 'index'])->name('public.rankings.index');
+
+Route::get('media/{path}', function (string $path) {
+    if (!Storage::disk('public')->exists($path)) {
+        abort(404);
+    }
+    return Storage::disk('public')->response($path);
+})->where('path', '.*')->name('media');
 
 Route::get('dashboard', [AdminDashboardController::class, 'index'])
     ->middleware(['auth', 'verified'])

@@ -1,12 +1,19 @@
 <script setup lang="ts">
 import { Head, useForm } from '@inertiajs/vue3';
-import { Calendar, Save } from 'lucide-vue-next';
+import { Calendar, Save, ChevronDown, X } from 'lucide-vue-next';
 import { route } from 'ziggy-js';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { DatePicker } from '@/components/ui/date-picker';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { ref } from 'vue';
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { type BreadcrumbItem } from '@/types';
 
@@ -21,7 +28,7 @@ const form = useForm({
     location: '',
     start_date: '',
     end_date: '',
-    status: 'draft',
+    status: 'published',
     image: null as File | null,
 });
 
@@ -32,6 +39,15 @@ const onImageChange = (event: Event) => {
 
 const getImageUrl = (file: File) => {
     return URL.createObjectURL(file);
+};
+
+const imageInputRef = ref<HTMLInputElement | null>(null);
+
+const clearImage = () => {
+    if (imageInputRef.value) {
+        imageInputRef.value.value = '';
+    }
+    form.image = null;
 };
 
 const submit = () => {
@@ -124,16 +140,20 @@ const submit = () => {
                         </div>
                     </div>
 
-                    <div class="grid gap-2">
+                    <div class="space-y-2">
                         <Label for="status">Status</Label>
-                        <select
-                            id="status"
-                            v-model="form.status"
-                            class="h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
-                        >
-                            <option value="draft">Draft</option>
-                            <option value="published">Published</option>
-                        </select>
+                        <DropdownMenu>
+                            <DropdownMenuTrigger as-child>
+                                <Button variant="outline" class="w-full justify-between bg-background border-input text-foreground capitalize font-normal">
+                                    {{ form.status }}
+                                    <ChevronDown class="ml-2 h-4 w-4 opacity-50" />
+                                </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" class="min-w-0 w-[var(--reka-dropdown-menu-trigger-width)]">
+                                <DropdownMenuItem @click="form.status = 'draft'" class="capitalize">Draft</DropdownMenuItem>
+                                <DropdownMenuItem @click="form.status = 'published'" class="capitalize">Published</DropdownMenuItem>
+                            </DropdownMenuContent>
+                        </DropdownMenu>
                         <p v-if="form.errors.status" class="text-xs text-destructive">{{ form.errors.status }}</p>
                     </div>
                     </div>
@@ -150,11 +170,12 @@ const submit = () => {
                             type="file"
                             accept="image/*"
                             @change="onImageChange"
+                            ref="imageInputRef"
                             class="h-10 w-full rounded-md border border-input bg-muted/30 px-3 py-2 text-sm shadow-sm text-foreground file:border-0 file:bg-transparent file:text-sm file:font-medium"
                         />
                         <p v-if="form.errors.image" class="text-xs text-destructive">{{ form.errors.image }}</p>
                     </div>
-                    <div class="rounded-lg border border-border bg-muted/30 h-64 flex items-center justify-center overflow-hidden">
+                    <div class="relative rounded-lg border border-border bg-muted/30 h-64 flex items-center justify-center overflow-hidden">
                         <img
                             v-if="form.image"
                             :src="getImageUrl(form.image)"
@@ -162,6 +183,16 @@ const submit = () => {
                             class="max-h-full max-w-full object-contain"
                         />
                         <div v-else class="text-xs text-muted-foreground uppercase tracking-widest">No image</div>
+                        <Button
+                            v-if="form.image"
+                            variant="outline"
+                            size="icon"
+                            class="absolute top-2 right-2 h-7 w-7 rounded-full bg-background/80 hover:bg-background"
+                            @click="clearImage"
+                            title="Remove image"
+                        >
+                            <X class="h-4 w-4" />
+                        </Button>
                     </div>
                     <div class="text-xs text-muted-foreground">
                         Recommended size: 1600×900 or larger. JPG/PNG, max 2MB.
