@@ -25,6 +25,8 @@ import {
 } from '@/components/ui/table'
 import { useBracketLogic } from '@/composables/useBracketLogic'
 import type { MatchItem, BracketItem } from '@/types/bracket'
+import { router } from '@inertiajs/vue3'
+import { route } from 'ziggy-js'
 
 /**
  * Component props
@@ -65,6 +67,20 @@ const {
     matchReady 
 } = useBracketLogic()
 
+const formatAbbrev = (format: BracketItem['format']) => {
+    if (format === 'single_elimination') return 'SE'
+    if (format === 'double_elimination') return 'DE'
+    if (format === 'round_robin') return 'RR'
+    if (format === 'pool_to_elimination') return 'POOL'
+    if (format === 'ladder') return 'LAD'
+    return 'UNK'
+}
+
+const updateFormat = async (bracketId: number, format: BracketItem['format']) => {
+    try {
+        await router.post(route('admin.brackets.update-format', { bracket: bracketId }), { format })
+    } catch (e) {}
+}
 /**
  * Selects a bracket to view its details.
  * @param id Bracket ID
@@ -137,9 +153,11 @@ const chooseWinner = (match: MatchItem, winnerId: number | null) => emit('choose
                                 </div>
                             </TableCell>
                             <TableCell class="text-center">
-                                <Badge :variant="bracket.format === 'single_elimination' ? 'secondary' : 'outline'">
-                                    {{ formatLabel(bracket.format) }}
-                                </Badge>
+                                <div class="flex items-center justify-center gap-2">
+                                    <Badge :variant="bracket.format === 'single_elimination' ? 'secondary' : 'outline'" :title="formatLabel(bracket.format)">
+                                        {{ formatAbbrev(bracket.format) }}
+                                    </Badge>
+                                </div>
                             </TableCell>
                             <TableCell class="text-center font-medium">
                                 {{ bracket.entrant_count ?? 0 }}
@@ -183,7 +201,15 @@ const chooseWinner = (match: MatchItem, winnerId: number | null) => emit('choose
                                     <Badge variant="default" class="bg-primary hover:bg-primary/90">{{ (bracket.gender || 'unknown').toUpperCase() }}</Badge>
                                     <Badge variant="secondary" class="bg-muted text-muted-foreground">{{ bracket.age_category || '-' }}</Badge>
                                     <Badge variant="outline" class="border-border text-foreground">{{ bracket.weight_category || '-' }}</Badge>
-                                    <Badge variant="outline" class="border-border text-foreground">{{ formatLabel(bracket.format) }}</Badge>
+                                    <Badge variant="outline" class="border-border text-foreground" :title="formatLabel(bracket.format)">{{ formatAbbrev(bracket.format) }}</Badge>
+                                    <select class="text-xs border rounded-md px-2 py-1" :value="bracket.format || 'unknown'" @change="updateFormat(bracket.id, ($event.target as HTMLSelectElement).value as BracketItem['format'])">
+                                        <option value="unknown">Unknown</option>
+                                        <option value="single_elimination">Single Elimination</option>
+                                        <option value="double_elimination">Double Elimination</option>
+                                        <option value="round_robin">Round Robin</option>
+                                        <option value="pool_to_elimination">Pools to Elimination</option>
+                                        <option value="ladder">Ladder</option>
+                                    </select>
                                     <span class="text-sm text-muted-foreground ml-2">{{ bracket.entrant_count ?? 0 }} Entrants</span>
                                 </div>
                             </div>

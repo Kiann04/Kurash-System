@@ -27,7 +27,6 @@ import {
 } from '@/components/ui/dialog'
 import { useBracketLogic } from '@/composables/useBracketLogic'
 import AppLayout from '@/layouts/AppLayout.vue'
-import type { BreadcrumbItem } from '@/types'
 import type { MatchItem, BracketItem, TournamentItem, CategoryParticipant } from '@/types/bracket'
 
 // Components
@@ -72,15 +71,6 @@ const revertMatchItem = ref<MatchItem | null>(null)
 const { 
     matchReady 
 } = useBracketLogic()
-
-/**
- * Breadcrumbs
- */
-const breadcrumbs: BreadcrumbItem[] = [
-    { title: 'Tournaments', href: route('admin.tournaments.index') },
-    { title: 'Brackets', href: route('admin.brackets.index') },
-    { title: 'Bracket Management', href: '' },
-]
 
 /**
  * Computed list of all scheduled matches across all brackets.
@@ -260,7 +250,7 @@ const goBack = () => {
 </script>
 
 <template>
-    <AppLayout title="Bracket Management" :breadcrumbs="pageBreadcrumbs">
+    <AppLayout title="Bracket Management">
         <Head title="Bracket Management" />
 
         <div class="py-6" :class="{ 'fixed inset-0 z-50 bg-background overflow-auto p-4': fullscreenBracketId }">

@@ -229,10 +229,10 @@ const formatDate = (date: string) => {
  */
 const getStatusColor = (status: string) => {
     switch(status.toLowerCase()) {
-        case 'open': return 'bg-primary/15 text-primary hover:bg-primary/25 border-primary/20';
+        case 'open': return 'bg-accent/15 text-accent hover:bg-accent/25 border-accent/20';
         case 'ongoing': return 'bg-secondary/15 text-secondary hover:bg-secondary/25 border-secondary/20';
-        case 'completed': return 'bg-muted text-muted-foreground hover:bg-muted/80 border-border';
-        default: return 'bg-accent/15 text-accent-foreground hover:bg-accent/25 border-accent/20'; // draft
+        case 'completed': return 'bg-primary/15 text-primary hover:bg-primary/25 border-primary/20';
+        default: return 'bg-accent/15 text-accent hover:bg-accent/25 border-accent/20'; // draft
     }
 };
 
@@ -258,7 +258,7 @@ const stats = computed(() => [
         title: 'Weight Classes',
         value: props.weightCategories.length,
         icon: Dumbbell,
-        color: 'text-accent-foreground',
+        color: 'text-accent',
         bg: 'bg-accent/15'
     }
 ]);

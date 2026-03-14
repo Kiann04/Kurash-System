@@ -18,8 +18,10 @@ export interface BracketItem {
     gender: string | null
     age_category: string | null
     weight_category: string | null
-    format: 'round_robin' | 'single_elimination' | null
-    rounds: number
+    format: 'single_elimination' | 'double_elimination' | 'round_robin' | 'pool_to_elimination' | 'ladder' | 'unknown' | null
+    rounds: number | null
+    pools?: number | null
+    stage_labels?: string[] | null
     entrant_count?: number
     champion: string | null
     awards?: {

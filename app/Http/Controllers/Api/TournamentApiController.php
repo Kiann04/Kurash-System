@@ -185,6 +185,7 @@ class TournamentApiController extends Controller
 
             // Structure data by bracket as requested
             $brackets = $tournament->brackets->map(function ($bracket) {
+                $derived = $this->deriveFormatAndLabels($bracket);
                 return [
                     'id' => $bracket->id,
                     'name' => ($bracket->ageCategory ? $bracket->ageCategory->name : '') . ' ' .
@@ -193,6 +194,10 @@ class TournamentApiController extends Controller
                     'age_category' => $bracket->ageCategory ? $bracket->ageCategory->name : 'Unknown',
                     'weight_category' => $bracket->weightCategory ? $bracket->weightCategory->name : 'Open',
                     'gender' => $bracket->gender,
+                    'format' => $derived['format'],
+                    'rounds' => $derived['rounds'],
+                    'pools' => $derived['pools'],
+                    'stage_labels' => $derived['stage_labels'],
                     'matches' => $bracket->matches->map(function ($match) use ($bracket) {
                         return [
                             'id' => $match->id,
@@ -287,6 +292,7 @@ class TournamentApiController extends Controller
                         ($bracket->weightCategory?->name ?? '') . ' ' .
                         ($bracket->gender ?? '')
                     );
+                    $derived = $this->deriveFormatAndLabels($bracket);
                     $matches = $bracket->matches->map(function ($match) use ($bracket) {
                         $meta = $this->roundMeta($bracket, $match);
                         $next = $this->nextMatchLink($bracket, $match);
@@ -345,6 +351,10 @@ class TournamentApiController extends Controller
                         'gender' => $bracket->gender ?? 'N/A',
                         'age_category' => $bracket->ageCategory?->name,
                         'weight_category' => $bracket->weightCategory?->name,
+                        'format' => $derived['format'],
+                        'rounds' => $derived['rounds'],
+                        'pools' => $derived['pools'],
+                        'stage_labels' => $derived['stage_labels'],
                         'matches' => $matches,
                     ];
                 });
@@ -405,6 +415,57 @@ class TournamentApiController extends Controller
         }
         $rn = $match->round_number ?: 0;
         return ['round_name' => 'Round '.$rn, 'round_order' => max(10, $rn * 10)];
+    }
+
+    private function deriveFormatAndLabels($bracket): array
+    {
+        $format = $bracket->format ?? null;
+        $rounds = $bracket->rounds ?? null;
+        $pools = $bracket->pools ?? null;
+        $stageLabels = null;
+
+        if (!$format) {
+            $matchesByRound = $bracket->matches->groupBy('round_number')->map->count()->sortKeys();
+            $counts = $matchesByRound->values()->all();
+            if (!empty($counts)) {
+                $last = end($counts);
+                $isDecreasing = true;
+                for ($i = 1; $i < count($counts); $i++) {
+                    if ($counts[$i] > $counts[$i - 1]) { $isDecreasing = false; break; }
+                }
+                if ($last === 1 && $isDecreasing) {
+                    $format = 'single_elimination';
+                } else {
+                    $format = 'round_robin';
+                }
+            }
+        }
+
+        if ($format === 'single_elimination') {
+            $stageLabels = [];
+            $total = (int) ($rounds ?? $bracket->matches->max('round_number') ?? 0);
+            if ($total >= 3) { $stageLabels[] = 'Quarterfinals'; }
+            if ($total >= 2) { $stageLabels[] = 'Semifinals'; }
+            if ($total >= 1) { $stageLabels[] = 'Finals'; }
+            $hasBronze = $bracket->matches->where('is_bronze', true)->isNotEmpty();
+            if ($hasBronze) { $stageLabels[] = 'Bronze'; }
+        }
+
+        if (!$format) {
+            $format = 'unknown';
+        }
+
+        if ($bracket->format !== $format) {
+            $bracket->format = $format;
+            $bracket->save();
+        }
+
+        return [
+            'format' => $format,
+            'rounds' => $rounds ?? ($bracket->matches->max('round_number') ?: null),
+            'pools' => $pools ?? null,
+            'stage_labels' => $stageLabels,
+        ];
     }
 
     private function nextMatchLink($bracket, $match): array

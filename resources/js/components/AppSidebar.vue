@@ -73,8 +73,8 @@ const footerNavItems: NavItem[] = [
                 <SidebarMenuItem>
                     <SidebarMenuButton size="lg" as-child class="md:h-16 md:py-2 group-data-[collapsible=icon]:p-2!">
                         <Link :href="dashboard()">
-                            <div class="flex aspect-square size-10 items-center justify-center rounded-lg bg-transparent">
-                                <img src="/images/ksf-logo.png" alt="KSF Logo" class="size-9 object-contain rounded-md" />
+                            <div class="flex aspect-square size-12 items-center justify-center rounded-lg">
+                                <AppLogo />
                             </div>
                             <div class="grid flex-1 text-left text-sm leading-tight group-data-[collapsible=icon]:hidden">
                                 <span class="truncate font-bold text-primary">Kurash System</span>

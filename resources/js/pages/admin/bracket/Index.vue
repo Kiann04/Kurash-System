@@ -44,7 +44,6 @@ import {
     TableRow,
 } from '@/components/ui/table'
 import AppLayout from '@/layouts/AppLayout.vue'
-import { type BreadcrumbItem } from '@/types'
 
 /**
  * Interface representing a tournament in the context of bracket generation
@@ -122,15 +121,15 @@ const formatDate = (date: string) => {
 const getStatusClass = (status: string) => {
     switch (status) {
         case 'draft':
-            return 'bg-accent text-accent-foreground border-accent hover:bg-accent/90'
+            return 'bg-accent/15 text-accent hover:bg-accent/25 border-accent/20'
         case 'open':
-            return 'bg-primary text-primary-foreground border-primary hover:bg-primary/90'
+            return 'bg-accent/15 text-accent hover:bg-accent/25 border-accent/20'
         case 'ongoing':
-            return 'bg-secondary text-secondary-foreground border-secondary hover:bg-secondary/90'
+            return 'bg-secondary/15 text-secondary hover:bg-secondary/25 border-secondary/20'
         case 'completed':
-            return 'bg-muted text-muted-foreground border-border'
+            return 'bg-primary/15 text-primary hover:bg-primary/25 border-primary/20'
         default:
-            return 'bg-muted text-muted-foreground border-border'
+            return 'bg-accent/15 text-accent hover:bg-accent/25 border-accent/20'
     }
 }
 
@@ -153,19 +152,12 @@ const filteredGenerated = computed(() => {
         t.name.toLowerCase().includes(search.value.toLowerCase())
     )
 })
-
-/**
- * Breadcrumbs
- */
-const breadcrumbs: BreadcrumbItem[] = [
-    { title: 'Brackets', href: route('admin.brackets.index') },
-]
 </script>
 
 <template>
     <Head title="Generate Brackets" />
 
-    <AppLayout :breadcrumbs="breadcrumbs">
+    <AppLayout>
         <div class="p-6 space-y-6">
             <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
@@ -185,7 +177,7 @@ const breadcrumbs: BreadcrumbItem[] = [
 
             <div class="grid gap-6">
                 <!-- Pending Generation -->
-                <Card class="border-none shadow-none bg-transparent">
+                <Card class="border-l-4 border-l-secondary shadow-sm bg-card text-card-foreground">
                     <CardHeader class="border-b bg-muted/50">
                         <CardTitle class="flex items-center gap-2 text-lg text-foreground">
                             <ListTree class="h-5 w-5 text-secondary" />
@@ -196,10 +188,10 @@ const breadcrumbs: BreadcrumbItem[] = [
                         </CardDescription>
                     </CardHeader>
                     <CardContent class="p-0">
-                        <div class="rounded-md border border-border">
-                        <Table>
-                            <TableHeader class="bg-muted/50 sticky top-0 z-10">
-                                <TableRow class="hover:bg-transparent border-b border-border">
+                        <div class="relative w-full overflow-auto rounded-md border border-border">
+                            <Table>
+                            <TableHeader>
+                                <TableRow class="bg-muted/50 hover:bg-muted/50">
                                     <TableHead class="w-[30%] font-semibold text-muted-foreground">Tournament</TableHead>
                                     <TableHead class="hidden md:table-cell font-semibold text-muted-foreground">Date</TableHead>
                                     <TableHead class="hidden md:table-cell font-semibold text-muted-foreground">Location</TableHead>
@@ -218,36 +210,36 @@ const breadcrumbs: BreadcrumbItem[] = [
                                         <div class="flex flex-col">
                                             <span class="font-medium text-foreground">{{ tournament.name }}</span>
                                             <span class="text-xs text-muted-foreground md:hidden flex items-center gap-1">
-                                                <Calendar class="h-3 w-3" />
+                                                <Calendar class="h-3 w-3 text-white" />
                                                 {{ formatDate(tournament.tournament_date) }}
                                             </span>
                                             <span v-if="tournament.location" class="text-xs text-muted-foreground md:hidden flex items-center gap-1 mt-0.5">
-                                                <MapPin class="h-3 w-3" />
+                                                <MapPin class="h-3 w-3 text-white" />
                                                 {{ tournament.location }}
                                             </span>
                                         </div>
                                     </TableCell>
                                     <TableCell class="hidden md:table-cell">
                                         <div class="flex items-center gap-2 text-muted-foreground">
-                                            <Calendar class="h-3.5 w-3.5" />
+                                            <Calendar class="h-3.5 w-3.5 text-white" />
                                             {{ formatDate(tournament.tournament_date) }}
                                         </div>
                                     </TableCell>
                                     <TableCell class="hidden md:table-cell">
                                         <div class="flex items-center gap-2 text-muted-foreground">
-                                            <MapPin class="h-3.5 w-3.5" />
+                                            <MapPin class="h-3.5 w-3.5 text-white" />
                                             {{ tournament.location || '-' }}
                                         </div>
                                     </TableCell>
                                     <TableCell>
-                                        <Badge :class="['capitalize font-normal border', getStatusClass(tournament.status)]">
+                                        <Badge variant="outline" :class="['capitalize shadow-none font-normal w-20 justify-center border-transparent', getStatusClass(tournament.status)]">
                                             {{ tournament.status }}
                                         </Badge>
                                     </TableCell>
                                     <TableCell class="text-center">
                                         <div class="flex items-center justify-center gap-1">
-                                            <Users class="h-3.5 w-3.5 text-muted-foreground" />
-                                            <span class="text-foreground">{{ tournament.registrations_count }}</span>
+                                            <Users class="h-3.5 w-3.5 text-white" />
+                                            <span class="text-white font-normal">{{ tournament.registrations_count }}</span>
                                         </div>
                                     </TableCell>
                                     <TableCell class="text-right">
@@ -280,13 +272,13 @@ const breadcrumbs: BreadcrumbItem[] = [
                                     </TableCell>
                                 </TableRow>
                             </TableBody>
-                        </Table>
+                            </Table>
                         </div>
                     </CardContent>
                 </Card>
 
                 <!-- Generated Brackets -->
-                <Card class="border-none shadow-none bg-transparent">
+                <Card class="shadow-sm bg-card text-card-foreground border-border">
                     <CardHeader class="border-b bg-muted/50">
                         <CardTitle class="flex items-center gap-2 text-lg text-foreground">
                             <CheckCircle2 class="h-5 w-5 text-primary" />
@@ -297,10 +289,10 @@ const breadcrumbs: BreadcrumbItem[] = [
                         </CardDescription>
                     </CardHeader>
                     <CardContent class="p-0">
-                        <div class="rounded-md border border-border">
-                        <Table>
-                            <TableHeader class="bg-muted/50 sticky top-0 z-10">
-                                <TableRow class="hover:bg-transparent border-b border-border">
+                        <div class="relative w-full overflow-auto rounded-md border border-border">
+                            <Table>
+                            <TableHeader>
+                                <TableRow class="bg-muted/50 hover:bg-muted/50">
                                     <TableHead class="w-[30%] font-semibold text-muted-foreground">Tournament</TableHead>
                                     <TableHead class="hidden md:table-cell font-semibold text-muted-foreground">Date</TableHead>
                                     <TableHead class="hidden md:table-cell font-semibold text-muted-foreground">Location</TableHead>
@@ -319,46 +311,45 @@ const breadcrumbs: BreadcrumbItem[] = [
                                         <div class="flex flex-col">
                                             <span class="font-medium text-foreground">{{ tournament.name }}</span>
                                             <span class="text-xs text-muted-foreground md:hidden flex items-center gap-1">
-                                                <Calendar class="h-3 w-3" />
+                                                <Calendar class="h-3 w-3 text-white" />
                                                 {{ formatDate(tournament.tournament_date) }}
                                             </span>
                                             <span v-if="tournament.location" class="text-xs text-muted-foreground md:hidden flex items-center gap-1 mt-0.5">
-                                                <MapPin class="h-3 w-3" />
+                                                <MapPin class="h-3 w-3 text-white" />
                                                 {{ tournament.location }}
                                             </span>
                                         </div>
                                     </TableCell>
                                     <TableCell class="hidden md:table-cell">
                                         <div class="flex items-center gap-2 text-muted-foreground">
-                                            <Calendar class="h-3.5 w-3.5" />
+                                            <Calendar class="h-3.5 w-3.5 text-white" />
                                             {{ formatDate(tournament.tournament_date) }}
                                         </div>
                                     </TableCell>
                                     <TableCell class="hidden md:table-cell">
                                         <div class="flex items-center gap-2 text-muted-foreground">
-                                            <MapPin class="h-3.5 w-3.5" />
+                                            <MapPin class="h-3.5 w-3.5 text-white" />
                                             {{ tournament.location || '-' }}
                                         </div>
                                     </TableCell>
                                     <TableCell>
-                                        <Badge variant="outline" :class="['capitalize font-normal', getStatusClass(tournament.status)]">
+                                        <Badge variant="outline" :class="['capitalize shadow-none font-normal w-20 justify-center border-transparent', getStatusClass(tournament.status)]">
                                             {{ tournament.status }}
                                         </Badge>
                                     </TableCell>
                                     <TableCell class="text-center">
                                         <div class="flex items-center justify-center gap-1">
-                                            <Users class="h-3.5 w-3.5 text-muted-foreground" />
-                                            <span class="text-foreground">{{ tournament.registrations_count }}</span>
+                                            <Users class="h-3.5 w-3.5 text-white" />
+                                            <span class="text-white font-normal">{{ tournament.registrations_count }}</span>
                                         </div>
                                     </TableCell>
                                     <TableCell class="text-right">
                                         <div class="flex items-center justify-end gap-2">
                                             <Button 
-                                                variant="default" 
                                                 size="sm" 
                                                 :disabled="tournament.registrations_count < 2"
                                                 @click="confirmRegenerate(tournament)"
-                                                class="bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm transition-all disabled:opacity-50"
+                                                class="bg-primary hover:bg-primary/90 text-primary-foreground shadow-sm transition-all"
                                                 title="Regenerate Brackets"
                                             >
                                                 <RefreshCw class="h-3.5 w-3.5 mr-1.5" />
@@ -384,7 +375,7 @@ const breadcrumbs: BreadcrumbItem[] = [
                                     </TableCell>
                                 </TableRow>
                             </TableBody>
-                        </Table>
+                            </Table>
                         </div>
                     </CardContent>
                 </Card>

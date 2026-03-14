@@ -101,7 +101,10 @@ export function useBracketLogic() {
      */
     const formatLabel = (format: BracketItem['format']) => {
         if (format === 'single_elimination') return 'Single Elimination'
+        if (format === 'double_elimination') return 'Double Elimination'
         if (format === 'round_robin') return 'Round Robin'
+        if (format === 'pool_to_elimination') return 'Pools to Elimination'
+        if (format === 'ladder') return 'Ladder'
         return 'Unknown'
     }
 

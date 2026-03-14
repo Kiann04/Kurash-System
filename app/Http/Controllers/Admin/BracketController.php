@@ -366,6 +366,21 @@ class BracketController extends Controller
 
         return back()->with('success', 'Match reverted successfully.');
     }
+
+    public function updateFormat(Request $request, Bracket $bracket): RedirectResponse
+    {
+        $validated = $request->validate([
+            'format' => 'required|string|in:single_elimination,double_elimination,round_robin,pool_to_elimination,ladder,unknown',
+            'rounds' => 'nullable|integer|min:1',
+            'pools' => 'nullable|integer|min:1',
+        ]);
+        $bracket->update([
+            'format' => $validated['format'],
+            'rounds' => $validated['rounds'] ?? $bracket->rounds,
+            'pools' => $validated['pools'] ?? $bracket->pools,
+        ]);
+        return back()->with('success', 'Bracket format updated.');
+    }
     /**
      * Check and update tournament status based on match completion.
      *

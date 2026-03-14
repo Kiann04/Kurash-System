@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Link, Head } from '@inertiajs/vue3';
-import { Users, UserCheck, UserX, ArrowRight, Shield, Calendar, Clock, Trophy } from 'lucide-vue-next';
+import { Users, UserCheck, UserX, ArrowRight, Calendar, Clock, Trophy } from 'lucide-vue-next';
 import { route } from 'ziggy-js';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
@@ -125,7 +125,7 @@ const getInitials = (name: string) => {
 
             <div class="grid gap-6 md:grid-cols-7">
                 <!-- Recent Registrations -->
-                <Card class="md:col-span-4 lg:col-span-5 border-none shadow-none bg-transparent">
+                <Card class="md:col-span-4 lg:col-span-5 shadow-sm">
                     <CardHeader class="flex flex-row items-center justify-between">
                         <div>
                             <CardTitle>Recent Registrations</CardTitle>
@@ -139,8 +139,7 @@ const getInitials = (name: string) => {
                             </Link>
                         </Button>
                     </CardHeader>
-                    <CardContent class="p-0">
-                        <div class="rounded-md border border-border">
+                    <CardContent>
                         <Table>
                             <TableHeader>
                                 <TableRow>
@@ -181,11 +180,11 @@ const getInitials = (name: string) => {
                                         <Badge 
                                             :variant="player.status === 'active' ? 'default' : (player.status === 'expiring' ? 'secondary' : 'outline')"
                                             :class="{
-                                                'bg-primary text-primary-foreground hover:bg-primary/90 border-primary': player.status === 'active',
-                                                'bg-accent text-accent-foreground hover:bg-accent/90 border-accent': player.status === 'expiring',
-                                                'bg-destructive text-destructive-foreground hover:bg-destructive/90 border-destructive': player.status === 'inactive'
-                                             }"
-                                             class="min-w-21 justify-center"
+                                                'w-20 justify-center': true,
+                                                'bg-primary/15 text-primary hover:bg-primary/25 border-primary/20': player.status === 'active',
+                                                'bg-accent/15 text-accent hover:bg-accent/25 border-accent/20': player.status === 'expiring',
+                                                'bg-destructive/15 text-red-500 hover:bg-destructive/25 border-destructive/20 font-semibold': player.status === 'inactive'
+                                            }"
                                         >
                                             {{ player.status.charAt(0).toUpperCase() + player.status.slice(1) }}
                                         </Badge>
@@ -198,33 +197,32 @@ const getInitials = (name: string) => {
                                 </TableRow>
                             </TableBody>
                         </Table>
-                        </div>
                     </CardContent>
                 </Card>
 
                 <!-- Quick Actions / Mini Stats -->
-                <div class="md:col-span-3 lg:col-span-2 flex flex-col gap-6">
+                <div class="md:col-span-3 lg:col-span-2 flex flex-col gap-6 h-full">
                     <Card class="shadow-sm">
                         <CardHeader>
                             <CardTitle>Quick Actions</CardTitle>
                         </CardHeader>
                         <CardContent class="grid gap-4">
-                            <Button variant="outline" class="w-full justify-start" as-child>
+                            <Button class="w-full justify-start" as-child>
                                 <Link :href="route('admin.players.index')">
-                                    <Users class="mr-2 h-4 w-4 text-primary" />
+                                    <Users class="mr-2 h-4 w-4" />
                                     Register New Athlete
                                 </Link>
                             </Button>
                             <Button variant="outline" class="w-full justify-start" as-child>
                                 <Link :href="route('admin.tournaments.index')">
-                                    <Trophy class="mr-2 h-4 w-4 text-accent" />
+                                    <Trophy class="mr-2 h-4 w-4" />
                                     Manage Tournaments
                                 </Link>
                             </Button>
                         </CardContent>
                     </Card>
 
-                    <Card class="shadow-sm">
+                    <Card class="shadow-sm flex-1">
                         <CardHeader>
                             <CardTitle>Upcoming Events</CardTitle>
                             <CardDescription>Next 30 days</CardDescription>
@@ -236,7 +234,7 @@ const getInitials = (name: string) => {
                             <p class="text-center text-sm text-muted-foreground">
                                 No tournaments scheduled for the upcoming month.
                             </p>
-                            <Button variant="secondary" class="w-full mt-4 text-white font-semibold" as-child>
+                            <Button variant="secondary" class="w-full mt-4 font-semibold" as-child>
                                 <Link :href="route('admin.tournaments.index')">
                                     Schedule Event
                                 </Link>

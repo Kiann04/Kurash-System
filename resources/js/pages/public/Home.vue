@@ -179,9 +179,9 @@ const navItems = [
 <template>
   <Head title="Kurash Ranking" />
   
-  <div class="min-h-screen bg-black text-foreground font-sans selection:bg-accent selection:text-accent-foreground dark">
+  <div class="min-h-screen bg-background text-foreground font-sans selection:bg-accent selection:text-accent-foreground dark">
     <!-- Navbar -->
-    <header class="border-b border-border bg-black/95 backdrop-blur-sm relative z-50">
+    <header class="border-b border-border bg-background/95 backdrop-blur-sm relative z-50">
       <div class="max-w-360 mx-auto px-8 h-20 flex items-center justify-between">
         <!-- Logo -->
         <a :href="route('public.home')" class="flex items-center gap-3">
@@ -249,7 +249,7 @@ const navItems = [
         <div class="relative w-full h-144 mb-12 rounded-4xl overflow-hidden group shadow-2xl">
            <!-- Background Image -->
            <div class="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1555597673-b21d5c935865?q=80&w=2000&auto=format&fit=crop')] bg-cover bg-center transition-transform duration-1000 group-hover:scale-105"></div>
-           <div class="absolute inset-0 bg-linear-to-t from-black via-black/40 to-transparent"></div>
+           <div class="absolute inset-0 bg-linear-to-t from-background via-background/40 to-transparent"></div>
            
            <!-- Content -->
         <div class="absolute bottom-0 left-0 w-full p-10 md:p-20 z-10">
@@ -709,5 +709,6 @@ const navItems = [
     font-family: 'Inter', sans-serif;
 }
 </style>
+
 
 

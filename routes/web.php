@@ -63,6 +63,7 @@ Route::prefix('admin')
             ->name('tournaments.matches.advance');
         Route::post('tournaments/{tournament}/matches/{match}/revert', [AdminBracketController::class, 'revert'])
             ->name('tournaments.matches.revert');
+        Route::post('brackets/{bracket}/format', [AdminBracketController::class, 'updateFormat'])->name('brackets.update-format');
 
         Route::resource('events', AdminEventController::class);
     });

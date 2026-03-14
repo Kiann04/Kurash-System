@@ -76,6 +76,42 @@ class TournamentsController extends Controller
                     'status' => $tournament->status,
                 ],
                 'brackets' => $tournament->brackets->map(function ($bracket) {
+                    $format = $bracket->format ?? null;
+                    $rounds = $bracket->rounds ?? null;
+                    $pools = $bracket->pools ?? null;
+                    $stageLabels = null;
+                    if (!$format) {
+                        $matchesByRound = $bracket->matches->groupBy('round_number')->map->count()->sortKeys();
+                        $counts = $matchesByRound->values()->all();
+                        if (!empty($counts)) {
+                            $last = end($counts);
+                            $isDecreasing = true;
+                            for ($i = 1; $i < count($counts); $i++) {
+                                if ($counts[$i] > $counts[$i - 1]) { $isDecreasing = false; break; }
+                            }
+                            if ($last === 1 && $isDecreasing) {
+                                $format = 'single_elimination';
+                            } else {
+                                $format = 'round_robin';
+                            }
+                        }
+                    }
+                    if ($format === 'single_elimination') {
+                        $stageLabels = [];
+                        $total = (int) ($rounds ?? $bracket->matches->max('round_number') ?? 0);
+                        if ($total >= 3) { $stageLabels[] = 'Quarterfinals'; }
+                        if ($total >= 2) { $stageLabels[] = 'Semifinals'; }
+                        if ($total >= 1) { $stageLabels[] = 'Finals'; }
+                        $hasBronze = $bracket->matches->where('is_bronze', true)->isNotEmpty();
+                        if ($hasBronze) { $stageLabels[] = 'Bronze'; }
+                    }
+                    if (!$format) {
+                        $format = 'unknown';
+                    }
+                    if ($bracket->format !== $format) {
+                        $bracket->format = $format;
+                        $bracket->save();
+                    }
                     $name = trim(
                         ($bracket->ageCategory?->name ?? '') . ' ' .
                         ($bracket->weightCategory?->name ?? '') . ' ' .
@@ -102,6 +138,10 @@ class TournamentsController extends Controller
                         'gender' => $bracket->gender ?? 'N/A',
                         'age_category' => $bracket->ageCategory?->name,
                         'weight_category' => $bracket->weightCategory?->name,
+                        'format' => $format,
+                        'rounds' => $rounds ?? ($bracket->matches->max('round_number') ?: null),
+                        'pools' => $pools ?? null,
+                        'stage_labels' => $stageLabels,
                         'matches' => $matches,
                     ];
                 })->values(),

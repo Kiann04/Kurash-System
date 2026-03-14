@@ -7,13 +7,6 @@ import { Card, CardContent } from '@/components/ui/card';
 import { DatePicker } from '@/components/ui/date-picker';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { 
-    Select, 
-    SelectContent, 
-    SelectItem, 
-    SelectTrigger, 
-    SelectValue 
-} from '@/components/ui/select';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { type BreadcrumbItem } from '@/types';
 
@@ -38,7 +31,7 @@ const onImageChange = (event: Event) => {
 };
 
 const getImageUrl = (file: File) => {
-    return window.URL.createObjectURL(file);
+    return URL.createObjectURL(file);
 };
 
 const submit = () => {
@@ -133,29 +126,14 @@ const submit = () => {
 
                     <div class="grid gap-2">
                         <Label for="status">Status</Label>
-                        <Select v-model="form.status">
-                            <SelectTrigger id="status" class="h-9">
-                                <SelectValue placeholder="Select status" />
-                            </SelectTrigger>
-                            <SelectContent 
-                                position="popper"
-                                class="min-w-0"
-                                :style="{ width: 'var(--radix-select-trigger-width)' }"
-                            >
-                                <SelectItem value="draft">
-                                    <span class="inline-flex items-center gap-2">
-                                        <span class="h-2.5 w-2.5 rounded-full bg-accent"></span>
-                                        Draft
-                                    </span>
-                                </SelectItem>
-                                <SelectItem value="published">
-                                    <span class="inline-flex items-center gap-2">
-                                        <span class="h-2.5 w-2.5 rounded-full bg-primary"></span>
-                                        Published
-                                    </span>
-                                </SelectItem>
-                            </SelectContent>
-                        </Select>
+                        <select
+                            id="status"
+                            v-model="form.status"
+                            class="h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+                        >
+                            <option value="draft">Draft</option>
+                            <option value="published">Published</option>
+                        </select>
                         <p v-if="form.errors.status" class="text-xs text-destructive">{{ form.errors.status }}</p>
                     </div>
                     </div>

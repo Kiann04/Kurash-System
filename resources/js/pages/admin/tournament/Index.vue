@@ -175,10 +175,10 @@ const formatDate = (date: string) => {
  */
 const getStatusColor = (status: string) => {
     switch(status.toLowerCase()) {
-        case 'open': return 'bg-primary text-primary-foreground hover:bg-primary/90 border-primary';
-        case 'ongoing': return 'bg-secondary text-secondary-foreground hover:bg-secondary/90 border-secondary';
-        case 'completed': return 'bg-muted text-muted-foreground border-border';
-        default: return 'bg-accent text-accent-foreground hover:bg-accent/90 border-accent'; // draft
+        case 'open': return 'bg-accent/15 text-accent hover:bg-accent/25 border-accent/20';
+        case 'ongoing': return 'bg-secondary/15 text-secondary hover:bg-secondary/25 border-secondary/20';
+        case 'completed': return 'bg-primary/15 text-primary hover:bg-primary/25 border-primary/20';
+        default: return 'bg-accent/15 text-accent hover:bg-accent/25 border-accent/20'; // draft
     }
 }
 </script>
@@ -288,12 +288,12 @@ const getStatusColor = (status: string) => {
             </Dialog>
 
             <!-- Table -->
-            <Card class="border-none shadow-none bg-transparent">
+            <Card class="border-none bg-transparent shadow-none">
                 <CardContent class="p-0">
-                    <div class="rounded-md border border-border">
+                    <div class="relative w-full overflow-auto rounded-md border border-border">
                         <Table>
-                            <TableHeader class="bg-muted/50 sticky top-0 z-10 backdrop-blur-sm">
-                                <TableRow class="hover:bg-transparent border-b">
+                            <TableHeader>
+                                <TableRow class="bg-muted/50 hover:bg-muted/50">
                                     <TableHead class="h-12 px-4 align-middle font-medium text-muted-foreground">Tournament Name</TableHead>
                                     <TableHead class="h-12 px-4 align-middle font-medium text-muted-foreground">Location</TableHead>
                                     <TableHead class="h-12 px-4 align-middle font-medium text-muted-foreground">Date</TableHead>
@@ -305,7 +305,7 @@ const getStatusColor = (status: string) => {
                                 <TableRow
                                     v-for="t in tournaments.data"
                                     :key="t.id"
-                                    class="hover:bg-muted/50 transition-colors border-b last:border-0"
+                                    class="hover:bg-muted/50 transition-colors border-b border-border"
                                 >
                                     <TableCell class="p-4 align-middle font-medium">
                                         <div class="flex items-center gap-3">
@@ -323,12 +323,12 @@ const getStatusColor = (status: string) => {
                                     </TableCell>
                                     <TableCell class="p-4 align-middle">
                                         <div class="flex items-center gap-2 text-muted-foreground">
-                                            <Calendar class="h-4 w-4 text-muted-foreground/70" />
+                                            <Calendar class="h-4 w-4 text-white" />
                                             <span class="font-medium text-sm">{{ formatDate(t.tournament_date) }}</span>
                                         </div>
                                     </TableCell>
                                     <TableCell class="p-4 align-middle text-center">
-                                        <Badge :class="['capitalize shadow-sm font-medium border', getStatusColor(t.status)]">
+                                    <Badge :class="['capitalize shadow-none font-normal w-20 justify-center border-transparent', getStatusColor(t.status)]">
                                             {{ t.status }}
                                         </Badge>
                                     </TableCell>

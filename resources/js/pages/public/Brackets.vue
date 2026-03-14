@@ -204,9 +204,9 @@ const getStatusColor = (status: string) => {
 
 <template>
 <Head title="Brackets Board" />
-<div class="min-h-screen bg-black text-foreground font-sans selection:bg-accent selection:text-accent-foreground">
+<div class="min-h-screen bg-background text-foreground font-sans selection:bg-accent selection:text-accent-foreground">
     <!-- Navbar (Consistent across public pages) -->
-    <header class="border-b border-border bg-black/95 backdrop-blur-sm relative z-50">
+    <header class="border-b border-border bg-background/95 backdrop-blur-sm relative z-50">
       <div class="max-w-360 mx-auto px-8 h-20 flex items-center justify-between">
         <a :href="route('public.home')" class="flex items-center gap-3">
           <img src="/images/ksf-logo.png" alt="KSF Logo" class="h-12 w-auto" />
@@ -385,7 +385,7 @@ const getStatusColor = (status: string) => {
     <!-- Bracket Modal -->
     <div v-if="isModalOpen && selectedCategory" class="fixed inset-0 z-100 flex items-center justify-center p-4 md:p-8">
         <!-- Backdrop -->
-        <div class="absolute inset-0 bg-black/95 backdrop-blur-xl" @click="closeBracket"></div>
+        <div class="absolute inset-0 bg-background/95 backdrop-blur-xl" @click="closeBracket"></div>
         
         <!-- Modal Content -->
         <div class="relative w-full max-w-[95vw] h-full max-h-[95vh] bg-card rounded-4xl border border-border shadow-2xl overflow-hidden flex flex-col">
@@ -422,7 +422,7 @@ const getStatusColor = (status: string) => {
                         <div class="flex gap-12">
                             <div v-for="round in eastRounds(selectedCategory)" :key="`east-${round.round}`" class="flex flex-col gap-8">
                                 <h4 class="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground text-center mb-4">
-                                    {{ roundLabel(selectedCategory.rounds, round.round, selectedCategory.entrant_count, 'single_elimination') }}
+                                    {{ roundLabel(selectedCategory.rounds ?? finalRoundNumber(selectedCategory), round.round, selectedCategory.entrant_count, 'single_elimination') }}
                                 </h4>
                                 <div class="flex flex-col justify-around flex-1" :style="roundColumnStyle(round.round)">
                                     <div v-for="match in round.matches" :key="match.id" class="w-72">
@@ -465,7 +465,7 @@ const getStatusColor = (status: string) => {
                         <!-- Grand Final (Center) -->
                         <div class="flex flex-col gap-8">
                             <h4 class="text-[10px] font-black uppercase tracking-[0.2em] text-accent text-center mb-4">
-                                {{ roundLabel(selectedCategory.rounds, selectedCategory.rounds, selectedCategory.entrant_count, 'single_elimination') }}
+                                {{ roundLabel(selectedCategory.rounds ?? finalRoundNumber(selectedCategory), (selectedCategory.rounds ?? finalRoundNumber(selectedCategory)), selectedCategory.entrant_count, 'single_elimination') }}
                             </h4>
                             <div v-for="match in grandFinalMatches(selectedCategory)" :key="match.id" class="w-80">
                                 <div class="bg-linear-to-b from-accent/10 to-transparent border-2 border-accent/20 rounded-3xl p-6 shadow-[0_0_50px_hsl(var(--accent)/0.1)]">

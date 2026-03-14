@@ -95,24 +95,24 @@ const confirmDelete = (id: number) => {
                 </Button>
             </div>
 
-            <Card class="border-none shadow-none bg-transparent">
+            <Card class="border-none bg-transparent shadow-none">
                 <CardContent class="p-0">
-                    <div class="rounded-md border border-border">
-                    <Table>
-                        <TableHeader class="bg-muted/50 sticky top-0 z-10 backdrop-blur-sm">
-                            <TableRow class="hover:bg-transparent border-b border-border">
+                    <div class="relative w-full overflow-auto rounded-md border border-border">
+                        <Table>
+                            <TableHeader>
+                                <TableRow class="bg-muted/50 hover:bg-muted/50">
                                 <TableHead class="h-12 px-4 align-middle font-semibold text-muted-foreground">Event</TableHead>
                                 <TableHead class="h-12 px-4 align-middle font-semibold text-muted-foreground">Location</TableHead>
                                 <TableHead class="h-12 px-4 align-middle font-semibold text-muted-foreground">Dates</TableHead>
                                 <TableHead class="h-12 px-4 align-middle font-semibold text-center text-muted-foreground">Status</TableHead>
                                 <TableHead class="h-12 px-4 align-middle font-semibold text-right text-muted-foreground">Actions</TableHead>
                             </TableRow>
-                        </TableHeader>
-                        <TableBody>
+                            </TableHeader>
+                            <TableBody>
                             <TableRow
                                 v-for="event in props.events.data"
                                 :key="event.id"
-                                class="hover:bg-muted/50 transition-colors border-b border-border last:border-0"
+                                    class="hover:bg-muted/50 transition-colors border-b border-border"
                             >
                                 <TableCell class="p-4 align-middle font-medium">
                                     <div class="flex items-center gap-3">
@@ -180,8 +180,8 @@ const confirmDelete = (id: number) => {
                                     No events found. Create one to get started.
                                 </TableCell>
                             </TableRow>
-                        </TableBody>
-                    </Table>
+                            </TableBody>
+                        </Table>
                     </div>
                     <div class="mt-4">
                         <Pagination :links="props.events.links" />

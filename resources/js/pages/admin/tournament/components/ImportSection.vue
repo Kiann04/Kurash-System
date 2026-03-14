@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Loader2, Upload, AlertTriangle, CheckCircle2, FileText, Maximize2 } from 'lucide-vue-next'
+import { Loader2, Upload, AlertTriangle, CheckCircle2, FileText } from 'lucide-vue-next'
 import { ref } from 'vue'
 import { route } from 'ziggy-js'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
@@ -27,12 +27,6 @@ import {
     TableHeader,
     TableRow,
 } from '@/components/ui/table'
-import {
-    Dialog,
-    DialogContent,
-    DialogHeader,
-    DialogTitle,
-} from '@/components/ui/dialog'
 import type { ImportAnalysis, ImportRowResult } from '@/types/tournament'
 
 interface Props {
@@ -51,7 +45,6 @@ const importProcessing = ref(false)
 const importError = ref<string | null>(null)
 const importAnalysis = ref<ImportAnalysis | null>(null)
 const fileInput = ref<HTMLInputElement | null>(null)
-const previewOpen = ref(false)
 
 // Handler: Updates file state on selection change
 const handleFileChange = (event: Event) => {
@@ -211,13 +204,6 @@ const getStatusBadgeVariant = (status: ImportRowResult['status']) => {
             </Alert>
 
             <div v-if="importAnalysis" class="space-y-4 border border-border rounded-md p-4 bg-muted/30">
-                <div class="flex items-center justify-between">
-                    <div class="text-sm font-medium text-foreground">Registration Preview</div>
-                    <Button variant="outline" size="sm" @click="previewOpen = true">
-                        <Maximize2 class="mr-2 h-4 w-4" />
-                        Fullscreen
-                    </Button>
-                </div>
                 <div class="grid grid-cols-2 gap-4 sm:grid-cols-4">
                     <div class="p-3 bg-card rounded shadow-sm border border-border">
                         <div class="text-xs text-muted-foreground uppercase font-bold">Total Rows</div>
@@ -279,38 +265,4 @@ const getStatusBadgeVariant = (status: ImportRowResult['status']) => {
             </div>
         </CardContent>
     </Card>
-
-    <Dialog v-model:open="previewOpen">
-        <DialogContent class="w-[98vw] sm:max-w-[92vw] md:max-w-[96vw] lg:max-w-[1400px] xl:max-w-[1600px]">
-            <DialogHeader>
-                <DialogTitle>Registration File Preview</DialogTitle>
-            </DialogHeader>
-            <div class="max-h-[75vh] w-full overflow-y-auto overflow-x-hidden border border-border rounded bg-card">
-                <Table>
-                    <TableHeader class="bg-muted/50 sticky top-0">
-                        <TableRow class="border-border">
-                            <TableHead class="w-20">Row</TableHead>
-                            <TableHead>Status</TableHead>
-                            <TableHead>Player</TableHead>
-                            <TableHead>Category</TableHead>
-                            <TableHead>Details</TableHead>
-                        </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                        <TableRow v-for="row in importAnalysis?.rows" :key="row.row" class="border-border">
-                            <TableCell class="font-mono text-xs text-muted-foreground">#{{ row.row }}</TableCell>
-                            <TableCell>
-                                <Badge :variant="getStatusBadgeVariant(row.status)" class="uppercase text-[10px]">
-                                    {{ row.status.replace('_', ' ') }}
-                                </Badge>
-                            </TableCell>
-                            <TableCell class="text-foreground">{{ row.player }}</TableCell>
-                            <TableCell class="text-foreground">{{ row.category || '-' }}</TableCell>
-                            <TableCell class="text-xs text-muted-foreground">{{ row.reason }}</TableCell>
-                        </TableRow>
-                    </TableBody>
-                </Table>
-            </div>
-        </DialogContent>
-    </Dialog>
 </template>

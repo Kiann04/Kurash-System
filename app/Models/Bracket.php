@@ -22,6 +22,7 @@ class Bracket extends Model
         'weight_category_id',
         'format', // 'single_elimination', 'round_robin'
         'rounds', // JSON field storing structure if needed, or derived from matches
+        'pools',
     ];
 
     /**

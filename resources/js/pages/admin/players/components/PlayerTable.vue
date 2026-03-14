@@ -177,12 +177,12 @@ const getInitials = (name: string) => {
                             </TableCell>
                             <TableCell class="p-4 align-middle text-center">
                                 <Badge 
-                                    :variant="getUiStatus(player) === 'active' ? 'default' : (getUiStatus(player) === 'expiring' ? 'secondary' : 'destructive')"
+                                    :variant="getUiStatus(player) === 'active' ? 'default' : (getUiStatus(player) === 'expiring' ? 'secondary' : 'outline')"
                                     :class="[
-                                        'capitalize shadow-none font-normal border min-w-21 justify-center',
-                                        getUiStatus(player) === 'active' && 'bg-primary text-primary-foreground hover:bg-primary/90 border-primary',
-                                        getUiStatus(player) === 'expiring' && 'bg-accent text-accent-foreground hover:bg-accent/90 border-accent',
-                                        getUiStatus(player) === 'inactive' && 'bg-destructive text-destructive-foreground hover:bg-destructive/90 border-destructive'
+                                        'capitalize shadow-none font-normal w-20 justify-center',
+                                        getUiStatus(player) === 'active' && 'bg-primary/15 text-primary hover:bg-primary/25 border-primary/20',
+                                        getUiStatus(player) === 'expiring' && 'bg-accent/15 text-accent hover:bg-accent/25 border-accent/20',
+                                        getUiStatus(player) === 'inactive' && 'bg-destructive/15 text-red-500 hover:bg-destructive/25 border-destructive/20 font-semibold'
                                     ]">
                                     {{ getUiStatus(player) === 'expiring' ? 'Expiring' : getUiStatus(player) }}
                                 </Badge>
