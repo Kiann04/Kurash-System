@@ -114,10 +114,11 @@ const getStatusColor = (status: string) => {
 </script>
 
 <template>
-<Head :title="`${props.tournament.name} | Kurash Federation`" />
-<div class="min-h-screen bg-background text-foreground font-sans selection:bg-accent selection:text-accent-foreground">
-    <!-- Navbar (Consistent across public pages) -->
-    <header class="border-b border-border bg-background/95 backdrop-blur-sm relative z-50">
+    <div class="min-h-screen bg-background text-foreground font-sans relative" style="--background: hsl(222 47% 6%)">
+        <Head :title="props.tournament.name" />
+        
+        <!-- Navbar -->
+        <nav class="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-xl border-b border-border/40 transition-all duration-300">
       <div class="max-w-360 mx-auto px-8 h-20 flex items-center justify-between">
         <a :href="route('public.home')" class="flex items-center gap-3">
           <img src="/images/ksf-logo.png" alt="KSF Logo" class="h-12 w-auto" />
@@ -127,7 +128,7 @@ const getStatusColor = (status: string) => {
           </div>
         </a>
 
-        <nav class="hidden lg:flex items-center gap-x-2 xl:gap-x-4 text-[10px] xl:text-xs font-bold tracking-wider uppercase h-full font-serif">
+        <nav class="hidden lg:flex items-center gap-x-2 xl:gap-x-4 text-[10px] xl:text-xs font-bold tracking-wider uppercase h-full font-sans">
           <template v-for="item in navItems" :key="item.name">
             <a 
               v-if="item.route"
@@ -168,9 +169,9 @@ const getStatusColor = (status: string) => {
         </div>
       </div>
       <div class="absolute bottom-0 left-0 w-full h-px bg-linear-to-r from-transparent via-accent/50 to-transparent"></div>
-    </header>
+    </nav>
 
-    <main class="max-w-7xl mx-auto px-4 py-12 relative">
+    <main class="max-w-7xl mx-auto px-4 py-16 relative">
         <!-- Background Glow -->
         <div class="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-3xl h-64 bg-secondary/10 blur-[100px] rounded-full pointer-events-none"></div>
 

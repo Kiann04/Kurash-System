@@ -179,9 +179,9 @@ const navItems = [
 <template>
   <Head title="Kurash Ranking" />
   
-  <div class="min-h-screen bg-background text-foreground font-sans selection:bg-accent selection:text-accent-foreground dark">
+  <div class="min-h-screen bg-background text-foreground font-sans selection:bg-accent selection:text-accent-foreground dark" style="--background: hsl(222 47% 6%)">
     <!-- Navbar -->
-    <header class="border-b border-border bg-background/95 backdrop-blur-sm relative z-50">
+    <nav class="border-b border-border bg-background/95 backdrop-blur-sm relative z-50">
       <div class="max-w-360 mx-auto px-8 h-20 flex items-center justify-between">
         <!-- Logo -->
         <a :href="route('public.home')" class="flex items-center gap-3">
@@ -193,7 +193,7 @@ const navItems = [
         </a>
 
         <!-- Navigation -->
-        <nav class="hidden lg:flex items-center gap-x-2 xl:gap-x-4 text-[10px] xl:text-xs font-bold tracking-wider uppercase h-full font-serif">
+        <nav class="hidden lg:flex items-center gap-x-2 xl:gap-x-4 text-[10px] xl:text-xs font-bold tracking-wider uppercase h-full font-sans">
           <template v-for="item in navItems" :key="item.name">
             <a 
               v-if="item.route"
@@ -236,9 +236,9 @@ const navItems = [
       </div>
       <!-- Gold Line -->
       <div class="absolute bottom-0 left-0 w-full h-px bg-linear-to-r from-transparent via-accent/50 to-transparent"></div>
-    </header>
+    </nav>
 
-    <!-- Main Content -->
+    <!-- Hero Section -->
     <main class="max-w-7xl mx-auto px-4 py-12 relative">
         <!-- Background Glow -->
         <div class="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-3xl h-64 bg-primary/20 blur-[100px] rounded-full pointer-events-none"></div>
