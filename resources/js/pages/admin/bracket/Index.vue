@@ -13,6 +13,7 @@ import {
     Play, 
     Eye,
     ListTree,
+    Brackets,
     ArrowRight,
     CheckCircle2,
     Clock,
@@ -160,11 +161,16 @@ const filteredGenerated = computed(() => {
     <AppLayout>
         <div class="p-6 space-y-6">
             <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                <div>
-                    <h1 class="text-2xl font-bold tracking-tight text-foreground">Generate Brackets</h1>
-                    <p class="text-sm text-muted-foreground mt-1">
-                        Manage and generate brackets for your tournaments.
-                    </p>
+                <div class="flex items-center gap-3">
+                    <div class="h-12 w-12 rounded-xl bg-primary/10 flex items-center justify-center border border-primary/20">
+                        <Brackets class="h-6 w-6 text-primary" />
+                    </div>
+                    <div class="flex flex-col gap-1">
+                        <h1 class="text-2xl font-bold tracking-tight text-foreground">Generate Brackets</h1>
+                        <p class="text-sm text-muted-foreground">
+                            Manage and generate brackets for your tournaments.
+                        </p>
+                    </div>
                 </div>
                 <div class="w-full md:w-72">
                     <Input 
@@ -278,7 +284,7 @@ const filteredGenerated = computed(() => {
                 </Card>
 
                 <!-- Generated Brackets -->
-                <Card class="shadow-sm bg-card text-card-foreground border-border">
+                <Card class="border-l-4 border-l-primary shadow-sm bg-card text-card-foreground">
                     <CardHeader class="border-b bg-muted/50">
                         <CardTitle class="flex items-center gap-2 text-lg text-foreground">
                             <CheckCircle2 class="h-5 w-5 text-primary" />

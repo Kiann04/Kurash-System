@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Link, Head } from '@inertiajs/vue3';
-import { Users, UserCheck, UserX, ArrowRight, Calendar, Clock, Trophy } from 'lucide-vue-next';
+import { Users, UserCheck, UserX, ArrowRight, Calendar, Clock, Trophy, LayoutGrid } from 'lucide-vue-next';
 import { route } from 'ziggy-js';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
@@ -59,9 +59,14 @@ const getInitials = (name: string) => {
     <AppLayout :breadcrumbs="breadcrumbs">
         <div class="flex flex-1 flex-col gap-8 p-6">
             <!-- Header Section -->
-            <div class="flex flex-col gap-2">
-                <h1 class="text-3xl font-bold tracking-tight text-foreground">Dashboard</h1>
-                <p class="text-muted-foreground">Overview of the Kurash Federation system status.</p>
+            <div class="flex flex-col md:flex-row items-start md:items-center gap-3">
+                <div class="h-12 w-12 rounded-xl bg-primary/10 flex items-center justify-center border border-primary/20">
+                    <LayoutGrid class="h-6 w-6 text-primary" />
+                </div>
+                <div class="flex flex-col gap-1">
+                    <h1 class="text-3xl font-bold tracking-tight text-foreground">Dashboard</h1>
+                    <p class="text-muted-foreground">Overview of the Kurash Federation system status.</p>
+                </div>
             </div>
 
             <!-- Stats Grid -->
@@ -128,9 +133,9 @@ const getInitials = (name: string) => {
                 <Card class="md:col-span-4 lg:col-span-5 shadow-sm">
                     <CardHeader class="flex flex-row items-center justify-between">
                         <div>
-                            <CardTitle>Recent Registrations</CardTitle>
+                            <CardTitle>Feed</CardTitle>
                             <CardDescription>
-                                Latest athletes added to the federation database.
+                                Latest athletes added and recent membership status changes.
                             </CardDescription>
                         </div>
                         <Button variant="outline" size="sm" as-child>

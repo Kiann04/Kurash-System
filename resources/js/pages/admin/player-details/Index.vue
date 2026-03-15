@@ -5,7 +5,7 @@ import { ref, watch } from 'vue';
 import { route } from 'ziggy-js';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import {
@@ -72,32 +72,31 @@ const getInitials = (name: string) => {
     <Head title="Player Details" />
 
     <AppLayout :breadcrumbs="breadcrumbs">
-        <div class="flex flex-1 flex-col gap-4 p-4 pt-0">
-            <div class="flex items-center justify-between space-y-2">
-                <h2 class="text-3xl font-bold tracking-tight">Player Details</h2>
+        <div class="flex flex-1 flex-col gap-6 p-6">
+            <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                <div class="flex items-center gap-3">
+                    <div class="h-12 w-12 rounded-xl bg-primary/10 flex items-center justify-center border border-primary/20">
+                        <Users class="h-6 w-6 text-primary" />
+                    </div>
+                    <div class="space-y-1">
+                        <h2 class="text-3xl font-bold tracking-tight">Player Details</h2>
+                        <p class="text-sm text-muted-foreground">View contact and personal details for all players.</p>
+                    </div>
+                </div>
+                <div class="flex flex-wrap items-center gap-2 w-full sm:w-auto">
+                    <div class="relative w-full sm:w-64">
+                        <Search class="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                        <Input
+                            v-model="search"
+                            type="search"
+                            placeholder="Search details..."
+                            class="pl-9 h-9 w-full bg-background border-border"
+                        />
+                    </div>
+                </div>
             </div>
             
             <Card class="border-none bg-transparent shadow-none">
-                <CardHeader class="p-4 sm:p-6">
-                    <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-                        <div class="space-y-1">
-                            <CardTitle class="text-lg font-semibold text-card-foreground">Detailed Information</CardTitle>
-                            <CardDescription>View contact and personal details for all players.</CardDescription>
-                        </div>
-                        <div class="flex flex-wrap items-center gap-2 w-full sm:w-auto">
-                            <div class="relative w-full sm:w-64">
-                                <Search class="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                                <Input
-                                    v-model="search"
-                                    type="search"
-                                    placeholder="Search details..."
-                                    class="pl-9 h-9 w-full bg-background border-border"
-                                />
-                            </div>
-
-                        </div>
-                    </div>
-                </CardHeader>
                 <CardContent class="p-0">
                     <div class="relative w-full overflow-auto rounded-md border border-border">
                         <Table>
