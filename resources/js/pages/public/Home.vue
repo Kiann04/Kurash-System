@@ -193,7 +193,7 @@ const navItems = [
         </a>
 
         <!-- Navigation -->
-        <nav class="hidden lg:flex items-center gap-x-2 xl:gap-x-4 text-[10px] xl:text-xs font-bold tracking-wider uppercase h-full font-serif">
+        <nav class="hidden lg:flex items-center gap-x-2 xl:gap-x-4 text-[10px] xl:text-xs font-bold tracking-wider uppercase h-full font-sans">
           <template v-for="item in navItems" :key="item.name">
             <a 
               v-if="item.route"
