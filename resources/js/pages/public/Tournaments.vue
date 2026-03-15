@@ -81,7 +81,7 @@ const getStatusColor = (status: string) => {
                 </div>
             </a>
 
-            <nav class="hidden lg:flex items-center gap-x-2 xl:gap-x-4 text-xs xl:text-xs font-bold tracking-wider uppercase h-full font-sans">
+            <nav class="hidden lg:flex items-center gap-x-2 xl:gap-x-4 text-xs xl:text-xs font-bold tracking-wider uppercase h-full font-serif">
                 <template v-for="item in navItems" :key="item.name">
                     <a 
                         v-if="item.route"

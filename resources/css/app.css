@@ -171,7 +171,7 @@ body[style*="overflow: hidden"] {
 
 .dark {
     /* Base - Rich Dark Slate */
-    --background: hsl(222 47% 6%);
+    --background: hsl(222 47% 11%);
     --foreground: hsl(210 40% 98%);
 
     /* Card & Popover - Slightly lighter than background */
